@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Sistema de Préstamos</title>
+    <title>Home - Sistema de Préstamos</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -66,7 +66,7 @@
                     <ul class="nav flex-column">
                         <li class="nav-item">
                             <a class="nav-link active" href="{{ route('dashboard') }}">
-                                <i class="fas fa-tachometer-alt"></i> Dashboard
+                                <i class="fas fa-home"></i> Home
                             </a>
                         </li>
                         <li class="nav-item">
@@ -108,8 +108,8 @@
                 <!-- Header -->
                 <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">
-                        <i class="fas fa-tachometer-alt text-primary"></i>
-                        Dashboard
+                        <i class="fas fa-home text-primary"></i>
+                        Home
                     </h1>
                     <div class="btn-toolbar mb-2 mb-md-0">
                         <div class="dropdown">
