@@ -143,26 +143,26 @@
                                     <h2 class="mt-2 mb-0">0</h2>
                                 </div>
                                 <div class="align-self-center">
-                                    <i class="fas fa-users fa-2x text-primary"></i>
+                                    <i class="fas fa-users fa-2x text-success"></i>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="stat-card success">
+                        <div class="stat-card primary">
                             <div class="d-flex justify-content-between">
                                 <div>
                                     <h5 class="card-title text-muted mb-0">Equipos Disponibles</h5>
                                     <h2 class="mt-2 mb-0">0</h2>
                                 </div>
                                 <div class="align-self-center">
-                                    <i class="fas fa-laptop fa-2x text-success"></i>
+                                    <i class="fas fa-laptop fa-2x text-info"></i>
                                 </div>
                             </div>
                         </div>
                     </div>
                     <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="stat-card warning">
+                        <div class="stat-card primary">
                             <div class="d-flex justify-content-between">
                                 <div>
                                     <h5 class="card-title text-muted mb-0">Préstamos Activos</h5>
@@ -175,7 +175,7 @@
                         </div>
                     </div>
                     <div class="col-xl-3 col-md-6 mb-4">
-                        <div class="stat-card danger">
+                        <div class="stat-card primary">
                             <div class="d-flex justify-content-between">
                                 <div>
                                     <h5 class="card-title text-muted mb-0">Pendientes Devolución</h5>
@@ -208,19 +208,19 @@
                                         </a>
                                     </div>
                                     <div class="col-lg-3 col-md-6">
-                                        <a href="#" class="btn btn-success w-100 h-100 py-3">
+                                        <a href="#" class="btn btn-primary w-100 h-100 py-3">
                                             <i class="fas fa-laptop fa-2x mb-2"></i><br>
                                             Agregar Equipo
                                         </a>
                                     </div>
                                     <div class="col-lg-3 col-md-6">
-                                        <a href="#" class="btn btn-warning w-100 h-100 py-3">
+                                        <a href="#" class="btn btn-primary w-100 h-100 py-3">
                                             <i class="fas fa-hand-holding fa-2x mb-2"></i><br>
                                             Nuevo Préstamo
                                         </a>
                                     </div>
                                     <div class="col-lg-3 col-md-6">
-                                        <a href="#" class="btn btn-info w-100 h-100 py-3">
+                                        <a href="#" class="btn btn-primary w-100 h-100 py-3">
                                             <i class="fas fa-undo fa-2x mb-2"></i><br>
                                             Registrar Devolución
                                         </a>
