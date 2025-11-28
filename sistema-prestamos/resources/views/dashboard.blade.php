@@ -70,7 +70,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{{ route('estudiantes.index') }}">
                                 <i class="fas fa-users"></i> Estudiantes
                             </a>
                         </li>
@@ -94,11 +94,6 @@
                                 <i class="fas fa-chart-bar"></i> Reportes
                             </a>
                         </li>
-                        <li class="nav-item mt-4">
-                            <a class="nav-link" href="#">
-                                <i class="fas fa-cog"></i> Configuración
-                            </a>
-                        </li>
                     </ul>
                 </div>
             </nav>
@@ -117,9 +112,6 @@
                                 <i class="fas fa-user-circle"></i> {{ Auth::user()->name }}
                             </button>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>Perfil</a></li>
-                                <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>Configuración</a></li>
-                                <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form method="POST" action="{{ route('logout') }}">
                                         @csrf
