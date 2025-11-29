@@ -29,6 +29,10 @@ Route::middleware(['auth'])->group(function () {
     // Gestión de Estudiantes
     Route::resource('estudiantes', EstudianteController::class);
 
+    Route::resource('equipos', App\Http\Controllers\EquipoController::class);
+
+    Route::resource('prestamos', App\Http\Controllers\PrestamoController::class);
+
     // Gestión del Inventario
     Route::resource('inventario', InventarioController::class);
 

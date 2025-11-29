@@ -75,12 +75,12 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{{ route('equipos.index') }}">
                                 <i class="fas fa-laptop"></i> Inventario
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#">
+                            <a class="nav-link" href="{{ route('prestamos.index') }}">
                                 <i class="fas fa-hand-holding"></i> Préstamos
                             </a>
                         </li>
@@ -194,19 +194,19 @@
                             <div class="card-body">
                                 <div class="row g-3">
                                     <div class="col-lg-3 col-md-6">
-                                        <a href="#" class="btn btn-primary w-100 h-100 py-3">
-                                            <i class="fas fa-user-plus fa-2x mb-2"></i><br>
-                                            Registrar Estudiante
+                                        <a href="{{ route('estudiantes.create') }}" class="btn btn-primary w-100 h-100 py-3">
+                                        <i class="fas fa-user-plus fa-2x mb-2"></i><br>
+                                        Registrar Estudiante
                                         </a>
                                     </div>
                                     <div class="col-lg-3 col-md-6">
-                                        <a href="#" class="btn btn-primary w-100 h-100 py-3">
+                                        <a href="{{ route('equipos.create') }}" class="btn btn-primary w-100 h-100 py-3">
                                             <i class="fas fa-laptop fa-2x mb-2"></i><br>
                                             Agregar Equipo
                                         </a>
                                     </div>
                                     <div class="col-lg-3 col-md-6">
-                                        <a href="#" class="btn btn-primary w-100 h-100 py-3">
+                                        <a href="{{ route('prestamos.create') }}" class="btn btn-primary w-100 h-100 py-3">
                                             <i class="fas fa-hand-holding fa-2x mb-2"></i><br>
                                             Nuevo Préstamo
                                         </a>
