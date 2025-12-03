@@ -10,26 +10,38 @@ use Illuminate\Support\Facades\Auth;
 
 class PrestamoController extends Controller
 {
-    // 1. Mostrar historial de préstamos
-    public function index()
+    public function index(Request $request)
     {
-        $prestamos = Prestamo::with(['equipo', 'estudiante', 'responsable'])
-                    ->latest()
-                    ->paginate(10);
+        // Iniciar la consulta con las relaciones necesarias
+        $query = Prestamo::with(['equipo', 'estudiante', 'responsable']);
+
+        // 1. Lógica del Buscador (Search)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                // Buscar por nombre o apellido del estudiante
+                $q->whereHas('estudiante', function($subQuery) use ($search) {
+                    $subQuery->where('nombre', 'LIKE', "%$search%")
+                             ->orWhere('apellido', 'LIKE', "%$search%");
+                })
+                // O buscar por código o marca del equipo
+                ->orWhereHas('equipo', function($subQuery) use ($search) {
+                    $subQuery->where('codigo_puce', 'LIKE', "%$search%")
+                             ->orWhere('marca', 'LIKE', "%$search%");
+                });
+            });
+        }
+
+        // 2. Lógica del Filtro de Estado
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        // Obtener resultados ordenados y paginados
+        $prestamos = $query->latest()->paginate(10);
         
+        // Retornar la vista conservando los filtros en la URL (para la paginación)
         return view('prestamos.index', compact('prestamos'));
-    }
-
-    // 2. Mostrar formulario (SOLO equipos disponibles)
-    public function create()
-    {
-        // Traer solo laptops/equipos que estén DISPONIBLES
-        $equipos = Equipo::where('estado', 'disponible')->get();
-        
-        // Traer todos los estudiantes para seleccionar
-        $estudiantes = Estudiante::all(); // O Student::all()
-
-        return view('prestamos.create', compact('equipos', 'estudiantes'));
     }
 
     // 3. Guardar el préstamo y actualizar inventario
@@ -58,4 +70,27 @@ class PrestamoController extends Controller
 
         return redirect()->route('dashboard')->with('success', 'Préstamo registrado correctamente.');
     }
+
+    // 4. Procesar la devolución del equipo
+    public function devolver(Prestamo $prestamo)
+    {
+        // A. Actualizar el Préstamo
+        $prestamo->estado = 'finalizado';
+        $prestamo->fecha_devolucion_real = now(); // Fecha y hora actual automática
+        $prestamo->save();
+
+        // B. Liberar el Equipo (Volver a ponerlo disponible)
+        $equipo = $prestamo->equipo;
+        $equipo->estado = 'disponible';
+        $equipo->save();
+
+        return redirect()->route('prestamos.index')->with('success', 'Equipo devuelto y marcado como disponible correctamente.');
+    }
+
+    // 5. Mostrar la pantalla de confirmación de devolución
+    public function finalizar(Prestamo $prestamo)
+    {
+        return view('prestamos.finalizar', compact('prestamo'));
+    }
+
 }

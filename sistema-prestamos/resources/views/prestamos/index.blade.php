@@ -1,98 +1,131 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Historial de Préstamos') }}
-        </h2>
-    </x-slot>
+@extends('layouts.panel')
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+@section('titulo', 'Gestión de Préstamos')
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 bg-white border-b border-gray-200">
-                    
-                    <div class="flex justify-between mb-4">
-                        <h3 class="text-lg font-bold">Listado General</h3>
-                        <a href="{{ route('prestamos.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                            + Nuevo Préstamo
+@section('contenido')
+<div class="card shadow-sm">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 text-secondary">
+            <i class="fas fa-history me-2"></i>Historial de Préstamos
+        </h5>
+        <a href="{{ route('prestamos.create') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i> Nuevo Préstamo
+        </a>
+    </div>
+
+    <div class="card-body">
+        
+        <form action="{{ route('prestamos.index') }}" method="GET">
+            <div class="row mb-3">
+                
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
+                        <input type="text" name="search" class="form-control" 
+                               placeholder="Buscar por estudiante, código o equipo..." 
+                               value="{{ request('search') }}">
+                        <button class="btn btn-outline-secondary" type="submit">Buscar</button>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <select name="estado" class="form-select" onchange="this.form.submit()">
+                        <option value="">Todos los estados</option>
+                        <option value="activo" {{ request('estado') == 'activo' ? 'selected' : '' }}>En Curso</option>
+                        <option value="finalizado" {{ request('estado') == 'finalizado' ? 'selected' : '' }}>Devueltos</option>
+                    </select>
+                </div>
+                
+                @if(request('search') || request('estado'))
+                    <div class="col-md-2">
+                        <a href="{{ route('prestamos.index') }}" class="btn btn-outline-danger">
+                            <i class="fas fa-eraser"></i> Limpiar
                         </a>
                     </div>
+                @endif
 
-                    <div class="overflow-x-auto relative">
-                        <table class="w-full text-sm text-left text-gray-500">
-                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                                <tr>
-                                    <th class="py-3 px-6">Equipo</th>
-                                    <th class="py-3 px-6">Estudiante</th>
-                                    <th class="py-3 px-6">Fecha Préstamo</th>
-                                    <th class="py-3 px-6">Estado</th>
-                                    <th class="py-3 px-6">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($prestamos as $prestamo)
-                                    <tr class="bg-white border-b hover:bg-gray-50">
-                                        <td class="py-4 px-6">
-                                            <div class="font-bold text-gray-900">{{ $prestamo->equipo->tipo }}</div>
-                                            <div class="text-xs">{{ $prestamo->equipo->marca }} ({{ $prestamo->equipo->codigo_puce }})</div>
-                                        </td>
-                                        
-                                        <td class="py-4 px-6">
-                                            <div class="font-semibold text-gray-900">
-                                                {{ $prestamo->estudiante->nombre }} {{ $prestamo->estudiante->apellido }}
-                                            </div>
-                                            <div class="text-xs text-gray-500">{{ $prestamo->estudiante->carrera }}</div>
-                                        </td>
-
-                                        <td class="py-4 px-6">
-                                            {{ \Carbon\Carbon::parse($prestamo->fecha_prestamo)->format('d/m/Y h:i A') }}
-                                            <br>
-                                            <span class="text-xs text-gray-400">Reg: {{ $prestamo->responsable->name }}</span>
-                                        </td>
-
-                                        <td class="py-4 px-6">
-                                            @if($prestamo->estado == 'activo')
-                                                <span class="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2.5 py-0.5 rounded border border-yellow-400">
-                                                    En Curso
-                                                </span>
-                                            @elseif($prestamo->estado == 'finalizado')
-                                                <span class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded border border-green-400">
-                                                    Devuelto
-                                                </span>
-                                            @else
-                                                <span class="bg-gray-100 text-gray-800 text-xs font-semibold px-2.5 py-0.5 rounded">
-                                                    {{ $prestamo->estado }}
-                                                </span>
-                                            @endif
-                                        </td>
-
-                                        <td class="py-4 px-6">
-                                            @if($prestamo->estado == 'activo')
-                                                <button class="text-white bg-green-600 hover:bg-green-700 font-medium rounded-lg text-xs px-3 py-2 text-center">
-                                                    <i class="fas fa-undo"></i> Devolver
-                                                </button>
-                                            @else
-                                                <span class="text-gray-400 text-xs">Completado</span>
-                                            @endif
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="py-4 px-6 text-center text-gray-500">
-                                            No hay préstamos registrados.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="mt-4">
-                        {{ $prestamos->links() }}
-                    </div>
-
-                </div>
             </div>
+        </form>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Equipo</th>
+                        <th>Estudiante</th>
+                        <th>Fecha Préstamo</th>
+                        <th class="text-center">Estado</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($prestamos as $prestamo)
+                        <tr>
+                            <td>
+                                <div class="fw-bold text-primary">
+                                    <i class="fas fa-laptop me-1"></i> {{ $prestamo->equipo->tipo }}
+                                </div>
+                                <div class="small text-muted">
+                                    {{ $prestamo->equipo->marca }} - {{ $prestamo->equipo->modelo }} 
+                                    <span class="badge bg-light text-dark border">{{ $prestamo->equipo->codigo_puce }}</span>
+                                </div>
+                            </td>
+                            
+                            <td>
+                                <div class="fw-bold">{{ $prestamo->estudiante->nombre }} {{ $prestamo->estudiante->apellido }}</div>
+                                <div class="small text-muted">{{ $prestamo->estudiante->carrera }}</div>
+                            </td>
+
+                            <td>
+                                <div><i class="far fa-calendar-alt me-1 text-secondary"></i> {{ \Carbon\Carbon::parse($prestamo->fecha_prestamo)->format('d/m/Y') }}</div>
+                                <div class="small text-muted"><i class="far fa-clock me-1"></i> {{ \Carbon\Carbon::parse($prestamo->fecha_prestamo)->format('h:i A') }}</div>
+                                <div class="small text-muted fst-italic mt-1" style="font-size: 0.8em;">
+                                    Reg: {{ $prestamo->responsable->name }}
+                                </div>
+                            </td>
+
+                            <td class="text-center">
+                                @if($prestamo->estado == 'activo')
+                                    <span class="badge bg-warning text-dark border border-warning rounded-pill px-3">
+                                        <i class="fas fa-spinner fa-spin me-1"></i> En Curso
+                                    </span>
+                                @elseif($prestamo->estado == 'finalizado')
+                                    <span class="badge bg-success rounded-pill px-3">
+                                        <i class="fas fa-check me-1"></i> Devuelto
+                                    </span>
+                                @else
+                                    <span class="badge bg-secondary rounded-pill px-3">{{ $prestamo->estado }}</span>
+                                @endif
+                            </td>
+
+                            <td class="text-end">
+                                @if($prestamo->estado == 'activo')
+                                    <a href="{{ route('prestamos.finalizar', $prestamo) }}" class="btn btn-sm btn-success" title="Registrar Devolución">
+                                        <i class="fas fa-undo me-1"></i> Devolver
+                                    </a>
+                                @else
+                                    <button class="btn btn-sm btn-outline-secondary" disabled>
+                                        <i class="fas fa-check-double"></i>
+                                    </button>
+                                @endif
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="text-center py-5">
+                                <div class="text-muted mb-2"><i class="fas fa-clipboard-list fa-3x"></i></div>
+                                <h6 class="text-muted">No hay historial de préstamos.</h6>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-end mt-3">
+            {{ $prestamos->links('pagination::bootstrap-5') }}
         </div>
     </div>
-</x-app-layout>
+</div>
+@endsection

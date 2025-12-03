@@ -1,71 +1,87 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Registrar Nuevo Equipo') }}
-        </h2>
-    </x-slot>
+@extends('layouts.panel')
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 bg-white border-b border-gray-200">
-                    
+@section('titulo', 'Registrar Equipo')
+
+@section('contenido')
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 text-secondary">
+                        <i class="fas fa-laptop-medical me-2"></i>Datos del Nuevo Equipo
+                    </h5>
+                </div>
+                
+                <div class="card-body p-4">
                     <form action="{{ route('equipos.store') }}" method="POST">
                         @csrf 
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Código Activo / Serie</label>
-                                <input type="text" name="codigo_puce" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required placeholder="Ej: LAP-001">
+                        <div class="row g-4">
+                            <div class="col-12">
+                                <h6 class="text-primary border-bottom pb-2 mb-3">Identificación</h6>
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Tipo de Equipo</label>
-                                <select name="tipo" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Código Activo / Serie <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-barcode"></i></span>
+                                    <input type="text" name="codigo_puce" class="form-control" placeholder="Ej: LAP-001" required>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Tipo de Equipo <span class="text-danger">*</span></label>
+                                <select name="tipo" class="form-select" required>
                                     <option value="Laptop">Laptop</option>
                                     <option value="Proyector">Proyector</option>
                                     <option value="Tablet">Tablet</option>
                                     <option value="Accesorio">Accesorio (Cargador, Mouse...)</option>
+                                    <option value="Otro">Otro</option>
                                 </select>
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Marca</label>
-                                <input type="text" name="marca" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                            <div class="col-12 mt-4">
+                                <h6 class="text-primary border-bottom pb-2 mb-3">Detalles Técnicos</h6>
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Modelo</label>
-                                <input type="text" name="modelo" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Marca <span class="text-danger">*</span></label>
+                                <input type="text" name="marca" class="form-control" placeholder="Ej: HP, Dell, Epson" required>
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Estado Inicial</label>
-                                <select name="estado" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                    <option value="disponible">Disponible</option>
-                                    <option value="mantenimiento">En Mantenimiento</option>
-                                    <option value="baja">De Baja</option>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Modelo <span class="text-danger">*</span></label>
+                                <input type="text" name="modelo" class="form-control" placeholder="Ej: Pavilion 15" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Estado Inicial</label>
+                                <select name="estado" class="form-select">
+                                    <option value="disponible">🟢 Disponible</option>
+                                    <option value="mantenimiento">🔵 En Mantenimiento</option>
+                                    <option value="baja">🔴 De Baja (Dañado)</option>
                                 </select>
                             </div>
 
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700">Características (Procesador, RAM, Detalles)</label>
-                                <textarea name="caracteristicas" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Características (Procesador, RAM, Detalles)</label>
+                                <textarea name="caracteristicas" rows="3" class="form-control" placeholder="Ej: Core i7, 16GB RAM, SSD 512GB"></textarea>
                             </div>
-
                         </div>
 
-                        <div class="mt-6 flex justify-end">
-                            <a href="{{ route('dashboard') }}" class="text-gray-500 mr-4 hover:text-gray-700 pt-2">Cancelar</a>
-                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                Guardar Equipo
+                        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <a href="{{ route('equipos.index') }}" class="btn btn-secondary px-4">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary px-4">
+                                <i class="fas fa-save me-2"></i>Guardar Equipo
                             </button>
                         </div>
                     </form>
-
                 </div>
             </div>
         </div>
     </div>
-</x-app-layout>
+</div>
+@endsection

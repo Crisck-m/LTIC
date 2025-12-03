@@ -1,82 +1,123 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Inventario de Equipos') }}
-        </h2>
-    </x-slot>
+@extends('layouts.panel')
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            
-            @if (session('success'))
-                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
-                    <span class="block sm:inline">{{ session('success') }}</span>
+@section('titulo', 'Inventario de Equipos')
+
+@section('contenido')
+<div class="card shadow-sm">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 text-secondary">
+            <i class="fas fa-laptop me-2"></i>Listado de Equipos
+        </h5>
+        <a href="{{ route('equipos.create') }}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i> Nuevo Equipo
+        </a>
+    </div>
+
+    <div class="card-body">
+        
+        <form action="{{ route('equipos.index') }}" method="GET">
+            <div class="row mb-3">
+                
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
+                        <input type="text" name="search" class="form-control" 
+                               placeholder="Buscar por código, marca..." 
+                               value="{{ request('search') }}">
+                    </div>
                 </div>
-            @endif
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 bg-white border-b border-gray-200">
-                    
-                    <div class="flex justify-between mb-4">
-                        <h3 class="text-lg font-bold">Listado de Equipos</h3>
-                        <a href="{{ route('equipos.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                            + Agregar Nuevo Equipo
+                <div class="col-md-3">
+                    <select name="estado" class="form-select" onchange="this.form.submit()">
+                        <option value="">Todos los estados</option>
+                        <option value="disponible" {{ request('estado') == 'disponible' ? 'selected' : '' }}>🟢 Disponible</option>
+                        <option value="prestado" {{ request('estado') == 'prestado' ? 'selected' : '' }}>🟡 Prestado</option>
+                        <option value="mantenimiento" {{ request('estado') == 'mantenimiento' ? 'selected' : '' }}>🔵 Mantenimiento</option>
+                        <option value="baja" {{ request('estado') == 'baja' ? 'selected' : '' }}>🔴 De Baja</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3 d-flex gap-2">
+                    <button class="btn btn-outline-primary" type="submit">
+                        <i class="fas fa-filter"></i> Filtrar
+                    </button>
+
+                    @if(request('search') || request('estado'))
+                        <a href="{{ route('equipos.index') }}" class="btn btn-outline-danger">
+                            <i class="fas fa-times"></i> Limpiar
                         </a>
-                    </div>
-
-                    <div class="overflow-x-auto relative">
-                        <table class="w-full text-sm text-left text-gray-500">
-                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
-                                <tr>
-                                    <th scope="col" class="py-3 px-6">Código</th>
-                                    <th scope="col" class="py-3 px-6">Tipo</th>
-                                    <th scope="col" class="py-3 px-6">Marca / Modelo</th>
-                                    <th scope="col" class="py-3 px-6">Estado</th>
-                                    <th scope="col" class="py-3 px-6">Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($equipos as $equipo)
-                                    <tr class="bg-white border-b">
-                                        <td class="py-4 px-6 font-medium text-gray-900 whitespace-nowrap">
-                                            {{ $equipo->codigo_puce }}
-                                        </td>
-                                        <td class="py-4 px-6">
-                                            {{ $equipo->tipo }}
-                                        </td>
-                                        <td class="py-4 px-6">
-                                            {{ $equipo->marca }} - {{ $equipo->modelo }}
-                                        </td>
-                                        <td class="py-4 px-6">
-                                            @if($equipo->estado == 'disponible')
-                                                <span class="bg-green-100 text-green-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded">Disponible</span>
-                                            @elseif($equipo->estado == 'prestado')
-                                                <span class="bg-yellow-100 text-yellow-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded">Prestado</span>
-                                            @else
-                                                <span class="bg-red-100 text-red-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded">{{ ucfirst($equipo->estado) }}</span>
-                                            @endif
-                                        </td>
-                                        <td class="py-4 px-6">
-                                            <a href="#" class="font-medium text-blue-600 hover:underline">Editar</a>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="py-4 px-6 text-center text-gray-500">
-                                            No hay equipos registrados aún.
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="mt-4">
-                        {{ $equipos->links() }}
-                    </div>
-
+                    @endif
                 </div>
+
             </div>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table table-hover table-striped align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Código</th>
+                        <th>Tipo</th>
+                        <th>Marca / Modelo</th>
+                        <th>Características</th>
+                        <th class="text-center">Estado</th>
+                        <th class="text-end">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($equipos as $equipo)
+                        <tr>
+                            <td class="fw-bold text-primary">{{ $equipo->codigo_puce }}</td>
+                            <td>
+                                @if($equipo->tipo == 'Laptop')
+                                    <i class="fas fa-laptop me-1 text-secondary"></i>
+                                @elseif($equipo->tipo == 'Proyector')
+                                    <i class="fas fa-video me-1 text-secondary"></i>
+                                @else
+                                    <i class="fas fa-box me-1 text-secondary"></i>
+                                @endif
+                                {{ $equipo->tipo }}
+                            </td>
+                            <td>{{ $equipo->marca }} - {{ $equipo->modelo }}</td>
+                            <td class="text-muted small text-truncate" style="max-width: 200px;">
+                                {{ $equipo->caracteristicas ?? 'Sin detalles' }}
+                            </td>
+                            <td class="text-center">
+                                @if($equipo->estado == 'disponible')
+                                    <span class="badge bg-success rounded-pill px-3">Disponible</span>
+                                @elseif($equipo->estado == 'prestado')
+                                    <span class="badge bg-warning text-dark rounded-pill px-3">Prestado</span>
+                                @elseif($equipo->estado == 'mantenimiento')
+                                    <span class="badge bg-info text-dark rounded-pill px-3">Mantenimiento</span>
+                                @else
+                                    <span class="badge bg-danger rounded-pill px-3">De Baja</span>
+                                @endif
+                            </td>
+                            <td class="text-end">
+                                <a href="{{ route('equipos.edit', $equipo) }}" class="btn btn-sm btn-outline-warning" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                
+                                <button class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="return confirm('¿Estás seguro de eliminar este equipo?')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div class="text-muted mb-2"><i class="fas fa-box-open fa-3x"></i></div>
+                                <h6 class="text-muted">No se encontraron equipos con ese criterio.</h6>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-end mt-3">
+            {{ $equipos->links('pagination::bootstrap-5') }}
         </div>
     </div>
-</x-app-layout>
+</div>
+@endsection

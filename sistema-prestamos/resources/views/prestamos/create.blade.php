@@ -1,70 +1,98 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Registrar Nuevo Préstamo') }}
-        </h2>
-    </x-slot>
+@extends('layouts.panel')
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 bg-white border-b border-gray-200">
-                    
+@section('titulo', 'Nuevo Préstamo')
+
+@section('contenido')
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white py-3">
+                    <h5 class="mb-0 text-secondary">
+                        <i class="fas fa-hand-holding me-2"></i>Registrar Salida de Equipo
+                    </h5>
+                </div>
+                
+                <div class="card-body p-4">
                     <form action="{{ route('prestamos.store') }}" method="POST">
                         @csrf 
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Estudiante que solicita</label>
-                                <select name="estudiante_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                                    <option value="" disabled selected>Seleccione un estudiante...</option>
-                                    @foreach($estudiantes as $estudiante)
-                                        <option value="{{ $estudiante->id }}">
-                                            {{ $estudiante->nombre }} {{ $estudiante->apellido }} - {{ $estudiante->carrera }}
-                                        </option>
-                                    @endforeach
-                                </select>
+                        <div class="row g-4">
+                            <div class="col-12">
+                                <h6 class="text-primary border-bottom pb-2 mb-3">Datos del Préstamo</h6>
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Equipo a Prestar (Disponibles)</label>
-                                <select name="equipo_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
-                                    <option value="" disabled selected>Seleccione un equipo...</option>
-                                    @foreach($equipos as $equipo)
-                                        <option value="{{ $equipo->id }}">
-                                            {{ $equipo->tipo }} - {{ $equipo->marca }} ({{ $equipo->codigo_puce }})
-                                        </option>
-                                    @endforeach
-                                </select>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Estudiante Solicitante <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-user-graduate"></i></span>
+                                    <select name="estudiante_id" class="form-select" required>
+                                        <option value="" disabled selected>Seleccione un estudiante...</option>
+                                        @foreach($estudiantes as $estudiante)
+                                            <option value="{{ $estudiante->id }}">
+                                                {{ $estudiante->nombre }} {{ $estudiante->apellido }} ({{ $estudiante->carrera }})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Equipo a Entregar <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-laptop"></i></span>
+                                    <select name="equipo_id" class="form-select" required>
+                                        <option value="" disabled selected>Seleccione un equipo disponible...</option>
+                                        @foreach($equipos as $equipo)
+                                            <option value="{{ $equipo->id }}">
+                                                {{ $equipo->tipo }} - {{ $equipo->marca }} [Serie: {{ $equipo->codigo_puce }}]
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
                                 @if($equipos->isEmpty())
-                                    <p class="text-red-500 text-xs mt-1">No hay equipos disponibles en este momento.</p>
+                                    <div class="form-text text-danger mt-1">
+                                        <i class="fas fa-exclamation-circle"></i> No hay equipos disponibles en el inventario.
+                                    </div>
+                                @else
+                                    <div class="form-text text-success mt-1">
+                                        <i class="fas fa-check-circle"></i> Solo se muestran equipos con estado "Disponible".
+                                    </div>
                                 @endif
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Responsable del registro</label>
-                                <input type="text" value="{{ Auth::user()->name }}" disabled class="mt-1 block w-full bg-gray-100 rounded-md border-gray-300 shadow-sm">
-                                <p class="text-xs text-gray-500">Se registrará tu usuario automáticamente.</p>
+                            <div class="col-12 mt-3">
+                                <h6 class="text-primary border-bottom pb-2 mb-3">Detalles y Observaciones</h6>
                             </div>
 
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">Observaciones de entrega</label>
-                                <textarea name="observaciones" rows="1" placeholder="Ej: Se entrega con cargador y mouse..." class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Registrado por</label>
+                                <input type="text" class="form-control bg-light" value="{{ Auth::user()->name }}" readonly>
                             </div>
 
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Fecha y Hora</label>
+                                <input type="text" class="form-control bg-light" value="{{ now()->format('d/m/Y h:i A') }}" readonly>
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label fw-bold">Estado de entrega / Observaciones</label>
+                                <textarea name="observaciones" rows="2" class="form-control" placeholder="Ej: Se entrega con cargador original, sin mouse..."></textarea>
+                            </div>
                         </div>
 
-                        <div class="mt-6 flex justify-end">
-                            <a href="{{ route('dashboard') }}" class="text-gray-500 mr-4 hover:text-gray-700 pt-2">Cancelar</a>
-                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                Confirmar Préstamo
+                        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <a href="{{ route('prestamos.index') }}" class="btn btn-secondary px-4">
+                                <i class="fas fa-times me-2"></i>Cancelar
+                            </a>
+                            <button type="submit" class="btn btn-primary px-4" {{ $equipos->isEmpty() ? 'disabled' : '' }}>
+                                <i class="fas fa-save me-2"></i>Confirmar Préstamo
                             </button>
                         </div>
                     </form>
-
                 </div>
             </div>
         </div>
     </div>
-</x-app-layout>
+</div>
+@endsection
