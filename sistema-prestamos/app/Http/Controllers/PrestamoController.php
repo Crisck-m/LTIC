@@ -13,7 +13,7 @@ class PrestamoController extends Controller
     public function index(Request $request)
     {
         // Iniciar la consulta con las relaciones necesarias
-        $query = Prestamo::with(['equipo', 'estudiante', 'responsable']);
+        $query = Prestamo::with(['equipo', 'estudiante', 'pasante']);
 
         // 1. Lógica del Buscador (Search)
         if ($request->filled('search')) {
@@ -45,25 +45,41 @@ class PrestamoController extends Controller
     }
 
     // 3. Guardar el préstamo y actualizar inventario
+    // En la función create()
+    public function create()
+    {
+        $equipos = Equipo::where('estado', 'disponible')->get();
+        
+        // Estudiantes normales (para prestarles)
+        $estudiantes = Estudiante::all(); 
+
+        // Pasantes (para seleccionar quién atiende)
+        $pasantes = Estudiante::where('tipo', 'pasante')->get(); // Asegúrate que en tu BD el rol sea 'pasante'
+
+        return view('prestamos.create', compact('equipos', 'estudiantes', 'pasantes'));
+    }
+
+    // En la función store()
     public function store(Request $request)
     {
         $request->validate([
-            'estudiante_id' => 'required|exists:estudiantes,id', // O students,id
+            'estudiante_id' => 'required|exists:estudiantes,id',
             'equipo_id'     => 'required|exists:equipos,id',
+            'pasante_id'    => 'required|exists:estudiantes,id', // Validar que se elija pasante
             'observaciones' => 'nullable|string'
         ]);
 
-        // A. Crear el Préstamo
         Prestamo::create([
             'equipo_id'     => $request->equipo_id,
             'estudiante_id' => $request->estudiante_id,
-            'user_id'       => Auth::id(), // El usuario logueado es el responsable
+            'pasante_id'    => $request->pasante_id, // Guardamos al pasante seleccionado
+            'user_id'       => Auth::id(), // Guardamos también la cuenta admin por auditoría técnica
             'fecha_prestamo'=> now(),
             'estado'        => 'activo',
             'observaciones_prestamo' => $request->observaciones
         ]);
 
-        // B. CAMBIAR ESTADO DEL EQUIPO (Para que nadie más lo tome)
+        // Cambiar estado del equipo
         $equipo = Equipo::find($request->equipo_id);
         $equipo->estado = 'prestado';
         $equipo->save();

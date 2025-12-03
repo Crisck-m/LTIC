@@ -22,9 +22,20 @@
                     <div class="input-group">
                         <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
                         <input type="text" name="search" class="form-control" 
-                               placeholder="Buscar por código, marca..." 
+                               placeholder="Buscar serie, marca..." 
                                value="{{ request('search') }}">
                     </div>
+                </div>
+
+                <div class="col-md-3">
+                    <select name="tipo" class="form-select" onchange="this.form.submit()">
+                        <option value="">Todos los tipos</option>
+                        <option value="Laptop" {{ request('tipo') == 'Laptop' ? 'selected' : '' }}>💻 Laptops</option>
+                        <option value="Proyector" {{ request('tipo') == 'Proyector' ? 'selected' : '' }}>📽️ Proyectores</option>
+                        <option value="Tablet" {{ request('tipo') == 'Tablet' ? 'selected' : '' }}>📱 Tablets</option>
+                        <option value="Accesorio" {{ request('tipo') == 'Accesorio' ? 'selected' : '' }}>🔌 Accesorios</option>
+                        <option value="Otro" {{ request('tipo') == 'Otro' ? 'selected' : '' }}>📦 Otros</option>
+                    </select>
                 </div>
 
                 <div class="col-md-3">
@@ -37,21 +48,20 @@
                     </select>
                 </div>
 
-                <div class="col-md-3 d-flex gap-2">
-                    <button class="btn btn-outline-primary" type="submit">
-                        <i class="fas fa-filter"></i> Filtrar
+                <div class="col-md-2 d-flex gap-1">
+                    <button class="btn btn-outline-primary w-100" type="submit">
+                        <i class="fas fa-filter"></i>
                     </button>
 
-                    @if(request('search') || request('estado'))
-                        <a href="{{ route('equipos.index') }}" class="btn btn-outline-danger">
-                            <i class="fas fa-times"></i> Limpiar
+                    @if(request('search') || request('estado') || request('tipo'))
+                        <a href="{{ route('equipos.index') }}" class="btn btn-outline-danger w-100" title="Limpiar filtros">
+                            <i class="fas fa-times"></i>
                         </a>
                     @endif
                 </div>
 
             </div>
         </form>
-
         <div class="table-responsive">
             <table class="table table-hover table-striped align-middle">
                 <thead class="table-dark">

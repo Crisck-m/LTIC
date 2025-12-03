@@ -62,17 +62,33 @@
                             </div>
 
                             <div class="col-12 mt-3">
-                                <h6 class="text-primary border-bottom pb-2 mb-3">Detalles y Observaciones</h6>
+                                <h6 class="text-primary border-bottom pb-2 mb-3">Detalles y Responsables</h6>
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label fw-bold">Registrado por</label>
-                                <input type="text" class="form-control bg-light" value="{{ Auth::user()->name }}" readonly>
+                                <label class="form-label fw-bold text-info">Atendido por (Pasante) <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-info bg-opacity-10 text-dark"><i class="fas fa-user-tie"></i></span>
+                                    <select name="pasante_id" class="form-select border-info" required>
+                                        <option value="" disabled selected>Seleccione quién atiende...</option>
+                                        @foreach($pasantes as $pasante)
+                                            <option value="{{ $pasante->id }}">
+                                                {{ $pasante->nombre }} {{ $pasante->apellido }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="form-text text-muted small">
+                                    Responsable de entregar el equipo.
+                                </div>
                             </div>
 
                             <div class="col-md-4">
                                 <label class="form-label fw-bold">Fecha y Hora</label>
-                                <input type="text" class="form-control bg-light" value="{{ now()->format('d/m/Y h:i A') }}" readonly>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-clock"></i></span>
+                                    <input type="text" class="form-control bg-light" value="{{ now()->format('d/m/Y h:i A') }}" readonly>
+                                </div>
                             </div>
 
                             <div class="col-12">

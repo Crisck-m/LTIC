@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 
 class EquipoController extends Controller
 {
-    // 1. Mostrar la lista de equipos (Inventario)
     public function index(Request $request)
     {
         $query = Equipo::query();
@@ -21,14 +20,18 @@ class EquipoController extends Controller
             });
         }
 
-        // 2. Filtro de Estado (El nuevo botón)
+        // 2. Filtro de Estado
         if ($request->filled('estado')) {
             $query->where('estado', $request->estado);
         }
 
+        // 3. NUEVO: Filtro de Tipo
+        if ($request->filled('tipo')) {
+            $query->where('tipo', $request->tipo);
+        }
+
         $equipos = $query->latest()->paginate(10);
         
-        // Retornamos la vista (compact envía los datos)
         return view('equipos.index', compact('equipos'));
     }
     // 2. Mostrar el formulario de crear

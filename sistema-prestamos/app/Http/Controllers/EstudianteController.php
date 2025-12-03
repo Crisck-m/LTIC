@@ -10,18 +10,25 @@ class EstudianteController extends Controller
 {
     public function index(Request $request)
     {
-        $search = $request->get('search');
-        
-        $estudiantes = Estudiante::when($search, function($query, $search) {
-            return $query->buscar($search);
-        })->latest()->paginate(10);
+        $query = Estudiante::query();
 
-        return view('estudiantes.index', compact('estudiantes', 'search'));
-    }
+        // 1. Filtro de Búsqueda (Nombre, Apellido o Matrícula)
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->where('nombre', 'LIKE', "%{$request->search}%")
+                  ->orWhere('apellido', 'LIKE', "%{$request->search}%")
+                  ->orWhere('matricula', 'LIKE', "%{$request->search}%");
+            });
+        }
 
-    public function create()
-    {
-        return view('estudiantes.create');
+        // 2. Filtro por Rol (Tipo)
+        if ($request->filled('tipo')) {
+            $query->where('tipo', $request->tipo);
+        }
+
+        $estudiantes = $query->latest()->paginate(10);
+
+        return view('estudiantes.index', compact('estudiantes'));
     }
 
     public function store(Request $request)

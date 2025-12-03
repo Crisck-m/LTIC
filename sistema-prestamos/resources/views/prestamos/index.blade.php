@@ -46,15 +46,14 @@
 
             </div>
         </form>
-        </div>
 
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead class="table-dark">
                     <tr>
                         <th>Equipo</th>
-                        <th>Estudiante</th>
-                        <th>Fecha Préstamo</th>
+                        <th>Estudiante (Receptor)</th>
+                        <th>Fecha y Atención</th>
                         <th class="text-center">Estado</th>
                         <th class="text-end">Acciones</th>
                     </tr>
@@ -80,8 +79,9 @@
                             <td>
                                 <div><i class="far fa-calendar-alt me-1 text-secondary"></i> {{ \Carbon\Carbon::parse($prestamo->fecha_prestamo)->format('d/m/Y') }}</div>
                                 <div class="small text-muted"><i class="far fa-clock me-1"></i> {{ \Carbon\Carbon::parse($prestamo->fecha_prestamo)->format('h:i A') }}</div>
-                                <div class="small text-muted fst-italic mt-1" style="font-size: 0.8em;">
-                                    Reg: {{ $prestamo->responsable->name }}
+                                
+                                <div class="small text-info fst-italic mt-1" style="font-size: 0.85em;">
+                                    <i class="fas fa-user-tie me-1"></i> Atendió: {{ $prestamo->pasante->nombre ?? 'Admin' }} {{ $prestamo->pasante->apellido ?? '' }}
                                 </div>
                             </td>
 

@@ -9,23 +9,23 @@ class Prestamo extends Model
 {
     use HasFactory;
 
-    protected $guarded = []; // Permite guardar todo
+    protected $guarded = [];
 
-    // Relación: Un préstamo es de un equipo
+    // Relación: Equipo prestado
     public function equipo()
     {
         return $this->belongsTo(Equipo::class);
     }
 
-    // Relación: Un préstamo es para un estudiante
+    // Relación: Estudiante que RECIBE el equipo
     public function estudiante()
     {
-        return $this->belongsTo(Estudiante::class); 
+        return $this->belongsTo(Estudiante::class, 'estudiante_id'); 
     }
 
-    // Relación: Un préstamo lo hizo un usuario (admin/pasante)
-    public function responsable()
+    // Relación: Pasante que ATENDIÓ (Registró)
+    public function pasante()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(Estudiante::class, 'pasante_id');
     }
 }
