@@ -16,14 +16,19 @@
                 <div class="card-body p-4">
                     <form action="{{ route('estudiantes.update', $estudiante) }}" method="POST">
                         @csrf 
-                        @method('PUT') <div class="row g-4">
+                        @method('PUT') 
+
+                        <div class="row g-4">
                             <div class="col-12">
                                 <h6 class="text-primary border-bottom pb-2 mb-3">Datos Personales</h6>
                             </div>
 
                             <div class="col-md-6">
-                                <label class="form-label fw-bold">Matrícula / Cédula</label>
-                                <input type="text" name="matricula" class="form-control" value="{{ $estudiante->matricula }}" required>
+                                <label class="form-label fw-bold">Cédula de Identidad</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-id-card"></i></span>
+                                    <input type="text" name="matricula" class="form-control" value="{{ $estudiante->matricula }}" placeholder="Ej: 1712345678" maxlength="10" required>
+                                </div>
                             </div>
 
                             <div class="col-md-6">
@@ -50,12 +55,18 @@
 
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Correo Institucional</label>
-                                <input type="email" name="email" class="form-control" value="{{ $estudiante->email }}" required>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-envelope"></i></span>
+                                    <input type="email" name="email" class="form-control" value="{{ $estudiante->email }}" required>
+                                </div>
                             </div>
 
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Teléfono</label>
-                                <input type="text" name="telefono" class="form-control" value="{{ $estudiante->telefono }}">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-phone"></i></span>
+                                    <input type="text" name="telefono" class="form-control" value="{{ $estudiante->telefono }}">
+                                </div>
                             </div>
 
                             <div class="col-md-12">

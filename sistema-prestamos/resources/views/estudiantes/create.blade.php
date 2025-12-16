@@ -23,10 +23,10 @@
                             </div>
 
                             <div class="col-md-6">
-                                <label for="matricula" class="form-label fw-bold">Matrícula / Cédula <span class="text-danger">*</span></label>
+                                <label for="matricula" class="form-label fw-bold">Cédula de Identidad <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light"><i class="fas fa-id-card"></i></span>
-                                    <input type="text" name="matricula" id="matricula" class="form-control" placeholder="Ej: 20240001" required>
+                                    <input type="text" name="matricula" id="matricula" class="form-control" placeholder="Ej: 1712345678" maxlength="10" required>
                                 </div>
                             </div>
 
