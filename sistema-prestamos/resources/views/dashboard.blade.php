@@ -12,7 +12,7 @@
                             <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                                 Estudiantes Registrados</div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ \App\Models\Estudiante::count() }}
+                                {{ $stats['total_estudiantes'] }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -31,7 +31,7 @@
                             <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
                                 Equipos Disponibles</div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ \App\Models\Equipo::where('estado', 'disponible')->count() }}
+                                {{ $stats['equipos_disponibles'] }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -50,7 +50,7 @@
                             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
                                 Préstamos Activos</div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ \App\Models\Prestamo::where('estado', 'activo')->count() }}
+                                {{ $stats['prestamos_activos'] }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -69,7 +69,7 @@
                             <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
                                 Pendientes Devolución</div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ \App\Models\Prestamo::where('estado', 'activo')->count() }}
+                                {{ $stats['pendientes_devolucion'] }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -131,7 +131,7 @@
                 </div>
                 <div class="card-body">
                     <div class="list-group list-group-flush">
-                        @foreach(\App\Models\Prestamo::with(['estudiante','equipo'])->latest()->take(3)->get() as $p)
+                        @foreach($stats['ultimos_movimientos'] as $p)
                             <div class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
                                     @if($p->estado == 'activo')
@@ -146,7 +146,7 @@
                             </div>
                         @endforeach
                         
-                        @if(\App\Models\Prestamo::count() == 0)
+                        @if($stats['ultimos_movimientos']->isEmpty())
                             <p class="text-center text-muted my-3">No hay actividad reciente.</p>
                         @endif
                     </div>

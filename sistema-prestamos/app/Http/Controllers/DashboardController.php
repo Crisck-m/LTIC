@@ -2,21 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\Controller;
+use App\Services\DashboardService;
 
 class DashboardController extends Controller
 {
-    public function index()
+    protected $dashboardService;
+
+    public function __construct(DashboardService $dashboardService)
     {
-        return view('dashboard');
+        $this->dashboardService = $dashboardService;
     }
 
-    public function profile()
+    public function index()
     {
-        return view('profile', [
-            'user' => Auth::user()
-        ]);
+        $stats = $this->dashboardService->obtenerEstadisticas();
+
+        // Pasamos la variable $stats a la vista
+        return view('dashboard', compact('stats'));
     }
 }
