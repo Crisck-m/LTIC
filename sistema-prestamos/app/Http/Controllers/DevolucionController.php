@@ -2,19 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Prestamo;
+use App\Services\PrestamoService;
 use Illuminate\Http\Request;
 
 class DevolucionController extends Controller
 {
+    protected $prestamoService;
+
+    public function __construct(PrestamoService $prestamoService)
+    {
+        $this->prestamoService = $prestamoService;
+    }
+
     public function index()
     {
-        // Traer SOLO los préstamos que están "En Curso" (activos)
-        // Ordenados por fecha: Los más antiguos primero (urgentes)
-        $pendientes = Prestamo::with(['equipo', 'estudiante'])
-                        ->where('estado', 'activo')
-                        ->orderBy('fecha_prestamo', 'asc')
-                        ->paginate(10);
+        // Reutilizamos la lógica del servicio
+        $pendientes = $this->prestamoService->obtenerPendientes();
 
         return view('devoluciones.index', compact('pendientes'));
     }

@@ -2,111 +2,78 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Prestamo;
 use App\Models\Equipo;
 use App\Models\Estudiante;
+use App\Models\Prestamo;
+use App\Services\PrestamoService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class PrestamoController extends Controller
 {
+    protected $prestamoService;
+
+    public function __construct(PrestamoService $prestamoService)
+    {
+        $this->prestamoService = $prestamoService;
+    }
+
+    // Mostrar historial
     public function index(Request $request)
     {
-        // Iniciar la consulta con las relaciones necesarias
-        $query = Prestamo::with(['equipo', 'estudiante', 'pasante']);
+        $prestamos = $this->prestamoService->listarPrestamos(
+            $request->search,
+            $request->estado
+        );
 
-        // 1. Lógica del Buscador (Search)
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                // Buscar por nombre o apellido del estudiante
-                $q->whereHas('estudiante', function($subQuery) use ($search) {
-                    $subQuery->where('nombre', 'LIKE', "%$search%")
-                             ->orWhere('apellido', 'LIKE', "%$search%");
-                })
-                // O buscar por código o marca del equipo
-                ->orWhereHas('equipo', function($subQuery) use ($search) {
-                    $subQuery->where('codigo_puce', 'LIKE', "%$search%")
-                             ->orWhere('marca', 'LIKE', "%$search%");
-                });
-            });
-        }
-
-        // 2. Lógica del Filtro de Estado
-        if ($request->filled('estado')) {
-            $query->where('estado', $request->estado);
-        }
-
-        // Obtener resultados ordenados y paginados
-        $prestamos = $query->latest()->paginate(10);
-        
-        // Retornar la vista conservando los filtros en la URL (para la paginación)
         return view('prestamos.index', compact('prestamos'));
     }
 
-    // 3. Guardar el préstamo y actualizar inventario
-    // En la función create()
+    // Mostrar formulario de nuevo préstamo
     public function create()
     {
+        // Esto es solo cargar datos para los select, no necesita servicio complejo
         $equipos = Equipo::where('estado', 'disponible')->get();
-        
-        // Estudiantes normales (para prestarles)
-        $estudiantes = Estudiante::all(); 
-
-        // Pasantes (para seleccionar quién atiende)
-        $pasantes = Estudiante::where('tipo', 'pasante')->get(); // Asegúrate que en tu BD el rol sea 'pasante'
+        $estudiantes = Estudiante::all();
+        $pasantes = Estudiante::where('tipo', 'pasante')->get();
 
         return view('prestamos.create', compact('equipos', 'estudiantes', 'pasantes'));
     }
 
-    // En la función store()
+    // Guardar el nuevo préstamo
     public function store(Request $request)
     {
-        $request->validate([
+        $datos = $request->validate([
             'estudiante_id' => 'required|exists:estudiantes,id',
             'equipo_id'     => 'required|exists:equipos,id',
-            'pasante_id'    => 'required|exists:estudiantes,id', // Validar que se elija pasante
+            'pasante_id'    => 'required|exists:estudiantes,id',
             'observaciones' => 'nullable|string'
         ]);
 
-        Prestamo::create([
-            'equipo_id'     => $request->equipo_id,
-            'estudiante_id' => $request->estudiante_id,
-            'pasante_id'    => $request->pasante_id, // Guardamos al pasante seleccionado
-            'user_id'       => Auth::id(), // Guardamos también la cuenta admin por auditoría técnica
-            'fecha_prestamo'=> now(),
-            'estado'        => 'activo',
-            'observaciones_prestamo' => $request->observaciones
-        ]);
+        $this->prestamoService->registrarSalida($datos);
 
-        // Cambiar estado del equipo
-        $equipo = Equipo::find($request->equipo_id);
-        $equipo->estado = 'prestado';
-        $equipo->save();
-
-        return redirect()->route('dashboard')->with('success', 'Préstamo registrado correctamente.');
+        return redirect()->route('dashboard') // O a prestamos.index si prefieres
+            ->with('success', 'Préstamo registrado correctamente.');
     }
 
-    // 4. Procesar la devolución del equipo
-    public function devolver(Prestamo $prestamo)
-    {
-        // A. Actualizar el Préstamo
-        $prestamo->estado = 'finalizado';
-        $prestamo->fecha_devolucion_real = now(); // Fecha y hora actual automática
-        $prestamo->save();
-
-        // B. Liberar el Equipo (Volver a ponerlo disponible)
-        $equipo = $prestamo->equipo;
-        $equipo->estado = 'disponible';
-        $equipo->save();
-
-        return redirect()->route('prestamos.index')->with('success', 'Equipo devuelto y marcado como disponible correctamente.');
-    }
-
-    // 5. Mostrar la pantalla de confirmación de devolución
+    // Mostrar formulario de confirmación de devolución
     public function finalizar(Prestamo $prestamo)
     {
         return view('prestamos.finalizar', compact('prestamo'));
     }
 
+    // Procesar la devolución
+    public function devolver(Request $request, Prestamo $prestamo)
+    {
+        $request->validate([
+            'observaciones' => 'nullable|string'
+        ]);
+
+        $this->prestamoService->registrarDevolucion(
+            $prestamo, 
+            $request->observaciones
+        );
+
+        return redirect()->route('prestamos.index')
+            ->with('success', 'Equipo devuelto correctamente.');
+    }
 }

@@ -3,79 +3,78 @@
 namespace App\Http\Controllers;
 
 use App\Models\Equipo;
+use App\Services\EquipoService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class EquipoController extends Controller
 {
+    protected $equipoService;
+
+    public function __construct(EquipoService $equipoService)
+    {
+        $this->equipoService = $equipoService;
+    }
+
     public function index(Request $request)
     {
-        $query = Equipo::query();
+        $equipos = $this->equipoService->listarEquipos(
+            $request->search,
+            $request->estado,
+            $request->tipo
+        );
 
-        // 1. Filtro de Búsqueda (Texto)
-        if ($request->filled('search')) {
-            $query->where(function($q) use ($request) {
-                $q->where('codigo_puce', 'LIKE', "%{$request->search}%")
-                  ->orWhere('marca', 'LIKE', "%{$request->search}%")
-                  ->orWhere('modelo', 'LIKE', "%{$request->search}%");
-            });
-        }
-
-        // 2. Filtro de Estado
-        if ($request->filled('estado')) {
-            $query->where('estado', $request->estado);
-        }
-
-        // 3. NUEVO: Filtro de Tipo
-        if ($request->filled('tipo')) {
-            $query->where('tipo', $request->tipo);
-        }
-
-        $equipos = $query->latest()->paginate(10);
-        
         return view('equipos.index', compact('equipos'));
     }
-    // 2. Mostrar el formulario de crear
+
     public function create()
     {
         return view('equipos.create');
     }
 
-    // 3. Guardar en base de datos
     public function store(Request $request)
     {
-        $request->validate([
-            'codigo_puce' => 'required|unique:equipos',
+        $datos = $request->validate([
+            'codigo_puce' => 'required|unique:equipos,codigo_puce',
             'tipo'        => 'required',
             'marca'       => 'required',
             'modelo'      => 'required',
             'estado'      => 'required',
+            'detalles'    => 'nullable'
         ]);
 
-        Equipo::create($request->all());
+        $this->equipoService->crearEquipo($datos);
 
-        return redirect()->route('equipos.index')->with('success', 'Equipo registrado correctamente.');
+        return redirect()->route('equipos.index')
+            ->with('success', 'Equipo registrado correctamente.');
     }
 
-    // 4. Mostrar formulario de edición
     public function edit(Equipo $equipo)
     {
         return view('equipos.edit', compact('equipo'));
     }
 
-    // 5. Guardar los cambios (Update)
     public function update(Request $request, Equipo $equipo)
     {
-        $request->validate([
-            'codigo_puce' => 'required|unique:equipos,codigo_puce,' . $equipo->id, // Ignora su propio ID para que no de error
+        $datos = $request->validate([
+            'codigo_puce' => ['required', Rule::unique('equipos')->ignore($equipo->id)],
             'tipo'        => 'required',
             'marca'       => 'required',
             'modelo'      => 'required',
             'estado'      => 'required',
+            'detalles'    => 'nullable'
         ]);
 
-        $equipo->update($request->all());
+        $this->equipoService->actualizarEquipo($equipo, $datos);
 
-        return redirect()->route('equipos.index')->with('success', 'Equipo actualizado correctamente.');
+        return redirect()->route('equipos.index')
+            ->with('success', 'Equipo actualizado correctamente.');
     }
 
+    public function destroy(Equipo $equipo)
+    {
+        $this->equipoService->eliminarEquipo($equipo);
+        return redirect()->route('equipos.index')
+            ->with('success', 'Equipo eliminado correctamente.');
+    }
 }
