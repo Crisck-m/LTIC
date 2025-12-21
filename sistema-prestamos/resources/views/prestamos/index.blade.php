@@ -81,7 +81,7 @@
                                 <div class="small text-muted"><i class="far fa-clock me-1"></i> {{ \Carbon\Carbon::parse($prestamo->fecha_prestamo)->format('h:i A') }}</div>
                                 
                                 <div class="small text-info fst-italic mt-1" style="font-size: 0.85em;">
-                                    <i class="fas fa-user-tie me-1"></i> Atendió: {{ $prestamo->pasante->nombre ?? 'Admin' }} {{ $prestamo->pasante->apellido ?? '' }}
+                                    <i class="fas fa-user-tie me-1"></i> Atendió: {{ $prestamo->practicante->nombre ?? 'Admin' }} {{ $prestamo->practicante->apellido ?? '' }}
                                 </div>
                             </td>
 

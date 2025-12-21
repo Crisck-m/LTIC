@@ -35,7 +35,7 @@
                                 <label class="form-label fw-bold">Rol en LTIC</label>
                                 <select name="tipo" class="form-select" required>
                                     <option value="estudiante" {{ $estudiante->tipo == 'estudiante' ? 'selected' : '' }}>Estudiante Regular</option>
-                                    <option value="pasante" {{ $estudiante->tipo == 'pasante' ? 'selected' : '' }}>Pasante</option>
+                                    <option value="practicante" {{ $estudiante->tipo == 'practicante' ? 'selected' : '' }}>Practicante</option>
                                 </select>
                             </div>
 

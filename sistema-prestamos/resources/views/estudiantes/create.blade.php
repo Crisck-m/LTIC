@@ -34,7 +34,7 @@
                                 <label for="tipo" class="form-label fw-bold">Rol en LTIC <span class="text-danger">*</span></label>
                                 <select name="tipo" id="tipo" class="form-select" required>
                                     <option value="estudiante">Estudiante Regular</option>
-                                    <option value="pasante">Pasante</option>
+                                    <option value="practicante">Practicante</option>
                                 </select>
                             </div>
 

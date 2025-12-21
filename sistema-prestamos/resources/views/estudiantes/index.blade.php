@@ -31,7 +31,7 @@
                     <select name="tipo" class="form-select" onchange="this.form.submit()">
                         <option value="">Todos los roles</option>
                         <option value="estudiante" {{ request('tipo') == 'estudiante' ? 'selected' : '' }}>Estudiante Regular</option>
-                        <option value="pasante" {{ request('tipo') == 'pasante' ? 'selected' : '' }}>Pasante (Staff)</option>
+                        <option value="practicante" {{ request('tipo') == 'practicante' ? 'selected' : '' }}>Practicante (Staff)</option>
                     </select>
                 </div>
 
@@ -75,7 +75,7 @@
                                     <span class="badge bg-info text-dark">Estudiante</span>
                                 @else
                                     <span class="badge bg-warning text-dark border border-dark">
-                                        <i class="fas fa-id-badge me-1"></i> Pasante
+                                        <i class="fas fa-id-badge me-1"></i> Practicante
                                     </span>
                                 @endif
                             </td>

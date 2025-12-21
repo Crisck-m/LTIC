@@ -42,7 +42,7 @@ class EstudianteController extends Controller
             'apellido'  => 'required|string',
             'email'     => 'required|email|unique:estudiantes,email',
             'carrera'   => 'required',
-            'tipo'      => 'required|in:estudiante,pasante',
+            'tipo' => 'required|in:estudiante,practicante',
             'telefono'  => 'nullable|string',
             'observaciones' => 'nullable|string'
         ]);
@@ -67,7 +67,7 @@ class EstudianteController extends Controller
             'apellido'  => 'required|string',
             'email'     => ['required', 'email', Rule::unique('estudiantes')->ignore($estudiante->id)],
             'carrera'   => 'required',
-            'tipo'      => 'required|in:estudiante,pasante',
+            'tipo' => 'required|in:estudiante,practicante',
             'telefono'  => 'nullable|string',
             'observaciones' => 'nullable|string'
         ]);

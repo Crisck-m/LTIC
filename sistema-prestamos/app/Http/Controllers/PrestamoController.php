@@ -17,7 +17,6 @@ class PrestamoController extends Controller
         $this->prestamoService = $prestamoService;
     }
 
-    // Mostrar historial
     public function index(Request $request)
     {
         $prestamos = $this->prestamoService->listarPrestamos(
@@ -28,40 +27,37 @@ class PrestamoController extends Controller
         return view('prestamos.index', compact('prestamos'));
     }
 
-    // Mostrar formulario de nuevo préstamo
     public function create()
     {
-        // Esto es solo cargar datos para los select, no necesita servicio complejo
         $equipos = Equipo::where('estado', 'disponible')->get();
         $estudiantes = Estudiante::all();
-        $pasantes = Estudiante::where('tipo', 'pasante')->get();
+        
+        $practicantes = Estudiante::where('tipo', 'practicante')->get(); 
 
-        return view('prestamos.create', compact('equipos', 'estudiantes', 'pasantes'));
+        return view('prestamos.create', compact('equipos', 'estudiantes', 'practicantes'));
     }
 
-    // Guardar el nuevo préstamo
     public function store(Request $request)
     {
+        // Validación directa
         $datos = $request->validate([
-            'estudiante_id' => 'required|exists:estudiantes,id',
-            'equipo_id'     => 'required|exists:equipos,id',
-            'pasante_id'    => 'required|exists:estudiantes,id',
-            'observaciones' => 'nullable|string'
+            'estudiante_id'  => 'required|exists:estudiantes,id',
+            'equipo_id'      => 'required|exists:equipos,id',
+            'practicante_id' => 'required|exists:estudiantes,id',
+            'observaciones'  => 'nullable|string'
         ]);
 
         $this->prestamoService->registrarSalida($datos);
 
-        return redirect()->route('dashboard') // O a prestamos.index si prefieres
+        return redirect()->route('dashboard')
             ->with('success', 'Préstamo registrado correctamente.');
     }
 
-    // Mostrar formulario de confirmación de devolución
     public function finalizar(Prestamo $prestamo)
     {
         return view('prestamos.finalizar', compact('prestamo'));
     }
 
-    // Procesar la devolución
     public function devolver(Request $request, Prestamo $prestamo)
     {
         $request->validate([

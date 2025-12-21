@@ -23,9 +23,10 @@ class Prestamo extends Model
         return $this->belongsTo(Estudiante::class, 'estudiante_id'); 
     }
 
-    // Relación: Pasante que ATENDIÓ (Registró)
-    public function pasante()
+    // CAMBIO TOTAL AQUÍ: Ahora la relación se llama 'practicante'
+    // y apunta a la columna 'practicante_id'
+    public function practicante()
     {
-        return $this->belongsTo(Estudiante::class, 'pasante_id');
+        return $this->belongsTo(Estudiante::class, 'practicante_id');
     }
 }
