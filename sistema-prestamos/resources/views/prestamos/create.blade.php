@@ -66,14 +66,14 @@
                             </div>
 
                             <div class="col-md-4">
-                                <label class="form-label fw-bold text-info">Atendido por (Pasante) <span class="text-danger">*</span></label>
+                                <label class="form-label fw-bold text-info">Atendido por (Practicante) <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-info bg-opacity-10 text-dark"><i class="fas fa-user-tie"></i></span>
-                                    <select name="pasante_id" class="form-select border-info" required>
+                                    <select name="practicante_id" class="form-select border-info" required>
                                         <option value="" disabled selected>Seleccione quién atiende...</option>
-                                        @foreach($pasantes as $pasante)
-                                            <option value="{{ $pasante->id }}">
-                                                {{ $pasante->nombre }} {{ $pasante->apellido }}
+                                        @foreach($practicantes as $practicante)
+                                            <option value="{{ $practicante->id }}">
+                                                {{ $practicante->nombre }} {{ $practicante->apellido }}
                                             </option>
                                         @endforeach
                                     </select>
