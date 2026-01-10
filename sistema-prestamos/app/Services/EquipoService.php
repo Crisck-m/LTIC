@@ -3,19 +3,20 @@
 namespace App\Services;
 
 use App\Models\Equipo;
-use Illuminate\Support\Facades\DB;
+use App\Models\Prestamo; // Importante
 
 class EquipoService
 {
-    public function listarEquipos($search, $estado, $tipo)
+    public function listarEquipos($search, $estado)
     {
         $query = Equipo::query();
 
         if ($search) {
             $query->where(function($q) use ($search) {
-                $q->where('codigo_puce', 'LIKE', "%{$search}%")
-                  ->orWhere('marca', 'LIKE', "%{$search}%")
-                  ->orWhere('modelo', 'LIKE', "%{$search}%");
+                $q->where('marca', 'LIKE', "%{$search}%")
+                  ->orWhere('modelo', 'LIKE', "%{$search}%")
+                  ->orWhere('codigo_puce', 'LIKE', "%{$search}%")
+                  ->orWhere('serie', 'LIKE', "%{$search}%");
             });
         }
 
@@ -23,11 +24,7 @@ class EquipoService
             $query->where('estado', $estado);
         }
 
-        if ($tipo) {
-            $query->where('tipo', $tipo);
-        }
-
-        return $query->latest()->paginate(10);
+        return $query->orderBy('id', 'desc')->paginate(10);
     }
 
     public function crearEquipo(array $datos)
@@ -37,12 +34,19 @@ class EquipoService
 
     public function actualizarEquipo(Equipo $equipo, array $datos)
     {
-        $equipo->update($datos);
-        return $equipo;
+        return $equipo->update($datos);
     }
 
+    // --- LÓGICA DE ELIMINACIÓN SEGURA ---
     public function eliminarEquipo(Equipo $equipo)
     {
+        // Si el equipo está en algún préstamo (activo o histórico), NO se borra
+        $tieneHistorial = Prestamo::where('equipo_id', $equipo->id)->exists();
+
+        if ($tieneHistorial) {
+            return false;
+        }
+
         return $equipo->delete();
     }
 }

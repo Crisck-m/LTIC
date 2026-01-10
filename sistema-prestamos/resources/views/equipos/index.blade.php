@@ -62,6 +62,7 @@
 
             </div>
         </form>
+
         <div class="table-responsive">
             <table class="table table-hover table-striped align-middle">
                 <thead class="table-dark">
@@ -104,13 +105,19 @@
                                 @endif
                             </td>
                             <td class="text-end">
-                                <a href="{{ route('equipos.edit', $equipo) }}" class="btn btn-sm btn-outline-warning" title="Editar">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                
-                                <button class="btn btn-sm btn-outline-danger" title="Eliminar" onclick="return confirm('¿Estás seguro de eliminar este equipo?')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                                <div class="d-flex justify-content-end gap-1">
+                                    <a href="{{ route('equipos.edit', $equipo) }}" class="btn btn-sm btn-outline-warning" title="Editar">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    
+                                    <form action="{{ route('equipos.destroy', $equipo) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de eliminar este equipo?');">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty

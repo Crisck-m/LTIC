@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Prestamo;
+use App\Models\Historial;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
@@ -43,10 +44,7 @@ class PrestamoService
             $prestamo = Prestamo::create([
                 'equipo_id'     => $datos['equipo_id'],
                 'estudiante_id' => $datos['estudiante_id'],
-                
-                // CAMBIO: Guardado directo y nativo
                 'practicante_id'=> $datos['practicante_id'], 
-                
                 'user_id'       => Auth::id(),
                 'fecha_prestamo'=> now(),
                 'estado'        => 'activo',
@@ -54,6 +52,15 @@ class PrestamoService
             ]);
 
             $prestamo->equipo->update(['estado' => 'prestado']);
+
+            $practicante = \App\Models\Estudiante::find($datos['practicante_id']);
+            $estudiante = \App\Models\Estudiante::find($datos['estudiante_id']);
+            $equipo = \App\Models\Equipo::find($datos['equipo_id']);
+
+            Historial::registrar(
+                'Préstamo Realizado',
+                "El practicante {$practicante->nombre} {$practicante->apellido} entregó el equipo {$equipo->tipo} ({$equipo->codigo_puce}) al estudiante {$estudiante->nombre} {$estudiante->apellido}."
+            );
 
             return $prestamo;
         });
@@ -69,6 +76,11 @@ class PrestamoService
             ]);
 
             $prestamo->equipo->update(['estado' => 'disponible']);
+
+            Historial::registrar(
+                'Devolución Completada',
+                "Se recibió el equipo {$prestamo->equipo->codigo_puce} (Devuelto por: {$prestamo->estudiante->nombre} {$prestamo->estudiante->apellido}). Observación: " . ($observaciones ?? 'Ninguna')
+            );
 
             return $prestamo;
         });

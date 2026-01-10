@@ -3,52 +3,53 @@
 namespace App\Services;
 
 use App\Models\Estudiante;
-use Illuminate\Support\Facades\DB;
+use App\Models\Prestamo; // <-- AGREGAR ESTO
 
 class EstudianteService
 {
-    // Lógica para listar con filtros
     public function listarEstudiantes($search, $tipo)
     {
         $query = Estudiante::query();
 
-        // Filtro de texto
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('nombre', 'LIKE', "%{$search}%")
                   ->orWhere('apellido', 'LIKE', "%{$search}%")
                   ->orWhere('matricula', 'LIKE', "%{$search}%");
             });
         }
 
-        // Filtro de rol
         if ($tipo) {
             $query->where('tipo', $tipo);
         }
 
-        return $query->latest()->paginate(10);
+        return $query->orderBy('id', 'desc')->paginate(10);
     }
 
-    // Lógica para crear
     public function crearEstudiante(array $datos)
     {
-        return DB::transaction(function () use ($datos) {
-            return Estudiante::create($datos);
-        });
+        return Estudiante::create($datos);
     }
 
-    // Lógica para actualizar
     public function actualizarEstudiante(Estudiante $estudiante, array $datos)
     {
-        return DB::transaction(function () use ($estudiante, $datos) {
-            $estudiante->update($datos);
-            return $estudiante;
-        });
+        return $estudiante->update($datos);
     }
 
-    // Lógica para eliminar
+    // --- AQUÍ ESTÁ LA CORRECCIÓN ---
     public function eliminarEstudiante(Estudiante $estudiante)
     {
+        // Verificar si el estudiante aparece en algún préstamo (como estudiante O como practicante)
+        $tieneHistorial = Prestamo::where('estudiante_id', $estudiante->id)
+                            ->orWhere('practicante_id', $estudiante->id)
+                            ->exists();
+
+        // Si tiene historial, NO borramos y devolvemos false
+        if ($tieneHistorial) {
+            return false;
+        }
+
+        // Si está limpio, lo borramos y devolvemos true
         return $estudiante->delete();
     }
 }

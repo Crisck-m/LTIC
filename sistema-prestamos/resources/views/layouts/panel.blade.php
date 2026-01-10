@@ -7,7 +7,11 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
     <style>
+        /* --- ESTILOS DEL SIDEBAR --- */
         .sidebar {
             min-height: 100vh;
             background: linear-gradient(180deg, #2c3e50 0%, #3498db 100%);
@@ -34,6 +38,7 @@
             width: 20px;
             margin-right: 10px;
         }
+        
         /* Estilos generales para tablas y tarjetas */
         .card {
             border-radius: 10px;
@@ -45,6 +50,53 @@
             border-bottom: 1px solid #eee;
             padding: 1.5rem;
             border-radius: 10px 10px 0 0 !important;
+        }
+
+        /* --- ESTILOS LIMPIOS PARA SELECT2 (BUSCADOR TIPO GOOGLE) --- */
+        
+        /* 1. Caja Principal */
+        .select2-container .select2-selection--single {
+            height: 38px !important;
+            padding: 6px 12px;
+        }
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
+            line-height: 24px !important;
+            padding-left: 0;
+            color: #212529;
+        }
+
+        /* 2. Ocultar la flecha */
+        .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
+            display: none !important;
+        }
+
+        /* 3. Estilizar la barra de búsqueda interna */
+        .select2-search--dropdown .select2-search__field {
+            padding: 8px 10px !important;
+            border-radius: 4px !important;
+            margin-top: 5px !important;
+            margin-bottom: 5px !important;
+        }
+
+        /* 4. Limpieza del menú desplegable */
+        .select2-dropdown {
+            border: none !important;
+            background: transparent !important;
+            box-shadow: none !important;
+        }
+        .select2-results__message {
+            display: none !important;
+        }
+        
+        /* 5. Solo mostrar caja cuando hay resultados */
+        .select2-results__options {
+            background: white;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            margin-top: 5px;
+            max-height: 200px;
+            overflow-y: auto;
         }
     </style>
 </head>
@@ -87,6 +139,12 @@
                                 <i class="fas fa-undo"></i> Devoluciones
                             </a>
                         </li>
+
+                        <li class="nav-item">
+                            <a class="nav-link {{ request()->routeIs('historial.*') ? 'active' : '' }}" href="{{ route('historial.index') }}">
+                                <i class="fas fa-history"></i> Historial
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </nav>
@@ -114,7 +172,14 @@
 
                 @if (session('success'))
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        {{ session('success') }}
+                        <i class="fas fa-check-circle me-2"></i> {{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                @endif
+
+                @if (session('error'))
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i> {{ session('error') }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 @endif
@@ -125,6 +190,9 @@
         </div>
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    @stack('scripts')
 </body>
 </html>

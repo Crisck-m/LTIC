@@ -1,20 +1,21 @@
 <?php
+
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\EstudianteController;
-use App\Http\Controllers\InventarioController;
+use App\Http\Controllers\EquipoController;
 use App\Http\Controllers\PrestamoController;
 use App\Http\Controllers\DevolucionController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\HistorialController; // ¡Importante importar esto!
 
-// 👉 Ruta principal (redirección)
+// 👉 Ruta principal (redirección al login)
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// 👉 Rutas protegidas por auth
+// 👉 Rutas protegidas por auth (Solo usuarios logueados)
 Route::middleware(['auth'])->group(function () {
-
+    
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -24,24 +25,24 @@ Route::middleware(['auth'])->group(function () {
     // Gestión de Estudiantes
     Route::resource('estudiantes', EstudianteController::class);
 
-    // Gestión de Inventario
-    Route::resource('equipos', App\Http\Controllers\EquipoController::class);
+    // Gestión de Inventario (Equipos)
+    Route::resource('equipos', EquipoController::class);
 
-    Route::resource('prestamos', App\Http\Controllers\PrestamoController::class);
-
-    // Gestión de Préstamos
+    // Gestión de Préstamos (CRUD completo)
     Route::resource('prestamos', PrestamoController::class);
 
-    // Ruta para la bandeja de Devoluciones pendientes
-    Route::get('/devoluciones', [App\Http\Controllers\DevolucionController::class, 'index'])->name('devoluciones.index');
+    // Rutas personalizadas para Devoluciones
+    // 1. Bandeja de devoluciones pendientes
+    Route::get('/devoluciones', [DevolucionController::class, 'index'])->name('devoluciones.index');
+    
+    // 2. Pantalla de confirmación de devolución
+    Route::get('/prestamos/{prestamo}/finalizar', [PrestamoController::class, 'finalizar'])->name('prestamos.finalizar');
 
-    // Gestión de Devoluciones
+    // 3. Procesar la devolución (Guardar en BD)
+    Route::put('/prestamos/{prestamo}/devolver', [PrestamoController::class, 'devolver'])->name('prestamos.devolver');
 
-    // Ruta para VER el formulario de confirmación (Pantalla intermedia)
-Route::get('/prestamos/{prestamo}/finalizar', [App\Http\Controllers\PrestamoController::class, 'finalizar'])->name('prestamos.finalizar');
-
-    // Ruta específica para procesar la devolución
-    Route::put('/prestamos/{prestamo}/devolver', [App\Http\Controllers\PrestamoController::class, 'devolver'])->name('prestamos.devolver');
+    // --- NUEVA RUTA: HISTORIAL DE OPERACIONES ---
+    Route::get('/historial', [HistorialController::class, 'index'])->name('historial.index');
 });
 
 // ===============================
