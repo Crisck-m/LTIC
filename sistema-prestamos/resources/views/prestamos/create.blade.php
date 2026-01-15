@@ -91,9 +91,38 @@
                                 </div>
                             </div>
 
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold">Fecha Esperada de Devolución <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-calendar-alt"></i></span>
+                                    <input type="datetime-local" name="fecha_devolucion_esperada" class="form-control" required>
+                                </div>
+                                <div class="form-text text-muted small">
+                                    Fecha límite para la devolución del equipo.
+                                </div>
+                            </div>
+
                             <div class="col-12">
                                 <label class="form-label fw-bold">Estado de entrega / Observaciones</label>
                                 <textarea name="observaciones" rows="2" class="form-control" placeholder="Ej: Se entrega con cargador original, sin mouse..."></textarea>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="notificar_retorno" id="notificar_retorno" value="1" onchange="togglePeriodo()">
+                                    <label class="form-check-label fw-bold" for="notificar_retorno">
+                                        Activar notificaciones por email para recordatorio de retorno
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6" id="periodoDiv" style="display: none;">
+                                <label class="form-label fw-bold">Período de notificación</label>
+                                <select name="periodo_notificacion" id="periodo_notificacion" class="form-select">
+                                    <option value="1_dia">1 día antes</option>
+                                    <option value="1_semana">1 semana antes</option>
+                                    <option value="1_mes">1 mes antes</option>
+                                </select>
                             </div>
                         </div>
 
@@ -111,4 +140,20 @@
         </div>
     </div>
 </div>
+
+<script>
+function togglePeriodo() {
+    const checkbox = document.getElementById('notificar_retorno');
+    const div = document.getElementById('periodoDiv');
+    const select = document.getElementById('periodo_notificacion');
+    if (checkbox.checked) {
+        div.style.display = 'block';
+        select.required = true;
+    } else {
+        div.style.display = 'none';
+        select.required = false;
+        select.value = '';
+    }
+}
+</script>
 @endsection

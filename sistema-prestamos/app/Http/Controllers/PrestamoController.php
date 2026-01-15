@@ -44,7 +44,10 @@ class PrestamoController extends Controller
             'estudiante_id'  => 'required|exists:estudiantes,id',
             'equipo_id'      => 'required|exists:equipos,id',
             'practicante_id' => 'required|exists:estudiantes,id',
-            'observaciones'  => 'nullable|string'
+            'observaciones'  => 'nullable|string',
+            'fecha_devolucion_esperada' => 'required|date|after:now',
+            'notificar_retorno' => 'boolean',
+            'periodo_notificacion' => 'nullable|in:1_dia,1_semana,1_mes'
         ]);
 
         $this->prestamoService->registrarSalida($datos);

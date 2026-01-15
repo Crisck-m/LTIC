@@ -47,8 +47,11 @@ class PrestamoService
                 'practicante_id'=> $datos['practicante_id'], 
                 'user_id'       => Auth::id(),
                 'fecha_prestamo'=> now(),
+                'fecha_devolucion_esperada' => $datos['fecha_devolucion_esperada'],
                 'estado'        => 'activo',
-                'observaciones_prestamo' => $datos['observaciones'] ?? null
+                'observaciones_prestamo' => $datos['observaciones'] ?? null,
+                'notificar_retorno' => $datos['notificar_retorno'] ?? false,
+                'periodo_notificacion' => $datos['periodo_notificacion'] ?? null
             ]);
 
             $prestamo->equipo->update(['estado' => 'prestado']);
