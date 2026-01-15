@@ -21,7 +21,7 @@ return new class extends Migration
                 'Tecnologías de la Información',
                 'Otra'
             ]);
-            $table->enum('tipo', ['estudiante', 'pasante'])->default('estudiante');
+            $table->enum('tipo', ['estudiante', 'practicante'])->default('estudiante');
             $table->boolean('activo')->default(true);
             $table->text('observaciones')->nullable();
             $table->timestamps();
