@@ -45,7 +45,14 @@ class EstudianteController extends Controller
             'observaciones' => 'nullable|string'
         ]);
 
-        $this->estudianteService->crearEstudiante($datos);
+        // Si carrera es 'Otra', usar el valor de otra_carrera
+        if ($request->carrera === 'Otra') {
+            $datos['carrera'] = $request->validate([
+                'otra_carrera' => 'required|string'
+            ])['otra_carrera'];
+        }
+
+        $estudiante = Estudiante::create($datos);
 
         Historial::registrar(
             'Nuevo Estudiante',
@@ -73,6 +80,13 @@ class EstudianteController extends Controller
             'telefono'  => 'nullable|string',
             'observaciones' => 'nullable|string'
         ]);
+
+        // Si carrera es 'Otra', usar el valor de otra_carrera
+        if ($request->carrera === 'Otra') {
+            $datos['carrera'] = $request->validate([
+                'otra_carrera' => 'required|string'
+            ])['otra_carrera'];
+        }
 
         $this->estudianteService->actualizarEstudiante($estudiante, $datos);
 

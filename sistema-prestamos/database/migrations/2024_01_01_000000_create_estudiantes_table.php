@@ -15,12 +15,7 @@ return new class extends Migration
             $table->string('apellido');
             $table->string('email')->unique();
             $table->string('telefono')->nullable();
-            $table->enum('carrera', [
-                'Ingeniería en Sistemas',
-                'Ingeniería Informática', 
-                'Tecnologías de la Información',
-                'Otra'
-            ]);
+            $table->string('carrera');
             $table->enum('tipo', ['estudiante', 'practicante'])->default('estudiante');
             $table->boolean('activo')->default(true);
             $table->text('observaciones')->nullable();

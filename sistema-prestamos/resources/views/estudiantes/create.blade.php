@@ -17,6 +17,16 @@
                     <form action="{{ route('estudiantes.store') }}" method="POST">
                         @csrf 
 
+                        @if ($errors->any())
+                            <div class="alert alert-danger">
+                                <ul class="mb-0">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
                         <div class="row g-4">
                             <div class="col-12">
                                 <h6 class="text-primary border-bottom pb-2 mb-3">Datos Personales</h6>
@@ -26,8 +36,11 @@
                                 <label for="matricula" class="form-label fw-bold">Cédula de Identidad <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light"><i class="fas fa-id-card"></i></span>
-                                    <input type="text" name="matricula" id="matricula" class="form-control" placeholder="Ej: 1712345678" maxlength="10" required>
+                                    <input type="text" name="matricula" id="matricula" class="form-control @error('matricula') is-invalid @enderror" placeholder="Ej: 1712345678" maxlength="10" required value="{{ old('matricula') }}">
                                 </div>
+                                @error('matricula')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
 
                             <div class="col-md-6">
@@ -56,8 +69,11 @@
                                 <label for="email" class="form-label fw-bold">Correo Institucional <span class="text-danger">*</span></label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-light"><i class="fas fa-envelope"></i></span>
-                                    <input type="email" name="email" id="email" class="form-control" placeholder="usuario@puce.edu.ec" required>
+                                    <input type="email" name="email" id="email" class="form-control @error('email') is-invalid @enderror" placeholder="usuario@puce.edu.ec" required value="{{ old('email') }}">
                                 </div>
+                                @error('email')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
 
                             <div class="col-md-6">
@@ -70,13 +86,21 @@
 
                             <div class="col-md-12">
                                 <label for="carrera" class="form-label fw-bold">Carrera <span class="text-danger">*</span></label>
-                                <select name="carrera" id="carrera" class="form-select" required>
+                                <select name="carrera" id="carrera" class="form-select" required onchange="toggleOtraCarrera()">
                                     <option value="" disabled selected>Seleccione una carrera...</option>
                                     <option value="Ingeniería en Sistemas">Ingeniería en Sistemas</option>
                                     <option value="Ingeniería Informática">Ingeniería Informática</option>
                                     <option value="Tecnologías de la Información">Tecnologías de la Información</option>
                                     <option value="Otra">Otra</option>
                                 </select>
+                            </div>
+
+                            <div class="col-md-12" id="otraCarreraDiv" style="display: none;">
+                                <label for="otra_carrera" class="form-label fw-bold">Especificar Carrera <span class="text-danger">*</span></label>
+                                <input type="text" name="otra_carrera" id="otra_carrera" class="form-control @error('otra_carrera') is-invalid @enderror" placeholder="Ej: Medicina, Derecho, etc." value="{{ old('otra_carrera') }}">
+                                @error('otra_carrera')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
                             </div>
 
                             <div class="col-12">
@@ -100,4 +124,20 @@
         </div>
     </div>
 </div>
+
+<script>
+function toggleOtraCarrera() {
+    const select = document.getElementById('carrera');
+    const div = document.getElementById('otraCarreraDiv');
+    const input = document.getElementById('otra_carrera');
+    if (select.value === 'Otra') {
+        div.style.display = 'block';
+        input.required = true;
+    } else {
+        div.style.display = 'none';
+        input.required = false;
+        input.value = '';
+    }
+}
+</script>
 @endsection

@@ -13,9 +13,9 @@ class EstudianteService
 
         if ($search) {
             $query->where(function ($q) use ($search) {
-                $q->where('nombre', 'LIKE', "%{$search}%")
-                  ->orWhere('apellido', 'LIKE', "%{$search}%")
-                  ->orWhere('matricula', 'LIKE', "%{$search}%");
+                $q->where('nombre', 'like', "%{$search}%")
+                  ->orWhere('apellido', 'like', "%{$search}%")
+                  ->orWhere('matricula', 'like', "%{$search}%");
             });
         }
 

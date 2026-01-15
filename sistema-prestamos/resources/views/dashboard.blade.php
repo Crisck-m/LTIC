@@ -5,79 +5,87 @@
 @section('contenido')
     <div class="row mb-4">
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2 border-0 border-start border-4 border-primary">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                Estudiantes Registrados</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ $stats['total_estudiantes'] }}
+            <a href="{{ route('estudiantes.index') }}" class="text-decoration-none">
+                <div class="card border-left-primary shadow h-100 py-2 border-0 border-start border-4 border-primary">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    Estudiantes Registrados</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    {{ $stats['total_estudiantes'] }}
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-users fa-2x text-gray-300 text-primary opacity-50"></i>
+                            <div class="col-auto">
+                                <i class="fas fa-users fa-2x text-gray-300 text-primary opacity-50"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
 
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2 border-0 border-start border-4 border-info">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                Equipos Disponibles</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ $stats['equipos_disponibles'] }}
+            <a href="{{ route('equipos.index') }}" class="text-decoration-none">
+                <div class="card border-left-info shadow h-100 py-2 border-0 border-start border-4 border-info">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                    Equipos Disponibles</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    {{ $stats['equipos_disponibles'] }}
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-laptop fa-2x text-gray-300 text-info opacity-50"></i>
+                            <div class="col-auto">
+                                <i class="fas fa-laptop fa-2x text-gray-300 text-info opacity-50"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
 
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2 border-0 border-start border-4 border-warning">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Préstamos Activos</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ $stats['prestamos_activos'] }}
+            <a href="{{ route('prestamos.index') }}" class="text-decoration-none">
+                <div class="card border-left-warning shadow h-100 py-2 border-0 border-start border-4 border-warning">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                    Préstamos Activos</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    {{ $stats['prestamos_activos'] }}
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-hand-holding fa-2x text-gray-300 text-warning opacity-50"></i>
+                            <div class="col-auto">
+                                <i class="fas fa-hand-holding fa-2x text-gray-300 text-warning opacity-50"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
 
         <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-danger shadow h-100 py-2 border-0 border-start border-4 border-danger">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                                Pendientes Devolución</div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ $stats['pendientes_devolucion'] }}
+            <a href="{{ route('prestamos.index', ['estado' => 'activo']) }}" class="text-decoration-none">
+                <div class="card border-left-danger shadow h-100 py-2 border-0 border-start border-4 border-danger">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                    Pendientes Devolución</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    {{ $stats['pendientes_devolucion'] }}
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-clock fa-2x text-gray-300 text-danger opacity-50"></i>
+                            <div class="col-auto">
+                                <i class="fas fa-clock fa-2x text-gray-300 text-danger opacity-50"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </a>
         </div>
     </div>
 

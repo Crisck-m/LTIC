@@ -28,7 +28,7 @@
                 </div>
 
                 <div class="col-md-3">
-                    <select name="tipo" class="form-select" onchange="this.form.submit()">
+                    <select name="tipo" class="form-select">
                         <option value="">Todos los roles</option>
                         <option value="estudiante" {{ request('tipo') == 'estudiante' ? 'selected' : '' }}>Estudiante Regular</option>
                         <option value="practicante" {{ request('tipo') == 'practicante' ? 'selected' : '' }}>Practicante (Staff)</option>
@@ -66,7 +66,9 @@
                         <tr>
                             <td class="fw-bold">{{ $estudiante->matricula }}</td>
                             <td>
-                                {{ $estudiante->nombre }} {{ $estudiante->apellido }}
+                                <span @if($estudiante->observaciones) data-bs-toggle="tooltip" data-bs-placement="top" title="{{ $estudiante->observaciones }}" @endif>
+                                    {{ $estudiante->nombre }} {{ $estudiante->apellido }}
+                                </span>
                             </td>
                             <td>{{ $estudiante->email }}</td>
                             <td>{{ $estudiante->carrera }}</td>
@@ -110,4 +112,13 @@
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+});
+</script>
 @endsection

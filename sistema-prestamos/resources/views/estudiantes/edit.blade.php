@@ -71,12 +71,17 @@
 
                             <div class="col-md-12">
                                 <label class="form-label fw-bold">Carrera</label>
-                                <select name="carrera" class="form-select" required>
+                                <select name="carrera" id="carrera" class="form-select" required onchange="toggleOtraCarrera()">
                                     <option value="Ingeniería en Sistemas" {{ $estudiante->carrera == 'Ingeniería en Sistemas' ? 'selected' : '' }}>Ingeniería en Sistemas</option>
                                     <option value="Ingeniería Informática" {{ $estudiante->carrera == 'Ingeniería Informática' ? 'selected' : '' }}>Ingeniería Informática</option>
                                     <option value="Tecnologías de la Información" {{ $estudiante->carrera == 'Tecnologías de la Información' ? 'selected' : '' }}>Tecnologías de la Información</option>
-                                    <option value="Otra" {{ $estudiante->carrera == 'Otra' ? 'selected' : '' }}>Otra</option>
+                                    <option value="Otra" {{ !in_array($estudiante->carrera, ['Ingeniería en Sistemas', 'Ingeniería Informática', 'Tecnologías de la Información']) ? 'selected' : '' }}>Otra</option>
                                 </select>
+                            </div>
+
+                            <div class="col-md-12" id="otraCarreraDiv" style="display: {{ !in_array($estudiante->carrera, ['Ingeniería en Sistemas', 'Ingeniería Informática', 'Tecnologías de la Información']) ? 'block' : 'none' }};">
+                                <label for="otra_carrera" class="form-label fw-bold">Especificar Carrera <span class="text-danger">*</span></label>
+                                <input type="text" name="otra_carrera" id="otra_carrera" class="form-control" value="{{ !in_array($estudiante->carrera, ['Ingeniería en Sistemas', 'Ingeniería Informática', 'Tecnologías de la Información']) ? $estudiante->carrera : '' }}" {{ !in_array($estudiante->carrera, ['Ingeniería en Sistemas', 'Ingeniería Informática', 'Tecnologías de la Información']) ? 'required' : '' }}>
                             </div>
 
                             <div class="col-12">
@@ -95,4 +100,20 @@
         </div>
     </div>
 </div>
+
+<script>
+function toggleOtraCarrera() {
+    const select = document.getElementById('carrera');
+    const div = document.getElementById('otraCarreraDiv');
+    const input = document.getElementById('otra_carrera');
+    if (select.value === 'Otra') {
+        div.style.display = 'block';
+        input.required = true;
+    } else {
+        div.style.display = 'none';
+        input.required = false;
+        input.value = '';
+    }
+}
+</script>
 @endsection
