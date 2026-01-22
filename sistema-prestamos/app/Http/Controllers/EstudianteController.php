@@ -35,7 +35,7 @@ class EstudianteController extends Controller
     public function store(Request $request)
     {
         $datos = $request->validate([
-            'matricula' => 'required|unique:estudiantes,matricula',
+            'cedula' => 'required|unique:estudiantes,cedula|digits:10',  // ✅ CAMBIADO
             'nombre'    => 'required|string',
             'apellido'  => 'required|string',
             'email'     => 'required|email|unique:estudiantes,email',
@@ -56,7 +56,7 @@ class EstudianteController extends Controller
 
         Historial::registrar(
             'Nuevo Estudiante',
-            "Se registró al estudiante {$request->nombre} {$request->apellido} con C.I. {$request->matricula}."
+            "Se registró al estudiante {$request->nombre} {$request->apellido} con C.I. {$request->cedula}."  // ✅ CAMBIADO
         );
 
         return redirect()->route('estudiantes.index')
@@ -71,7 +71,7 @@ class EstudianteController extends Controller
     public function update(Request $request, Estudiante $estudiante)
     {
         $datos = $request->validate([
-            'matricula' => ['required', Rule::unique('estudiantes')->ignore($estudiante->id)],
+            'cedula' => ['required', 'digits:10', Rule::unique('estudiantes')->ignore($estudiante->id)],  // ✅ CAMBIADO
             'nombre'    => 'required|string',
             'apellido'  => 'required|string',
             'email'     => ['required', 'email', Rule::unique('estudiantes')->ignore($estudiante->id)],
@@ -92,7 +92,7 @@ class EstudianteController extends Controller
 
         Historial::registrar(
             'Estudiante Actualizado',
-            "Se modificaron los datos de {$estudiante->nombre} {$estudiante->apellido} (C.I. {$estudiante->matricula})."
+            "Se modificaron los datos de {$estudiante->nombre} {$estudiante->apellido} (C.I. {$estudiante->cedula})."  // ✅ CAMBIADO
         );
 
         return redirect()->route('estudiantes.index')
@@ -102,19 +102,16 @@ class EstudianteController extends Controller
     public function destroy(Estudiante $estudiante)
     {
         $nombre = "{$estudiante->nombre} {$estudiante->apellido}";
-        $cedula = $estudiante->matricula; 
+        $cedula = $estudiante->cedula;  // ✅ CAMBIADO
 
         // Intentamos eliminar usando el servicio
-        // El servicio verifica si tiene préstamos pendientes o históricos
         $eliminado = $this->estudianteService->eliminarEstudiante($estudiante);
 
-        // --- MANEJO DE ERROR SI TIENE HISTORIAL ---
         if (!$eliminado) {
             return redirect()->route('estudiantes.index')
                 ->with('error', 'No se puede eliminar: El estudiante tiene historial de préstamos asociados.');
         }
 
-        // --- SI SE PUDO ELIMINAR, GUARDAMOS EL REGISTRO ---
         Historial::registrar(
             'Estudiante Eliminado',
             "Se eliminó del sistema al estudiante {$nombre} con C.I. {$cedula}."
@@ -122,5 +119,25 @@ class EstudianteController extends Controller
 
         return redirect()->route('estudiantes.index')
             ->with('success', 'Estudiante eliminado correctamente.');
+    }
+
+    /**
+     * 🔍 Búsqueda AJAX para autocompletado (NUEVO)
+     */
+    public function buscarAjax(Request $request)
+    {
+        $search = $request->get('q');
+        
+        $estudiantes = Estudiante::where('activo', true)
+            ->where(function($query) use ($search) {
+                $query->where('cedula', 'LIKE', "%{$search}%")  // ✅ CAMBIADO
+                      ->orWhere('nombre', 'LIKE', "%{$search}%")
+                      ->orWhere('apellido', 'LIKE', "%{$search}%")
+                      ->orWhereRaw("CONCAT(nombre, ' ', apellido) LIKE ?", ["%{$search}%"]);
+            })
+            ->limit(10)
+            ->get(['id', 'cedula', 'nombre', 'apellido', 'carrera']);  // ✅ CAMBIADO
+        
+        return response()->json($estudiantes);
     }
 }

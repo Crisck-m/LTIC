@@ -22,7 +22,7 @@
                     <div class="input-group">
                         <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
                         <input type="text" name="search" class="form-control" 
-                               placeholder="Buscar por nombre o matrícula..." 
+                               placeholder="Buscar por nombre o cédula..." 
                                value="{{ request('search') }}">
                     </div>
                 </div>
@@ -53,7 +53,7 @@
             <table class="table table-hover table-striped align-middle">
                 <thead class="table-dark">
                     <tr>
-                        <th>Matrícula</th>
+                        <th>Cédula</th>
                         <th>Nombre Completo</th>
                         <th>Email</th>
                         <th>Carrera</th>
@@ -64,7 +64,7 @@
                 <tbody>
                     @forelse ($estudiantes as $estudiante)
                         <tr>
-                            <td class="fw-bold">{{ $estudiante->matricula }}</td>
+                            <td class="fw-bold">{{ $estudiante->cedula }}</td>
                             <td>
                                 <span @if($estudiante->observaciones) data-bs-toggle="tooltip" data-bs-placement="top" title="{{ $estudiante->observaciones }}" @endif>
                                     {{ $estudiante->nombre }} {{ $estudiante->apellido }}

@@ -10,7 +10,7 @@ class Estudiante extends Model
     use HasFactory;
 
     protected $fillable = [
-        'matricula',
+        'cedula',        // ✅ CAMBIADO de 'matricula' a 'cedula'
         'nombre', 
         'apellido',
         'email',
@@ -43,10 +43,10 @@ class Estudiante extends Model
         return $query->where('activo', true);
     }
 
-    // Scope para búsqueda
+    // Scope para búsqueda (ACTUALIZADO)
     public function scopeBuscar($query, $search)
     {
-        return $query->where('matricula', 'LIKE', "%{$search}%")
+        return $query->where('cedula', 'LIKE', "%{$search}%")      // ✅ CAMBIADO
                     ->orWhere('nombre', 'LIKE', "%{$search}%")
                     ->orWhere('apellido', 'LIKE', "%{$search}%")
                     ->orWhere('email', 'LIKE', "%{$search}%");

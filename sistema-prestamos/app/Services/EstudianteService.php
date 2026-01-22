@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Models\Estudiante;
-use App\Models\Prestamo; // <-- AGREGAR ESTO
+use App\Models\Prestamo;
 
 class EstudianteService
 {
@@ -15,7 +15,7 @@ class EstudianteService
             $query->where(function ($q) use ($search) {
                 $q->where('nombre', 'like', "%{$search}%")
                   ->orWhere('apellido', 'like', "%{$search}%")
-                  ->orWhere('matricula', 'like', "%{$search}%");
+                  ->orWhere('cedula', 'like', "%{$search}%");  // ✅ CAMBIADO
             });
         }
 
@@ -36,20 +36,17 @@ class EstudianteService
         return $estudiante->update($datos);
     }
 
-    // --- AQUÍ ESTÁ LA CORRECCIÓN ---
     public function eliminarEstudiante(Estudiante $estudiante)
     {
-        // Verificar si el estudiante aparece en algún préstamo (como estudiante O como practicante)
+        // Verificar si el estudiante aparece en algún préstamo
         $tieneHistorial = Prestamo::where('estudiante_id', $estudiante->id)
                             ->orWhere('practicante_id', $estudiante->id)
                             ->exists();
 
-        // Si tiene historial, NO borramos y devolvemos false
         if ($tieneHistorial) {
             return false;
         }
 
-        // Si está limpio, lo borramos y devolvemos true
         return $estudiante->delete();
     }
 }

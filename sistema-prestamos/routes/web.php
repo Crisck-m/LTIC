@@ -25,6 +25,10 @@ Route::middleware(['auth'])->group(function () {
     // Gestión de Estudiantes
     Route::resource('estudiantes', EstudianteController::class);
 
+    // Rutas AJAX para búsqueda en tiempo real (después de las rutas de estudiantes)
+    Route::get('/api/estudiantes/buscar', [EstudianteController::class, 'buscarAjax'])->name('estudiantes.buscar');
+    Route::get('/api/equipos/buscar', [EquipoController::class, 'buscarAjax'])->name('equipos.buscar');
+
     // Gestión de Inventario (Equipos)
     Route::resource('equipos', EquipoController::class);
 

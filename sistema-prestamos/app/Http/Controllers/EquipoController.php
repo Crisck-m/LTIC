@@ -6,7 +6,8 @@ use App\Models\Equipo;
 use App\Services\EquipoService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use App\Models\Historial; // Importar Historial
+use App\Models\Historial;
+use Illuminate\Support\Facades\Log;
 
 class EquipoController extends Controller
 {
@@ -34,7 +35,6 @@ class EquipoController extends Controller
             'tipo' => 'required|string',
             'marca' => 'required|string',
             'modelo' => 'required|string',
-            'serie' => 'required|unique:equipos,serie',
             'codigo_puce' => 'required|unique:equipos,codigo_puce',
             'estado' => 'required|in:disponible,prestado,mantenimiento,baja',
             'observaciones' => 'nullable|string'
@@ -61,7 +61,6 @@ class EquipoController extends Controller
             'tipo' => 'required|string',
             'marca' => 'required|string',
             'modelo' => 'required|string',
-            'serie' => ['required', Rule::unique('equipos')->ignore($equipo->id)],
             'codigo_puce' => ['required', Rule::unique('equipos')->ignore($equipo->id)],
             'estado' => 'required|in:disponible,prestado,mantenimiento,baja',
             'observaciones' => 'nullable|string'
@@ -77,13 +76,11 @@ class EquipoController extends Controller
         return redirect()->route('equipos.index')->with('success', 'Equipo actualizado correctamente.');
     }
 
-    // --- AQUÍ ESTABA PROBABLEMENTE EL PROBLEMA (FALTABA CÓDIGO) ---
     public function destroy(Equipo $equipo)
     {
         $codigo = $equipo->codigo_puce;
         $desc = "{$equipo->tipo} {$equipo->marca}";
 
-        // Intentamos eliminar
         $eliminado = $this->equipoService->eliminarEquipo($equipo);
 
         if (!$eliminado) {
@@ -98,5 +95,38 @@ class EquipoController extends Controller
 
         return redirect()->route('equipos.index')
             ->with('success', 'Equipo eliminado correctamente.');
+    }
+
+    /**
+     * Búsqueda AJAX para autocompletado de equipos
+     */
+    public function buscarAjax(Request $request)
+    {
+        try {
+            $search = $request->get('q', '');
+            
+            if (empty($search)) {
+                return response()->json([]);
+            }
+            
+            $equipos = Equipo::where('estado', 'disponible')
+                ->where(function($query) use ($search) {
+                    $query->where('codigo_puce', 'LIKE', "%{$search}%")
+                          ->orWhere('tipo', 'LIKE', "%{$search}%")
+                          ->orWhere('marca', 'LIKE', "%{$search}%")
+                          ->orWhere('modelo', 'LIKE', "%{$search}%");
+                })
+                ->limit(10)
+                ->get(['id', 'tipo', 'marca', 'modelo', 'codigo_puce']);
+            
+            return response()->json($equipos);
+            
+        } catch (\Exception $e) {
+            Log::error('Error en búsqueda de equipos: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Error en la búsqueda',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }
