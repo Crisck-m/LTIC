@@ -1,22 +1,25 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Préstamos LTIC</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
+
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
+        rel="stylesheet" />
 
     <style>
         /* --- ESTILOS DEL SIDEBAR --- */
         .sidebar {
             min-height: 100vh;
             background: linear-gradient(180deg, #2c3e50 0%, #3498db 100%);
-            box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
         }
+
         .sidebar .nav-link {
             color: #ecf0f1;
             padding: 15px 20px;
@@ -25,26 +28,30 @@
             transition: all 0.3s ease;
             text-decoration: none;
         }
+
         .sidebar .nav-link:hover {
-            background-color: rgba(255,255,255,0.1);
+            background-color: rgba(255, 255, 255, 0.1);
             color: #ffffff;
             transform: translateX(5px);
         }
+
         .sidebar .nav-link.active {
             background-color: #e74c3c;
             color: white;
         }
+
         .sidebar .nav-link i {
             width: 20px;
             margin-right: 10px;
         }
-        
+
         /* Estilos generales para tablas y tarjetas */
         .card {
             border-radius: 10px;
             border: none;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
         }
+
         .card-header {
             background-color: white;
             border-bottom: 1px solid #eee;
@@ -53,12 +60,13 @@
         }
 
         /* --- ESTILOS LIMPIOS PARA SELECT2 (BUSCADOR TIPO GOOGLE) --- */
-        
+
         /* 1. Caja Principal */
         .select2-container .select2-selection--single {
             height: 38px !important;
             padding: 6px 12px;
         }
+
         .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
             line-height: 24px !important;
             padding-left: 0;
@@ -84,10 +92,11 @@
             background: transparent !important;
             box-shadow: none !important;
         }
+
         .select2-results__message {
             display: none !important;
         }
-        
+
         /* 5. Solo mostrar caja cuando hay resultados */
         .select2-results__options {
             background: white;
@@ -100,6 +109,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container-fluid">
         <div class="row">
@@ -112,37 +122,36 @@
                         </h4>
                         <small class="text-light">LTIC</small>
                     </div>
-                    
+
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}" href="{{ route('dashboard') }}">
+                            <a class="nav-link {{ request()->routeIs('dashboard') ? 'active' : '' }}"
+                                href="{{ route('dashboard') }}">
                                 <i class="fas fa-home"></i> Home
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('estudiantes.*') ? 'active' : '' }}" href="{{ route('estudiantes.index') }}">
+                            <a class="nav-link {{ request()->routeIs('estudiantes.*') ? 'active' : '' }}"
+                                href="{{ route('estudiantes.index') }}">
                                 <i class="fas fa-users"></i> Estudiantes
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('equipos.*') ? 'active' : '' }}" href="{{ route('equipos.index') }}">
+                            <a class="nav-link {{ request()->routeIs('equipos.*') ? 'active' : '' }}"
+                                href="{{ route('equipos.index') }}">
                                 <i class="fas fa-laptop"></i> Inventario
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('prestamos.*') ? 'active' : '' }}" href="{{ route('prestamos.index') }}">
+                            <a class="nav-link {{ request()->routeIs('prestamos.*') ? 'active' : '' }}"
+                                href="{{ route('prestamos.index') }}">
                                 <i class="fas fa-hand-holding"></i> Préstamos
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('devoluciones.*') ? 'active' : '' }}" href="{{ route('devoluciones.index') }}">
+                            <a class="nav-link {{ request()->routeIs('devoluciones.*') ? 'active' : '' }}"
+                                href="{{ route('devoluciones.index') }}">
                                 <i class="fas fa-undo"></i> Devoluciones
-                            </a>
-                        </li>
-
-                        <li class="nav-item">
-                            <a class="nav-link {{ request()->routeIs('historial.*') ? 'active' : '' }}" href="{{ route('historial.index') }}">
-                                <i class="fas fa-history"></i> Historial
                             </a>
                         </li>
                     </ul>
@@ -150,9 +159,10 @@
             </nav>
 
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4" style="background-color: #f8f9fa; min-height: 100vh;">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                <div
+                    class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                     <h1 class="h2">@yield('titulo')</h1>
-                    
+
                     <div class="dropdown">
                         <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user-circle"></i> {{ Auth::user()->name ?? 'Usuario' }}
@@ -195,4 +205,5 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     @stack('scripts')
 </body>
+
 </html>

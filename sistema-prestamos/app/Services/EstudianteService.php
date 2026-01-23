@@ -14,8 +14,8 @@ class EstudianteService
         if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('nombre', 'like', "%{$search}%")
-                  ->orWhere('apellido', 'like', "%{$search}%")
-                  ->orWhere('cedula', 'like', "%{$search}%");  // ✅ CAMBIADO
+                    ->orWhere('apellido', 'like', "%{$search}%")
+                    ->orWhere('cedula', 'like', "%{$search}%");  // ✅ CAMBIADO
             });
         }
 
@@ -39,11 +39,11 @@ class EstudianteService
     public function eliminarEstudiante(Estudiante $estudiante)
     {
         // Verificar si el estudiante aparece en algún préstamo
-        $tieneHistorial = Prestamo::where('estudiante_id', $estudiante->id)
-                            ->orWhere('practicante_id', $estudiante->id)
-                            ->exists();
+        $tienePrestamos = Prestamo::where('estudiante_id', $estudiante->id)
+            ->orWhere('practicante_id', $estudiante->id)
+            ->exists();
 
-        if ($tieneHistorial) {
+        if ($tienePrestamos) {
             return false;
         }
 

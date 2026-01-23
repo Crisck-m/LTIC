@@ -3,10 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Estudiante;
-use App\Services\EstudianteService; 
+use App\Services\EstudianteService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use App\Models\Historial; 
 
 class EstudianteController extends Controller
 {
@@ -20,7 +19,7 @@ class EstudianteController extends Controller
     public function index(Request $request)
     {
         $estudiantes = $this->estudianteService->listarEstudiantes(
-            $request->search, 
+            $request->search,
             $request->tipo
         );
 
@@ -36,12 +35,12 @@ class EstudianteController extends Controller
     {
         $datos = $request->validate([
             'cedula' => 'required|unique:estudiantes,cedula|digits:10',  // ✅ CAMBIADO
-            'nombre'    => 'required|string',
-            'apellido'  => 'required|string',
-            'email'     => 'required|email|unique:estudiantes,email',
-            'carrera'   => 'required',
-            'tipo'      => 'required|in:estudiante,practicante',
-            'telefono'  => 'nullable|string',
+            'nombre' => 'required|string',
+            'apellido' => 'required|string',
+            'email' => 'required|email|unique:estudiantes,email',
+            'carrera' => 'required',
+            'tipo' => 'required|in:estudiante,practicante',
+            'telefono' => 'nullable|string',
             'observaciones' => 'nullable|string'
         ]);
 
@@ -53,11 +52,6 @@ class EstudianteController extends Controller
         }
 
         $estudiante = Estudiante::create($datos);
-
-        Historial::registrar(
-            'Nuevo Estudiante',
-            "Se registró al estudiante {$request->nombre} {$request->apellido} con C.I. {$request->cedula}."  // ✅ CAMBIADO
-        );
 
         return redirect()->route('estudiantes.index')
             ->with('success', 'Estudiante registrado correctamente.');
@@ -72,12 +66,12 @@ class EstudianteController extends Controller
     {
         $datos = $request->validate([
             'cedula' => ['required', 'digits:10', Rule::unique('estudiantes')->ignore($estudiante->id)],  // ✅ CAMBIADO
-            'nombre'    => 'required|string',
-            'apellido'  => 'required|string',
-            'email'     => ['required', 'email', Rule::unique('estudiantes')->ignore($estudiante->id)],
-            'carrera'   => 'required',
-            'tipo'      => 'required|in:estudiante,practicante',
-            'telefono'  => 'nullable|string',
+            'nombre' => 'required|string',
+            'apellido' => 'required|string',
+            'email' => ['required', 'email', Rule::unique('estudiantes')->ignore($estudiante->id)],
+            'carrera' => 'required',
+            'tipo' => 'required|in:estudiante,practicante',
+            'telefono' => 'nullable|string',
             'observaciones' => 'nullable|string'
         ]);
 
@@ -89,11 +83,6 @@ class EstudianteController extends Controller
         }
 
         $this->estudianteService->actualizarEstudiante($estudiante, $datos);
-
-        Historial::registrar(
-            'Estudiante Actualizado',
-            "Se modificaron los datos de {$estudiante->nombre} {$estudiante->apellido} (C.I. {$estudiante->cedula})."  // ✅ CAMBIADO
-        );
 
         return redirect()->route('estudiantes.index')
             ->with('success', 'Estudiante actualizado correctamente.');
@@ -109,13 +98,8 @@ class EstudianteController extends Controller
 
         if (!$eliminado) {
             return redirect()->route('estudiantes.index')
-                ->with('error', 'No se puede eliminar: El estudiante tiene historial de préstamos asociados.');
+                ->with('error', 'No se puede eliminar: El estudiante tiene préstamos asociados.');
         }
-
-        Historial::registrar(
-            'Estudiante Eliminado',
-            "Se eliminó del sistema al estudiante {$nombre} con C.I. {$cedula}."
-        );
 
         return redirect()->route('estudiantes.index')
             ->with('success', 'Estudiante eliminado correctamente.');
@@ -127,17 +111,17 @@ class EstudianteController extends Controller
     public function buscarAjax(Request $request)
     {
         $search = $request->get('q');
-        
+
         $estudiantes = Estudiante::where('activo', true)
-            ->where(function($query) use ($search) {
+            ->where(function ($query) use ($search) {
                 $query->where('cedula', 'LIKE', "%{$search}%")  // ✅ CAMBIADO
-                      ->orWhere('nombre', 'LIKE', "%{$search}%")
-                      ->orWhere('apellido', 'LIKE', "%{$search}%")
-                      ->orWhereRaw("CONCAT(nombre, ' ', apellido) LIKE ?", ["%{$search}%"]);
+                    ->orWhere('nombre', 'LIKE', "%{$search}%")
+                    ->orWhere('apellido', 'LIKE', "%{$search}%")
+                    ->orWhereRaw("CONCAT(nombre, ' ', apellido) LIKE ?", ["%{$search}%"]);
             })
             ->limit(10)
             ->get(['id', 'cedula', 'nombre', 'apellido', 'carrera']);  // ✅ CAMBIADO
-        
+
         return response()->json($estudiantes);
     }
 }

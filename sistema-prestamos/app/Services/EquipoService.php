@@ -10,20 +10,20 @@ class EquipoService
     public function listarEquipos($search, $estado)
     {
         $query = Equipo::query();
-        
+
         if ($search) {
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('marca', 'LIKE', "%{$search}%")
-                  ->orWhere('modelo', 'LIKE', "%{$search}%")
-                  ->orWhere('codigo_puce', 'LIKE', "%{$search}%")
-                  ->orWhere('tipo', 'LIKE', "%{$search}%");
+                    ->orWhere('modelo', 'LIKE', "%{$search}%")
+                    ->orWhere('codigo_puce', 'LIKE', "%{$search}%")
+                    ->orWhere('tipo', 'LIKE', "%{$search}%");
             });
         }
-        
+
         if ($estado) {
             $query->where('estado', $estado);
         }
-        
+
         return $query->orderBy('id', 'desc')->paginate(10);
     }
 
@@ -42,7 +42,19 @@ class EquipoService
         if ($equipo->estado === 'prestado') {
             return false;
         }
-        
+
         return $equipo->update(['estado' => 'baja']);
+    }
+
+    public function eliminarEquipo(Equipo $equipo)
+    {
+        // Verificar si el equipo tiene préstamos asociados
+        $tienePrestamos = Prestamo::where('equipo_id', $equipo->id)->exists();
+
+        if ($tienePrestamos) {
+            return false;
+        }
+
+        return $equipo->delete();
     }
 }

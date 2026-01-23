@@ -6,7 +6,6 @@ use App\Models\Equipo;
 use App\Services\EquipoService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use App\Models\Historial;
 use Illuminate\Support\Facades\Log;
 
 class EquipoController extends Controller
@@ -42,11 +41,6 @@ class EquipoController extends Controller
 
         $equipo = $this->equipoService->crearEquipo($datos);
 
-        Historial::registrar(
-            'Nuevo Equipo',
-            "Se registró el equipo {$equipo->tipo} {$equipo->marca} con serie {$equipo->serie}."
-        );
-
         return redirect()->route('equipos.index')->with('success', 'Equipo registrado correctamente.');
     }
 
@@ -68,11 +62,6 @@ class EquipoController extends Controller
 
         $this->equipoService->actualizarEquipo($equipo, $datos);
 
-        Historial::registrar(
-            'Equipo Actualizado',
-            "Se actualizaron datos del equipo {$equipo->codigo_puce} ({$equipo->marca})."
-        );
-
         return redirect()->route('equipos.index')->with('success', 'Equipo actualizado correctamente.');
     }
 
@@ -85,13 +74,8 @@ class EquipoController extends Controller
 
         if (!$eliminado) {
             return redirect()->route('equipos.index')
-                ->with('error', 'No se puede eliminar: El equipo tiene historial de préstamos.');
+                ->with('error', 'No se puede eliminar: El equipo tiene préstamos asociados.');
         }
-
-        Historial::registrar(
-            'Equipo Eliminado',
-            "Se eliminó del inventario: {$desc} [{$codigo}]."
-        );
 
         return redirect()->route('equipos.index')
             ->with('success', 'Equipo eliminado correctamente.');
@@ -104,23 +88,23 @@ class EquipoController extends Controller
     {
         try {
             $search = $request->get('q', '');
-            
+
             if (empty($search)) {
                 return response()->json([]);
             }
-            
+
             $equipos = Equipo::where('estado', 'disponible')
-                ->where(function($query) use ($search) {
+                ->where(function ($query) use ($search) {
                     $query->where('codigo_puce', 'LIKE', "%{$search}%")
-                          ->orWhere('tipo', 'LIKE', "%{$search}%")
-                          ->orWhere('marca', 'LIKE', "%{$search}%")
-                          ->orWhere('modelo', 'LIKE', "%{$search}%");
+                        ->orWhere('tipo', 'LIKE', "%{$search}%")
+                        ->orWhere('marca', 'LIKE', "%{$search}%")
+                        ->orWhere('modelo', 'LIKE', "%{$search}%");
                 })
                 ->limit(10)
                 ->get(['id', 'tipo', 'marca', 'modelo', 'codigo_puce']);
-            
+
             return response()->json($equipos);
-            
+
         } catch (\Exception $e) {
             Log::error('Error en búsqueda de equipos: ' . $e->getMessage());
             return response()->json([

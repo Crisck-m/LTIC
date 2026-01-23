@@ -6,7 +6,6 @@ use App\Http\Controllers\EquipoController;
 use App\Http\Controllers\PrestamoController;
 use App\Http\Controllers\DevolucionController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\HistorialController; // ¡Importante importar esto!
 
 // 👉 Ruta principal (redirección al login)
 Route::get('/', function () {
@@ -15,7 +14,7 @@ Route::get('/', function () {
 
 // 👉 Rutas protegidas por auth (Solo usuarios logueados)
 Route::middleware(['auth'])->group(function () {
-    
+
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -38,18 +37,15 @@ Route::middleware(['auth'])->group(function () {
     // Rutas personalizadas para Devoluciones
     // 1. Bandeja de devoluciones pendientes
     Route::get('/devoluciones', [DevolucionController::class, 'index'])->name('devoluciones.index');
-    
+
     // 2. Pantalla de confirmación de devolución
     Route::get('/prestamos/{prestamo}/finalizar', [PrestamoController::class, 'finalizar'])->name('prestamos.finalizar');
 
     // 3. Procesar la devolución (Guardar en BD)
     Route::put('/prestamos/{prestamo}/devolver', [PrestamoController::class, 'devolver'])->name('prestamos.devolver');
-
-    // --- NUEVA RUTA: HISTORIAL DE OPERACIONES ---
-    Route::get('/historial', [HistorialController::class, 'index'])->name('historial.index');
 });
 
 // ===============================
 // 👉 Archivos de Auth (login, logout, register, etc.)
 // ===============================
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
