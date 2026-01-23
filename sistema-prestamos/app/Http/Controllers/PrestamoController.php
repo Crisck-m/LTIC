@@ -21,7 +21,9 @@ class PrestamoController extends Controller
     {
         $prestamos = $this->prestamoService->listarPrestamos(
             $request->search,
-            $request->estado
+            $request->estado,
+            $request->fecha_desde,
+            $request->fecha_hasta
         );
 
         return view('prestamos.index', compact('prestamos'));
@@ -31,8 +33,8 @@ class PrestamoController extends Controller
     {
         $equipos = Equipo::where('estado', 'disponible')->get();
         $estudiantes = Estudiante::all();
-        
-        $practicantes = Estudiante::where('tipo', 'practicante')->get(); 
+
+        $practicantes = Estudiante::where('tipo', 'practicante')->get();
 
         return view('prestamos.create', compact('equipos', 'estudiantes', 'practicantes'));
     }
@@ -41,10 +43,10 @@ class PrestamoController extends Controller
     {
         // Validación directa
         $datos = $request->validate([
-            'estudiante_id'  => 'required|exists:estudiantes,id',
-            'equipo_id'      => 'required|exists:equipos,id',
+            'estudiante_id' => 'required|exists:estudiantes,id',
+            'equipo_id' => 'required|exists:equipos,id',
             'practicante_id' => 'required|exists:estudiantes,id',
-            'observaciones'  => 'nullable|string',
+            'observaciones' => 'nullable|string',
             'fecha_devolucion_esperada' => 'required|date|after:now',
             'notificar_retorno' => 'boolean',
             'periodo_notificacion' => 'nullable|in:1_dia,1_semana,1_mes'
@@ -68,7 +70,7 @@ class PrestamoController extends Controller
         ]);
 
         $this->prestamoService->registrarDevolucion(
-            $prestamo, 
+            $prestamo,
             $request->observaciones
         );
 

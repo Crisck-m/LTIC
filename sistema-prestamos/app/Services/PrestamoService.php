@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 
 class PrestamoService
 {
-    public function listarPrestamos($search, $estado)
+    public function listarPrestamos($search, $estado, $fechaDesde = null, $fechaHasta = null)
     {
         $query = Prestamo::with(['equipo', 'estudiante', 'practicante']);
 
@@ -24,6 +24,15 @@ class PrestamoService
 
         if ($estado) {
             $query->where('estado', $estado);
+        }
+
+        // Filtro por rango de fechas
+        if ($fechaDesde) {
+            $query->whereDate('fecha_prestamo', '>=', $fechaDesde);
+        }
+
+        if ($fechaHasta) {
+            $query->whereDate('fecha_prestamo', '<=', $fechaHasta);
         }
 
         return $query->latest()->paginate(10);
