@@ -13,12 +13,14 @@ class PrestamoService
         $query = Prestamo::with(['equipo', 'estudiante', 'practicante']);
 
         if ($search) {
-            $query->whereHas('estudiante', function ($q) use ($search) {
-                $q->where('nombre', 'LIKE', "%{$search}%")
-                    ->orWhere('apellido', 'LIKE', "%{$search}%");
-            })->orWhereHas('equipo', function ($q) use ($search) {
-                $q->where('codigo_puce', 'LIKE', "%{$search}%")
-                    ->orWhere('tipo', 'LIKE', "%{$search}%");
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('estudiante', function ($subQ) use ($search) {
+                    $subQ->where('nombre', 'LIKE', "%{$search}%")
+                        ->orWhere('apellido', 'LIKE', "%{$search}%");
+                })->orWhereHas('equipo', function ($subQ) use ($search) {
+                    $subQ->where('codigo_puce', 'LIKE', "%{$search}%")
+                        ->orWhere('tipo', 'LIKE', "%{$search}%");
+                });
             });
         }
 
