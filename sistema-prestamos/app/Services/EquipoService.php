@@ -7,7 +7,7 @@ use App\Models\Prestamo;
 
 class EquipoService
 {
-    public function listarEquipos($search, $estado)
+    public function listarEquipos($search, $tipo, $estado)
     {
         $query = Equipo::query();
 
@@ -18,6 +18,10 @@ class EquipoService
                     ->orWhere('codigo_puce', 'LIKE', "%{$search}%")
                     ->orWhere('tipo', 'LIKE', "%{$search}%");
             });
+        }
+
+        if ($tipo) {
+            $query->where('tipo', $tipo);
         }
 
         if ($estado) {

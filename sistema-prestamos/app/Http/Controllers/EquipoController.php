@@ -19,7 +19,11 @@ class EquipoController extends Controller
 
     public function index(Request $request)
     {
-        $equipos = $this->equipoService->listarEquipos($request->search, $request->estado);
+        $equipos = $this->equipoService->listarEquipos(
+            $request->search,
+            $request->tipo,
+            $request->estado
+        );
         return view('equipos.index', compact('equipos'));
     }
 
