@@ -19,6 +19,14 @@ class PrestamoController extends Controller
 
     public function index(Request $request)
     {
+        // Validar que fecha_hasta no sea anterior a fecha_desde
+        $request->validate([
+            'fecha_desde' => 'nullable|date',
+            'fecha_hasta' => 'nullable|date|after_or_equal:fecha_desde',
+        ], [
+            'fecha_hasta.after_or_equal' => 'La fecha "Hasta" no puede ser anterior a la fecha "Desde".',
+        ]);
+
         $prestamos = $this->prestamoService->listarPrestamos(
             $request->search,
             $request->estado,

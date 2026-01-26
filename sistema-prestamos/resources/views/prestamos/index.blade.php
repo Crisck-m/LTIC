@@ -37,14 +37,16 @@
                     </div>
 
                     <div class="col-md-2">
-                        <input type="date" name="fecha_desde" class="form-control" value="{{ request('fecha_desde') }}"
-                            placeholder="Desde" title="Fecha desde" onchange="this.form.submit()">
+                        <input type="date" name="fecha_desde" id="fecha_desde" class="form-control"
+                            value="{{ request('fecha_desde') }}" placeholder="Desde" title="Fecha desde"
+                            onchange="validarFechas()">
                         <small class="text-muted">Desde</small>
                     </div>
 
                     <div class="col-md-2">
-                        <input type="date" name="fecha_hasta" class="form-control" value="{{ request('fecha_hasta') }}"
-                            placeholder="Hasta" title="Fecha hasta" onchange="this.form.submit()">
+                        <input type="date" name="fecha_hasta" id="fecha_hasta" class="form-control"
+                            value="{{ request('fecha_hasta') }}" placeholder="Hasta" title="Fecha hasta"
+                            onchange="validarFechas()">
                         <small class="text-muted">Hasta</small>
                     </div>
 
@@ -148,4 +150,44 @@
             </div>
         </div>
     </div>
+
+    @push('scripts')
+        <script>
+            function validarFechas() {
+                const fechaDesde = document.getElementById('fecha_desde');
+                const fechaHasta = document.getElementById('fecha_hasta');
+
+                // Actualizar el atributo min de fecha_hasta cuando se selecciona fecha_desde
+                if (fechaDesde.value) {
+                    fechaHasta.min = fechaDesde.value;
+                } else {
+                    fechaHasta.removeAttribute('min');
+                }
+
+                // Validar que fecha_hasta no sea menor que fecha_desde
+                if (fechaDesde.value && fechaHasta.value) {
+                    if (fechaHasta.value < fechaDesde.value) {
+                        alert('La fecha "Hasta" no puede ser anterior a la fecha "Desde".');
+                        fechaHasta.value = '';
+                        return false;
+                    }
+                }
+
+                // Si la validación pasa, enviar el formulario
+                if (fechaDesde.value || fechaHasta.value) {
+                    fechaDesde.form.submit();
+                }
+            }
+
+            // Establecer el min al cargar la página si ya hay un valor en fecha_desde
+            document.addEventListener('DOMContentLoaded', function () {
+                const fechaDesde = document.getElementById('fecha_desde');
+                const fechaHasta = document.getElementById('fecha_hasta');
+
+                if (fechaDesde.value) {
+                    fechaHasta.min = fechaDesde.value;
+                }
+            });
+        </script>
+    @endpush
 @endsection
