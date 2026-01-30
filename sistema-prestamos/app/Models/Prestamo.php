@@ -11,6 +11,13 @@ class Prestamo extends Model
 
     protected $guarded = [];
 
+    protected $casts = [
+        'fecha_prestamo' => 'datetime',
+        'fecha_devolucion_esperada' => 'datetime',
+        'fecha_devolucion_real' => 'datetime',
+        'notificar_retorno' => 'boolean',
+    ];
+
     // Relación: Equipo prestado
     public function equipo()
     {
@@ -23,10 +30,16 @@ class Prestamo extends Model
         return $this->belongsTo(Estudiante::class, 'estudiante_id'); 
     }
 
-    // CAMBIO TOTAL AQUÍ: Ahora la relación se llama 'practicante'
-    // y apunta a la columna 'practicante_id'
+    // Relación: Estudiante que REGISTRA el préstamo (pasante/practicante)
+    // La columna en BD es 'pasante_id'
     public function practicante()
     {
-        return $this->belongsTo(Estudiante::class, 'practicante_id');
+        return $this->belongsTo(Estudiante::class, 'pasante_id');
+    }
+
+    // Relación: Estudiante (practicante) que REVISA/RECIBE el equipo en la devolución
+    public function practicanteDevolucion()
+    {
+        return $this->belongsTo(Estudiante::class, 'pasante_devolucion_id');
     }
 }

@@ -382,10 +382,12 @@ function togglePeriodo() {
     if (checkbox.checked) {
         div.style.display = 'block';
         select.required = true;
+        select.disabled = false;
+        if (!select.value) select.value = '1_dia';
     } else {
         div.style.display = 'none';
         select.required = false;
-        select.value = '';
+        select.disabled = true; // no se envía en el form cuando está oculto
     }
 }
 

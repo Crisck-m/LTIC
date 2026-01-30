@@ -40,7 +40,7 @@ class EstudianteService
     {
         // Verificar si el estudiante aparece en algún préstamo
         $tienePrestamos = Prestamo::where('estudiante_id', $estudiante->id)
-            ->orWhere('practicante_id', $estudiante->id)
+            ->orWhere('pasante_id', $estudiante->id)
             ->exists();
 
         if ($tienePrestamos) {

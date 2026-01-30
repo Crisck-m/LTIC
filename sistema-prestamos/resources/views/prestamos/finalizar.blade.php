@@ -47,6 +47,21 @@
                                 <h6 class="text-success border-bottom pb-2 mb-3">Registro de Entrada (Devolución)</h6>
                             </div>
 
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Practicante que revisa el equipo <span class="text-danger">*</span></label>
+                                <select name="practicante_devolucion_id" class="form-select" required>
+                                    <option value="" disabled selected>Seleccione quién recibe el equipo...</option>
+                                    @foreach($practicantes as $practicante)
+                                        <option value="{{ $practicante->id }}">
+                                            {{ $practicante->nombre }} {{ $practicante->apellido }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <div class="form-text text-muted small">Responsable de verificar la devolución.</div>
+                            </div>
+
+                            <div class="col-md-6"></div>
+
                             <div class="col-md-12">
                                 <label class="form-label fw-bold">Observaciones de Recepción (Estado del equipo)</label>
                                 <textarea name="observaciones_devolucion" rows="3" class="form-control" placeholder="Ej: Equipo devuelto en buenas condiciones, sin novedades..."></textarea>

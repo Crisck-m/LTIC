@@ -56,9 +56,14 @@ class PrestamoController extends Controller
             'practicante_id' => 'required|exists:estudiantes,id',
             'observaciones' => 'nullable|string',
             'fecha_devolucion_esperada' => 'required|date|after:now',
-            'notificar_retorno' => 'boolean',
+            'notificar_retorno' => 'nullable|boolean',
             'periodo_notificacion' => 'nullable|in:1_dia,1_semana,1_mes'
         ]);
+
+        $datos['notificar_retorno'] = $request->boolean('notificar_retorno');
+        if ($datos['notificar_retorno'] && empty($datos['periodo_notificacion'])) {
+            $datos['periodo_notificacion'] = '1_dia';
+        }
 
         $this->prestamoService->registrarSalida($datos);
 
@@ -68,18 +73,21 @@ class PrestamoController extends Controller
 
     public function finalizar(Prestamo $prestamo)
     {
-        return view('prestamos.finalizar', compact('prestamo'));
+        $practicantes = Estudiante::where('tipo', 'practicante')->orderBy('nombre')->get();
+        return view('prestamos.finalizar', compact('prestamo', 'practicantes'));
     }
 
     public function devolver(Request $request, Prestamo $prestamo)
     {
         $request->validate([
-            'observaciones' => 'nullable|string'
+            'practicante_devolucion_id' => 'required|exists:estudiantes,id',
+            'observaciones_devolucion' => 'nullable|string'
         ]);
 
         $this->prestamoService->registrarDevolucion(
             $prestamo,
-            $request->observaciones
+            $request->observaciones_devolucion,
+            $request->practicante_devolucion_id
         );
 
         return redirect()->route('prestamos.index')

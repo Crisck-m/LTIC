@@ -8,5 +8,5 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-// Schedule the reminder command to run daily
-Schedule::command('prestamos:enviar-recordatorios')->daily();
+// Recordatorios de devolución: cada día a las 8:00 (envía al correo del estudiante)
+Schedule::command('prestamos:enviar-recordatorios')->dailyAt('08:00');

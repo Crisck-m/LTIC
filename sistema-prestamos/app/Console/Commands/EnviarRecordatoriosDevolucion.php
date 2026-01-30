@@ -25,7 +25,8 @@ class EnviarRecordatoriosDevolucion extends Command
      */
     public function handle()
     {
-        $prestamos = \App\Models\Prestamo::where('estado', 'activo')
+        $prestamos = \App\Models\Prestamo::with(['estudiante', 'equipo'])
+            ->where('estado', 'activo')
             ->where('notificar_retorno', true)
             ->where('recordatorio_enviado', false)
             ->whereNotNull('fecha_devolucion_esperada')
@@ -34,6 +35,11 @@ class EnviarRecordatoriosDevolucion extends Command
         $enviados = 0;
 
         foreach ($prestamos as $prestamo) {
+            if (!$prestamo->estudiante || !$prestamo->estudiante->email) {
+                $this->warn("Préstamo #{$prestamo->id}: estudiante sin email, se omite.");
+                continue;
+            }
+
             $fechaRecordatorio = $this->calcularFechaRecordatorio($prestamo);
 
             if (now()->isSameDay($fechaRecordatorio)) {
