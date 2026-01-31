@@ -66,7 +66,8 @@
                     <thead class="table-dark">
                         <tr>
                             <th>Equipo</th>
-                            <th>Estudiante (Receptor)</th>
+                            <th>Estudiante Solicitante</th>
+                            <th>Estudiante Receptor</th>
                             <th>Fecha y Atención</th>
                             <th class="text-center">Estado</th>
                             <th class="text-end">Acciones</th>
@@ -91,6 +92,21 @@
                                         {{ $prestamo->estudiante->apellido }}
                                     </div>
                                     <div class="small text-muted">{{ $prestamo->estudiante->carrera }}</div>
+                                </td>
+
+                                <td>
+                                    @if($prestamo->practicanteDevolucion)
+                                        <div class="fw-bold text-success">
+                                            <i class="fas fa-user-check me-1"></i>
+                                            {{ $prestamo->practicanteDevolucion->nombre }}
+                                            {{ $prestamo->practicanteDevolucion->apellido }}
+                                        </div>
+                                        <div class="small text-muted">Practicante receptor</div>
+                                    @else
+                                        <div class="text-muted fst-italic">
+                                            <i class="fas fa-hourglass-half me-1"></i> Pendiente
+                                        </div>
+                                    @endif
                                 </td>
 
                                 <td>
@@ -135,7 +151,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center py-5">
+                                <td colspan="6" class="text-center py-5">
                                     <div class="text-muted mb-2"><i class="fas fa-clipboard-list fa-3x"></i></div>
                                     <h6 class="text-muted">No hay historial de préstamos.</h6>
                                 </td>
