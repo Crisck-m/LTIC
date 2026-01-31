@@ -52,10 +52,8 @@ class EquipoService
 
     public function eliminarEquipo(Equipo $equipo)
     {
-        // Verificar si el equipo tiene préstamos asociados
-        $tienePrestamos = Prestamo::where('equipo_id', $equipo->id)->exists();
-
-        if ($tienePrestamos) {
+        // Verificar si el equipo tiene préstamos asociados usando la relación
+        if ($equipo->prestamos()->exists()) {
             return false;
         }
 

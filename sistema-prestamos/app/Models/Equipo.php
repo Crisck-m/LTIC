@@ -9,5 +9,24 @@ class Equipo extends Model
 {
     use HasFactory;
 
-    protected $guarded = [];
+    protected $fillable = [
+        'codigo_puce',
+        'tipo',
+        'marca',
+        'modelo',
+        'estado',
+        'caracteristicas'
+    ];
+
+    // Relación: Préstamos de este equipo
+    public function prestamos()
+    {
+        return $this->hasMany(Prestamo::class);
+    }
+
+    // Scope: Solo equipos disponibles
+    public function scopeDisponibles($query)
+    {
+        return $query->where('estado', 'disponible');
+    }
 }

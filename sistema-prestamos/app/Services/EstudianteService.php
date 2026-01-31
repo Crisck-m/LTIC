@@ -12,11 +12,7 @@ class EstudianteService
         $query = Estudiante::query();
 
         if ($search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('nombre', 'like', "%{$search}%")
-                    ->orWhere('apellido', 'like', "%{$search}%")
-                    ->orWhere('cedula', 'like', "%{$search}%");  // ✅ CAMBIADO
-            });
+            $query->buscar($search);  // Usa el scope definido en el modelo
         }
 
         if ($tipo) {
@@ -40,7 +36,7 @@ class EstudianteService
     {
         // Verificar si el estudiante aparece en algún préstamo
         $tienePrestamos = Prestamo::where('estudiante_id', $estudiante->id)
-            ->orWhere('pasante_id', $estudiante->id)
+            ->orWhere('practicante_id', $estudiante->id)
             ->exists();
 
         if ($tienePrestamos) {

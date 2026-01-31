@@ -11,7 +11,7 @@ class Estudiante extends Model
 
     protected $fillable = [
         'cedula',        // ✅ CAMBIADO de 'matricula' a 'cedula'
-        'nombre', 
+        'nombre',
         'apellido',
         'email',
         'telefono',
@@ -25,16 +25,22 @@ class Estudiante extends Model
         'activo' => 'boolean'
     ];
 
-    // Relación con préstamos como responsable
-    public function prestamosResponsable()
+    // Relación: Préstamos donde este estudiante RECIBIÓ el equipo
+    public function prestamosRecibidos()
     {
-        return $this->hasMany(Prestamo::class, 'estudiante_responsable_id');
+        return $this->hasMany(Prestamo::class, 'estudiante_id');
     }
 
-    // Relación con préstamos como receptor
-    public function prestamosReceptor()
+    // Relación: Préstamos donde este estudiante REGISTRÓ como practicante
+    public function prestamosRegistrados()
     {
-        return $this->hasMany(Prestamo::class, 'estudiante_receptor_id');
+        return $this->hasMany(Prestamo::class, 'practicante_id');
+    }
+
+    // Relación: Devoluciones donde este estudiante RECIBIÓ el equipo como practicante
+    public function devolucionesRecibidas()
+    {
+        return $this->hasMany(Prestamo::class, 'practicante_recibe_id');
     }
 
     // Scope para estudiantes activos
@@ -47,9 +53,9 @@ class Estudiante extends Model
     public function scopeBuscar($query, $search)
     {
         return $query->where('cedula', 'LIKE', "%{$search}%")      // ✅ CAMBIADO
-                    ->orWhere('nombre', 'LIKE', "%{$search}%")
-                    ->orWhere('apellido', 'LIKE', "%{$search}%")
-                    ->orWhere('email', 'LIKE', "%{$search}%");
+            ->orWhere('nombre', 'LIKE', "%{$search}%")
+            ->orWhere('apellido', 'LIKE', "%{$search}%")
+            ->orWhere('email', 'LIKE', "%{$search}%");
     }
 
     // Accessor para nombre completo

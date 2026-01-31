@@ -27,19 +27,20 @@ class Prestamo extends Model
     // Relación: Estudiante que RECIBE el equipo
     public function estudiante()
     {
-        return $this->belongsTo(Estudiante::class, 'estudiante_id'); 
+        return $this->belongsTo(Estudiante::class, 'estudiante_id');
     }
 
     // Relación: Estudiante que REGISTRA el préstamo (pasante/practicante)
-    // La columna en BD es 'pasante_id'
+    // La columna en BD es 'practicante_id'
     public function practicante()
     {
-        return $this->belongsTo(Estudiante::class, 'pasante_id');
+        return $this->belongsTo(Estudiante::class, 'practicante_id');
     }
 
     // Relación: Estudiante (practicante) que REVISA/RECIBE el equipo en la devolución
+    // La columna en BD es 'practicante_recibe_id'
     public function practicanteDevolucion()
     {
-        return $this->belongsTo(Estudiante::class, 'pasante_devolucion_id');
+        return $this->belongsTo(Estudiante::class, 'practicante_recibe_id');
     }
 }

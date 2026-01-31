@@ -54,7 +54,7 @@ class PrestamoService
             $prestamo = Prestamo::create([
                 'equipo_id' => $datos['equipo_id'],
                 'estudiante_id' => $datos['estudiante_id'],
-                'pasante_id' => $datos['practicante_id'],
+                'practicante_id' => $datos['practicante_id'],
                 'user_id' => Auth::id(),
                 'fecha_prestamo' => now(),
                 'fecha_devolucion_esperada' => $datos['fecha_devolucion_esperada'],
@@ -77,7 +77,7 @@ class PrestamoService
                 'fecha_devolucion_real' => now(),
                 'estado' => 'finalizado',
                 'observaciones_devolucion' => $observaciones,
-                'pasante_devolucion_id' => $pasanteDevolucionId
+                'practicante_recibe_id' => $pasanteDevolucionId
             ]);
 
             $prestamo->equipo->update(['estado' => 'disponible']);

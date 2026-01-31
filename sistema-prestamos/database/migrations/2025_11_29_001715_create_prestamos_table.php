@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -13,16 +12,16 @@ return new class extends Migration
     {
         Schema::create('prestamos', function (Blueprint $table) {
             $table->id();
-            
+
             // 1. ¿Qué equipo se presta?
-            $table->foreignId('equipo_id')->constrained('equipos'); 
-            
+            $table->foreignId('equipo_id')->constrained('equipos');
+
             // 2. ¿A qué estudiante se le presta? (Quien se lleva el equipo)
             $table->foreignId('estudiante_id')->constrained('estudiantes');
-            
-            // 3. ¿Quién REGISTRA el préstamo? (El Pasante que atiende)
+
+            // 3. ¿Quién REGISTRA el préstamo? (El Pasante/Practicante que atiende)
             // OJO: Lo relacionamos con la tabla 'estudiantes' porque los pasantes están ahí
-            $table->foreignId('pasante_id')->constrained('estudiantes'); 
+            $table->foreignId('practicante_id')->constrained('estudiantes');
 
             // (Opcional) Dejamos el user_id por si quieres saber desde qué cuenta se hizo, o lo quitamos.
             // Por ahora lo dejaremos nullable por si acaso.
@@ -32,11 +31,11 @@ return new class extends Migration
             $table->dateTime('fecha_prestamo');
             $table->dateTime('fecha_devolucion_esperada')->nullable();
             $table->dateTime('fecha_devolucion_real')->nullable();
-            
+
             $table->text('observaciones_prestamo')->nullable();
             $table->text('observaciones_devolucion')->nullable();
-            
-            $table->string('estado')->default('activo'); 
+
+            $table->string('estado')->default('activo');
 
             $table->timestamps();
         });

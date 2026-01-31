@@ -40,7 +40,7 @@ class EquipoController extends Controller
             'modelo' => 'required|string',
             'codigo_puce' => 'required|unique:equipos,codigo_puce',
             'estado' => 'required|in:disponible,prestado,mantenimiento,baja',
-            'observaciones' => 'nullable|string'
+            'caracteristicas' => 'nullable|string'
         ]);
 
         $equipo = $this->equipoService->crearEquipo($datos);
@@ -61,7 +61,7 @@ class EquipoController extends Controller
             'modelo' => 'required|string',
             'codigo_puce' => ['required', Rule::unique('equipos')->ignore($equipo->id)],
             'estado' => 'required|in:disponible,prestado,mantenimiento,baja',
-            'observaciones' => 'nullable|string'
+            'caracteristicas' => 'nullable|string'
         ]);
 
         $this->equipoService->actualizarEquipo($equipo, $datos);
