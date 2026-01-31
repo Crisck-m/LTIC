@@ -128,8 +128,8 @@
                                             class="text-danger">*</span></label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light"><i class="fas fa-calendar-alt"></i></span>
-                                        <input type="datetime-local" name="fecha_devolucion_esperada" class="form-control"
-                                            required>
+                                        <input type="date" name="fecha_devolucion_esperada" id="fecha_devolucion_esperada"
+                                            class="form-control" min="{{ date('Y-m-d') }}" required>
                                     </div>
                                     <div class="form-text text-muted small">
                                         Fecha límite para la devolución del equipo.
@@ -269,11 +269,11 @@
                         let html = '';
                         data.forEach(estudiante => {
                             html += `
-                                <div class="search-result-item" onclick="seleccionarEstudiante(${estudiante.id}, '${estudiante.nombre}', '${estudiante.apellido}', '${estudiante.cedula}', '${estudiante.carrera}')">
-                                    <strong>${estudiante.nombre} ${estudiante.apellido}</strong>
-                                    <small>Cédula: ${estudiante.cedula} | ${estudiante.carrera}</small>
-                                </div>
-                            `;
+                                            <div class="search-result-item" onclick="seleccionarEstudiante(${estudiante.id}, '${estudiante.nombre}', '${estudiante.apellido}', '${estudiante.cedula}', '${estudiante.carrera}')">
+                                                <strong>${estudiante.nombre} ${estudiante.apellido}</strong>
+                                                <small>Cédula: ${estudiante.cedula} | ${estudiante.carrera}</small>
+                                            </div>
+                                        `;
                         });
                         resultadosDiv.innerHTML = html;
                     })
@@ -331,11 +331,11 @@
                         let html = '';
                         data.forEach(equipo => {
                             html += `
-                                <div class="search-result-item" onclick="seleccionarEquipo(${equipo.id}, '${equipo.tipo}', '${equipo.marca}', '${equipo.modelo || ''}', '${equipo.codigo_puce}')">
-                                    <strong>Nombre: ${equipo.codigo_puce}</strong>
-                                    <small>${equipo.tipo} ${equipo.marca} - Modelo ${equipo.modelo || 'N/A'}</small>
-                                </div>
-                            `;
+                                            <div class="search-result-item" onclick="seleccionarEquipo(${equipo.id}, '${equipo.tipo}', '${equipo.marca}', '${equipo.modelo || ''}', '${equipo.codigo_puce}')">
+                                                <strong>Nombre: ${equipo.codigo_puce}</strong>
+                                                <small>${equipo.tipo} ${equipo.marca} - Modelo ${equipo.modelo || 'N/A'}</small>
+                                            </div>
+                                        `;
                         });
                         resultadosDiv.innerHTML = html;
                     })
@@ -414,6 +414,21 @@
                 alert('Por favor, selecciona un equipo de los resultados de búsqueda');
                 document.getElementById('buscarEquipo').focus();
                 return false;
+            }
+        });
+
+        // ============================================
+        // ESTABLECER FECHA DE DEVOLUCIÓN AUTOMÁTICA
+        // ============================================
+        document.addEventListener('DOMContentLoaded', function () {
+            const fechaDevolucion = document.getElementById('fecha_devolucion_esperada');
+            if (fechaDevolucion && !fechaDevolucion.value) {
+                // Establecer la fecha de hoy en formato YYYY-MM-DD
+                const hoy = new Date();
+                const year = hoy.getFullYear();
+                const month = String(hoy.getMonth() + 1).padStart(2, '0');
+                const day = String(hoy.getDate()).padStart(2, '0');
+                fechaDevolucion.value = `${year}-${month}-${day}`;
             }
         });
     </script>

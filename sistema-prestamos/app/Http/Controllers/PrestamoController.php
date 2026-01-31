@@ -55,9 +55,11 @@ class PrestamoController extends Controller
             'equipo_id' => 'required|exists:equipos,id',
             'practicante_id' => 'required|exists:estudiantes,id',
             'observaciones' => 'nullable|string',
-            'fecha_devolucion_esperada' => 'required|date|after:now',
+            'fecha_devolucion_esperada' => 'required|date|after_or_equal:today',
             'notificar_retorno' => 'nullable|boolean',
             'periodo_notificacion' => 'nullable|in:1_dia,1_semana,1_mes'
+        ], [
+            'fecha_devolucion_esperada.after_or_equal' => 'La fecha de devolución no puede ser anterior al día de hoy.',
         ]);
 
         $datos['notificar_retorno'] = $request->boolean('notificar_retorno');
