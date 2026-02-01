@@ -38,10 +38,10 @@
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Nombre / Código Activo / Serie <span
                                             class="text-danger">*</span></label>
-                                    <input type="text" name="codigo_puce"
-                                        class="form-control @error('codigo_puce') is-invalid @enderror"
-                                        placeholder="Ej: LAP-001" value="{{ old('codigo_puce') }}" required>
-                                    @error('codigo_puce')
+                                    <input type="text" name="nombre_equipo"
+                                        class="form-control @error('nombre_equipo') is-invalid @enderror"
+                                        placeholder="Ej: LAP-001" value="{{ old('nombre_equipo') }}" required>
+                                    @error('nombre_equipo')
                                         <div class="text-danger small mt-1">{{ $message }}</div>
                                     @enderror
                                 </div>

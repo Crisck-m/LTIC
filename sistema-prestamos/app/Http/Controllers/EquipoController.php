@@ -38,7 +38,7 @@ class EquipoController extends Controller
             'tipo' => 'required|string',
             'marca' => 'required|string',
             'modelo' => 'required|string',
-            'codigo_puce' => 'required|unique:equipos,codigo_puce',
+            'nombre_equipo' => 'required|unique:equipos,nombre_equipo',
             'estado' => 'required|in:disponible,prestado,mantenimiento,baja',
             'caracteristicas' => 'nullable|string'
         ]);
@@ -59,7 +59,7 @@ class EquipoController extends Controller
             'tipo' => 'required|string',
             'marca' => 'required|string',
             'modelo' => 'required|string',
-            'codigo_puce' => ['required', Rule::unique('equipos')->ignore($equipo->id)],
+            'nombre_equipo' => ['required', Rule::unique('equipos')->ignore($equipo->id)],
             'estado' => 'required|in:disponible,prestado,mantenimiento,baja',
             'caracteristicas' => 'nullable|string'
         ]);
@@ -71,7 +71,7 @@ class EquipoController extends Controller
 
     public function destroy(Equipo $equipo)
     {
-        $codigo = $equipo->codigo_puce;
+        $codigo = $equipo->nombre_equipo;
         $desc = "{$equipo->tipo} {$equipo->marca}";
 
         $eliminado = $this->equipoService->eliminarEquipo($equipo);
@@ -99,13 +99,13 @@ class EquipoController extends Controller
 
             $equipos = Equipo::where('estado', 'disponible')
                 ->where(function ($query) use ($search) {
-                    $query->where('codigo_puce', 'LIKE', "%{$search}%")
+                    $query->where('nombre_equipo', 'LIKE', "%{$search}%")
                         ->orWhere('tipo', 'LIKE', "%{$search}%")
                         ->orWhere('marca', 'LIKE', "%{$search}%")
                         ->orWhere('modelo', 'LIKE', "%{$search}%");
                 })
                 ->limit(10)
-                ->get(['id', 'tipo', 'marca', 'modelo', 'codigo_puce']);
+                ->get(['id', 'tipo', 'marca', 'modelo', 'nombre_equipo']);
 
             return response()->json($equipos);
 

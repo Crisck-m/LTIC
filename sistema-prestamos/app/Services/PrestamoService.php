@@ -18,7 +18,7 @@ class PrestamoService
                     $subQ->where('nombre', 'LIKE', "%{$search}%")
                         ->orWhere('apellido', 'LIKE', "%{$search}%");
                 })->orWhereHas('equipo', function ($subQ) use ($search) {
-                    $subQ->where('codigo_puce', 'LIKE', "%{$search}%")
+                    $subQ->where('nombre_equipo', 'LIKE', "%{$search}%")
                         ->orWhere('tipo', 'LIKE', "%{$search}%");
                 });
             });

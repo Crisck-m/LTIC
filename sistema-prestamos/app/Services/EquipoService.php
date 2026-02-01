@@ -15,7 +15,7 @@ class EquipoService
             $query->where(function ($q) use ($search) {
                 $q->where('marca', 'LIKE', "%{$search}%")
                     ->orWhere('modelo', 'LIKE', "%{$search}%")
-                    ->orWhere('codigo_puce', 'LIKE', "%{$search}%")
+                    ->orWhere('nombre_equipo', 'LIKE', "%{$search}%")
                     ->orWhere('tipo', 'LIKE', "%{$search}%");
             });
         }

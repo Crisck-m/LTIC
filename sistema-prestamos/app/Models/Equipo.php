@@ -10,7 +10,7 @@ class Equipo extends Model
     use HasFactory;
 
     protected $fillable = [
-        'codigo_puce',
+        'nombre_equipo',
         'tipo',
         'marca',
         'modelo',

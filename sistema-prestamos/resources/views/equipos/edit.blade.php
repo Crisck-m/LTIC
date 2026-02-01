@@ -9,7 +9,7 @@
                 <div class="card shadow-sm border-warning">
                     <div class="card-header bg-white py-3">
                         <h5 class="mb-0 text-warning text-dark">
-                            <i class="fas fa-tools me-2"></i>Editar Equipo: {{ $equipo->codigo_puce }}
+                            <i class="fas fa-tools me-2"></i>Editar Equipo: {{ $equipo->nombre_equipo }}
                         </h5>
                     </div>
 
@@ -26,8 +26,8 @@
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Nombre / Código Activo / Serie <span
                                             class="text-danger">*</span></label>
-                                    <input type="text" name="codigo_puce" class="form-control"
-                                        value="{{ $equipo->codigo_puce }}" required>
+                                    <input type="text" name="nombre_equipo" class="form-control"
+                                        value="{{ $equipo->nombre_equipo }}" required>
                                 </div>
 
                                 <div class="col-md-6">

@@ -180,7 +180,7 @@ return [
     */
 
     'custom' => [
-        'codigo_puce' => [
+        'nombre_equipo' => [
             'unique' => 'Este nombre ya ha sido tomado.',
             'required' => 'El nombre es obligatorio.',
         ],
@@ -199,7 +199,7 @@ return [
     */
 
     'attributes' => [
-        'codigo_puce' => 'nombre',
+        'nombre_equipo' => 'nombre de equipo',
         'tipo' => 'tipo',
         'marca' => 'marca',
         'modelo' => 'modelo',

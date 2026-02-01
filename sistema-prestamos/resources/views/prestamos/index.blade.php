@@ -83,7 +83,7 @@
                                     <div class="small text-muted">
                                         {{ $prestamo->equipo->marca }} - {{ $prestamo->equipo->modelo }}
                                         <span
-                                            class="badge bg-light text-dark border">{{ $prestamo->equipo->codigo_puce }}</span>
+                                            class="badge bg-light text-dark border">{{ $prestamo->equipo->nombre_equipo }}</span>
                                     </div>
                                 </td>
 

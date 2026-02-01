@@ -33,7 +33,7 @@
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Equipo a Recibir</label>
                                     <input type="text" class="form-control bg-light"
-                                        value="{{ $prestamo->equipo->tipo }} - {{ $prestamo->equipo->marca }} [{{ $prestamo->equipo->codigo_puce }}]"
+                                        value="{{ $prestamo->equipo->tipo }} - {{ $prestamo->equipo->marca }} [{{ $prestamo->equipo->nombre_equipo }}]"
                                         readonly>
                                 </div>
 

@@ -269,11 +269,11 @@
                         let html = '';
                         data.forEach(estudiante => {
                             html += `
-                                            <div class="search-result-item" onclick="seleccionarEstudiante(${estudiante.id}, '${estudiante.nombre}', '${estudiante.apellido}', '${estudiante.cedula}', '${estudiante.carrera}')">
-                                                <strong>${estudiante.nombre} ${estudiante.apellido}</strong>
-                                                <small>Cédula: ${estudiante.cedula} | ${estudiante.carrera}</small>
-                                            </div>
-                                        `;
+                                                <div class="search-result-item" onclick="seleccionarEstudiante(${estudiante.id}, '${estudiante.nombre}', '${estudiante.apellido}', '${estudiante.cedula}', '${estudiante.carrera}')">
+                                                    <strong>${estudiante.nombre} ${estudiante.apellido}</strong>
+                                                    <small>Cédula: ${estudiante.cedula} | ${estudiante.carrera}</small>
+                                                </div>
+                                            `;
                         });
                         resultadosDiv.innerHTML = html;
                     })
@@ -331,11 +331,11 @@
                         let html = '';
                         data.forEach(equipo => {
                             html += `
-                                            <div class="search-result-item" onclick="seleccionarEquipo(${equipo.id}, '${equipo.tipo}', '${equipo.marca}', '${equipo.modelo || ''}', '${equipo.codigo_puce}')">
-                                                <strong>Nombre: ${equipo.codigo_puce}</strong>
-                                                <small>${equipo.tipo} ${equipo.marca} - Modelo ${equipo.modelo || 'N/A'}</small>
-                                            </div>
-                                        `;
+                                                <div class="search-result-item" onclick="seleccionarEquipo(${equipo.id}, '${equipo.tipo}', '${equipo.marca}', '${equipo.modelo || ''}', '${equipo.nombre_equipo}')">
+                                                    <strong>Nombre: ${equipo.nombre_equipo}</strong>
+                                                    <small>${equipo.tipo} ${equipo.marca} - Modelo ${equipo.modelo || 'N/A'}</small>
+                                                </div>
+                                            `;
                         });
                         resultadosDiv.innerHTML = html;
                     })
