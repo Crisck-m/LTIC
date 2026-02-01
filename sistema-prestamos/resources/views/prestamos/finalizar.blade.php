@@ -45,6 +45,13 @@
                                 </div>
 
                                 <div class="col-md-6">
+                                    <label class="form-label fw-bold">Practicante que Atendió</label>
+                                    <input type="text" class="form-control bg-light"
+                                        value="{{ $prestamo->practicante ? $prestamo->practicante->nombre . ' ' . $prestamo->practicante->apellido : 'No registrado' }}"
+                                        readonly>
+                                </div>
+
+                                <div class="col-md-6">
                                     <label class="form-label fw-bold">Observaciones Iniciales</label>
                                     <input type="text" class="form-control bg-light"
                                         value="{{ $prestamo->observaciones_prestamo ?? 'Ninguna' }}" readonly>

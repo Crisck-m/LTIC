@@ -26,7 +26,8 @@
                     <thead class="table-light">
                         <tr>
                             <th>Equipo</th>
-                            <th>Responsable (Estudiante)</th>
+                            <th>Estudiante Solicitante</th>
+                            <th>Practicante que Atendió</th>
                             <th>Tiempo Transcurrido</th>
                             <th class="text-end">Acción</th>
                         </tr>
@@ -63,6 +64,16 @@
                                 </td>
 
                                 <td>
+                                    <div class="fw-bold text-info">
+                                        <i class="fas fa-user-tie me-1"></i>
+                                        {{ $prestamo->practicante ? $prestamo->practicante->nombre . ' ' . $prestamo->practicante->apellido : 'No registrado' }}
+                                    </div>
+                                    <div class="text-muted small">
+                                        Atendió la salida
+                                    </div>
+                                </td>
+
+                                <td>
                                     <div class="fw-bold text-dark">
                                         {{ \Carbon\Carbon::parse($prestamo->fecha_prestamo)->diffForHumans() }}
                                     </div>
@@ -80,7 +91,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="4" class="text-center py-5">
+                                <td colspan="5" class="text-center py-5">
                                     <div class="text-success mb-3">
                                         <i class="fas fa-check-double fa-4x"></i>
                                     </div>
