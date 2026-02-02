@@ -69,6 +69,7 @@
                             <th>Estudiante Solicitante</th>
                             <th>Estudiante Receptor</th>
                             <th>Fecha y Atención</th>
+                            <th>Fecha de Devolución</th>
                             <th class="text-center">Estado</th>
                             <th class="text-end">Acciones</th>
                         </tr>
@@ -122,6 +123,19 @@
                                     </div>
                                 </td>
 
+                                <td>
+                                    @if($prestamo->estado == 'finalizado' && $prestamo->fecha_devolucion_real)
+                                        <div><i class="far fa-calendar-check me-1 text-success"></i>
+                                            {{ \Carbon\Carbon::parse($prestamo->fecha_devolucion_real)->format('d/m/Y') }}</div>
+                                        <div class="small text-muted"><i class="far fa-clock me-1"></i>
+                                            {{ \Carbon\Carbon::parse($prestamo->fecha_devolucion_real)->format('h:i A') }}</div>
+                                    @else
+                                        <div class="text-muted fst-italic">
+                                            <i class="fas fa-hourglass-half me-1"></i> Pendiente
+                                        </div>
+                                    @endif
+                                </td>
+
                                 <td class="text-center">
                                     @if($prestamo->estado == 'activo')
                                         <span class="badge bg-warning text-dark border border-warning rounded-pill px-3">
@@ -151,7 +165,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center py-5">
+                                <td colspan="7" class="text-center py-5">
                                     <div class="text-muted mb-2"><i class="fas fa-clipboard-list fa-3x"></i></div>
                                     <h6 class="text-muted">No hay historial de préstamos.</h6>
                                 </td>

@@ -75,7 +75,12 @@
                                     <div class="form-text text-muted small">Responsable de verificar la devolución.</div>
                                 </div>
 
-                                <div class="col-md-6"></div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Fecha y Hora de Confirmación</label>
+                                    <input type="text" class="form-control bg-light"
+                                        value="{{ \Carbon\Carbon::now()->format('d/m/Y h:i A') }}" readonly>
+                                    <div class="form-text text-muted small">Fecha y hora de recepción del equipo.</div>
+                                </div>
 
                                 <div class="col-md-12">
                                     <label class="form-label fw-bold">Observaciones de Recepción (Estado del equipo)</label>
