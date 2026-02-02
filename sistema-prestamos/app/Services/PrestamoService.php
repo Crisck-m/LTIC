@@ -51,6 +51,17 @@ class PrestamoService
     public function registrarSalida(array $datos)
     {
         return DB::transaction(function () use ($datos) {
+            // Bloquear el equipo para evitar race conditions
+            $equipo = \App\Models\Equipo::lockForUpdate()->find($datos['equipo_id']);
+
+            // Verificar que el equipo aún está disponible
+            if ($equipo->estado !== 'disponible') {
+                throw new \Exception(
+                    'Este equipo ya no está disponible. ' .
+                    'Fue prestado por otro usuario hace unos momentos.'
+                );
+            }
+
             $prestamo = Prestamo::create([
                 'equipo_id' => $datos['equipo_id'],
                 'estudiante_id' => $datos['estudiante_id'],
@@ -64,7 +75,8 @@ class PrestamoService
                 'periodo_notificacion' => $datos['periodo_notificacion'] ?? null
             ]);
 
-            $prestamo->equipo->update(['estado' => 'prestado']);
+            // Actualizar estado del equipo
+            $equipo->update(['estado' => 'prestado']);
 
             return $prestamo;
         });
@@ -73,16 +85,26 @@ class PrestamoService
     public function registrarDevolucion(Prestamo $prestamo, $observaciones, $pasanteDevolucionId)
     {
         return DB::transaction(function () use ($prestamo, $observaciones, $pasanteDevolucionId) {
-            $prestamo->update([
+            // Bloquear el préstamo para evitar devoluciones duplicadas
+            $prestamoLocked = Prestamo::lockForUpdate()->find($prestamo->id);
+
+            // Verificar que el préstamo aún está activo
+            if ($prestamoLocked->estado !== 'activo') {
+                throw new \Exception(
+                    'Este préstamo ya fue procesado por otro usuario.'
+                );
+            }
+
+            $prestamoLocked->update([
                 'fecha_devolucion_real' => now(),
                 'estado' => 'finalizado',
                 'observaciones_devolucion' => $observaciones,
                 'practicante_recibe_id' => $pasanteDevolucionId
             ]);
 
-            $prestamo->equipo->update(['estado' => 'disponible']);
+            $prestamoLocked->equipo->update(['estado' => 'disponible']);
 
-            return $prestamo;
+            return $prestamoLocked;
         });
     }
 }

@@ -13,6 +13,24 @@
                         </h5>
                     </div>
 
+                    {{-- Mostrar errores de validación --}}
+                    @if ($errors->any())
+                        <div class="alert alert-danger alert-dismissible fade show m-3 mb-0" role="alert">
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <div>
+                                    <strong>Error al procesar el préstamo:</strong>
+                                    <ul class="mb-0 mt-2">
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    @endif
+
                     <div class="card-body p-4">
                         <form action="{{ route('prestamos.store') }}" method="POST" id="formPrestamo">
                             @csrf
@@ -269,11 +287,11 @@
                         let html = '';
                         data.forEach(estudiante => {
                             html += `
-                                                <div class="search-result-item" onclick="seleccionarEstudiante(${estudiante.id}, '${estudiante.nombre}', '${estudiante.apellido}', '${estudiante.cedula}', '${estudiante.carrera}')">
-                                                    <strong>${estudiante.nombre} ${estudiante.apellido}</strong>
-                                                    <small>Cédula: ${estudiante.cedula} | ${estudiante.carrera}</small>
-                                                </div>
-                                            `;
+                                                    <div class="search-result-item" onclick="seleccionarEstudiante(${estudiante.id}, '${estudiante.nombre}', '${estudiante.apellido}', '${estudiante.cedula}', '${estudiante.carrera}')">
+                                                        <strong>${estudiante.nombre} ${estudiante.apellido}</strong>
+                                                        <small>Cédula: ${estudiante.cedula} | ${estudiante.carrera}</small>
+                                                    </div>
+                                                `;
                         });
                         resultadosDiv.innerHTML = html;
                     })
@@ -331,11 +349,11 @@
                         let html = '';
                         data.forEach(equipo => {
                             html += `
-                                                <div class="search-result-item" onclick="seleccionarEquipo(${equipo.id}, '${equipo.tipo}', '${equipo.marca}', '${equipo.modelo || ''}', '${equipo.nombre_equipo}')">
-                                                    <strong>Nombre: ${equipo.nombre_equipo}</strong>
-                                                    <small>${equipo.tipo} ${equipo.marca} - Modelo ${equipo.modelo || 'N/A'}</small>
-                                                </div>
-                                            `;
+                                                    <div class="search-result-item" onclick="seleccionarEquipo(${equipo.id}, '${equipo.tipo}', '${equipo.marca}', '${equipo.modelo || ''}', '${equipo.nombre_equipo}')">
+                                                        <strong>Nombre: ${equipo.nombre_equipo}</strong>
+                                                        <small>${equipo.tipo} ${equipo.marca} - Modelo ${equipo.modelo || 'N/A'}</small>
+                                                    </div>
+                                                `;
                         });
                         resultadosDiv.innerHTML = html;
                     })

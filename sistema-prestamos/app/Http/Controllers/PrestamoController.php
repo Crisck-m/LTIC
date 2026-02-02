@@ -62,15 +62,33 @@ class PrestamoController extends Controller
             'fecha_devolucion_esperada.after_or_equal' => 'La fecha de devolución no puede ser anterior al día de hoy.',
         ]);
 
+        // Validación previa: verificar que el equipo está disponible
+        $equipo = Equipo::find($datos['equipo_id']);
+        if ($equipo->estado !== 'disponible') {
+            return redirect()
+                ->back()
+                ->withErrors([
+                    'equipo_id' => 'Este equipo fue prestado recientemente por otro usuario. Por favor, selecciona otro equipo disponible.'
+                ])
+                ->withInput();
+        }
+
         $datos['notificar_retorno'] = $request->boolean('notificar_retorno');
         if ($datos['notificar_retorno'] && empty($datos['periodo_notificacion'])) {
             $datos['periodo_notificacion'] = '1_dia';
         }
 
-        $this->prestamoService->registrarSalida($datos);
+        try {
+            $this->prestamoService->registrarSalida($datos);
 
-        return redirect()->route('dashboard')
-            ->with('success', 'Préstamo registrado correctamente.');
+            return redirect()->route('dashboard')
+                ->with('success', 'Préstamo registrado correctamente.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->withErrors(['error' => $e->getMessage()])
+                ->withInput();
+        }
     }
 
     public function finalizar(Prestamo $prestamo)
@@ -86,13 +104,28 @@ class PrestamoController extends Controller
             'observaciones_devolucion' => 'nullable|string'
         ]);
 
-        $this->prestamoService->registrarDevolucion(
-            $prestamo,
-            $request->observaciones_devolucion,
-            $request->practicante_devolucion_id
-        );
+        // Validación previa: verificar que el préstamo está activo
+        if ($prestamo->estado !== 'activo') {
+            return redirect()
+                ->back()
+                ->withErrors([
+                    'error' => 'Este préstamo ya fue procesado por otro usuario.'
+                ]);
+        }
 
-        return redirect()->route('prestamos.index')
-            ->with('success', 'Equipo devuelto correctamente.');
+        try {
+            $this->prestamoService->registrarDevolucion(
+                $prestamo,
+                $request->observaciones_devolucion,
+                $request->practicante_devolucion_id
+            );
+
+            return redirect()->route('prestamos.index')
+                ->with('success', 'Equipo devuelto correctamente.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->withErrors(['error' => $e->getMessage()]);
+        }
     }
 }
