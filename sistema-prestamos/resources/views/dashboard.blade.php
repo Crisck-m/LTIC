@@ -144,10 +144,12 @@
                                 <div>
                                     @if($p->estado == 'activo')
                                         <i class="fas fa-hand-holding text-warning me-2"></i>
-                                        <strong>{{ $p->estudiante->nombre }}</strong> solicitó {{ $p->equipo->tipo }}
+                                        <strong>{{ $p->estudiante->nombre }} {{ $p->estudiante->apellido }}</strong> solicitó
+                                        {{ $p->equipo->nombre_equipo }}
                                     @else
                                         <i class="fas fa-undo text-success me-2"></i>
-                                        <strong>{{ $p->estudiante->nombre }}</strong> devolvió {{ $p->equipo->tipo }}
+                                        <strong>{{ $p->estudiante->nombre }} {{ $p->estudiante->apellido }}</strong> devolvió
+                                        {{ $p->equipo->nombre_equipo }}
                                     @endif
                                 </div>
                                 <small class="text-muted">{{ $p->updated_at->diffForHumans() }}</small>
