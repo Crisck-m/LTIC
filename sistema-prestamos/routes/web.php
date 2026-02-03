@@ -18,9 +18,6 @@ Route::middleware(['auth'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Perfil del usuario
-    Route::get('/profile', [DashboardController::class, 'profile'])->name('profile');
-
     // Gestión de Estudiantes
     Route::resource('estudiantes', EstudianteController::class);
 
