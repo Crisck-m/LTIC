@@ -287,11 +287,11 @@
                         let html = '';
                         data.forEach(estudiante => {
                             html += `
-                                                    <div class="search-result-item" onclick="seleccionarEstudiante(${estudiante.id}, '${estudiante.nombre}', '${estudiante.apellido}', '${estudiante.cedula}', '${estudiante.carrera}')">
-                                                        <strong>${estudiante.nombre} ${estudiante.apellido}</strong>
-                                                        <small>Cédula: ${estudiante.cedula} | ${estudiante.carrera}</small>
-                                                    </div>
-                                                `;
+                                                        <div class="search-result-item" onclick="seleccionarEstudiante(${estudiante.id}, '${estudiante.nombre}', '${estudiante.apellido}', '${estudiante.cedula}', '${estudiante.carrera}')">
+                                                            <strong>${estudiante.nombre} ${estudiante.apellido}</strong>
+                                                            <small>Cédula: ${estudiante.cedula} | ${estudiante.carrera}</small>
+                                                        </div>
+                                                    `;
                         });
                         resultadosDiv.innerHTML = html;
                     })
@@ -349,11 +349,11 @@
                         let html = '';
                         data.forEach(equipo => {
                             html += `
-                                                    <div class="search-result-item" onclick="seleccionarEquipo(${equipo.id}, '${equipo.tipo}', '${equipo.marca}', '${equipo.modelo || ''}', '${equipo.nombre_equipo}')">
-                                                        <strong>Nombre: ${equipo.nombre_equipo}</strong>
-                                                        <small>${equipo.tipo} ${equipo.marca} - Modelo ${equipo.modelo || 'N/A'}</small>
-                                                    </div>
-                                                `;
+                                                        <div class="search-result-item" onclick="seleccionarEquipo(${equipo.id}, '${equipo.tipo}', '${equipo.marca}', '${equipo.modelo || ''}', '${equipo.nombre_equipo}')">
+                                                            <strong>Nombre: ${equipo.nombre_equipo}</strong>
+                                                            <small>${equipo.tipo} ${equipo.marca} - Modelo ${equipo.modelo || 'N/A'}</small>
+                                                        </div>
+                                                    `;
                         });
                         resultadosDiv.innerHTML = html;
                     })
@@ -449,5 +449,74 @@
                 fechaDevolucion.value = `${year}-${month}-${day}`;
             }
         });
+
+        // ============================================
+        // POLLING INVISIBLE - ACTUALIZACIÓN DE ESTADOS
+        // ============================================
+        let intervaloPolling;
+
+        function actualizarEstadosEquipos() {
+            fetch('/api/equipos/estados')
+                .then(response => response.json())
+                .then(equipos => {
+                    equipos.forEach(equipo => {
+                        const elementoEquipo = document.querySelector(`[data-equipo-id="${equipo.id}"]`);
+
+                        if (elementoEquipo) {
+                            const estadoActual = elementoEquipo.dataset.estado;
+
+                            if (estadoActual !== equipo.estado) {
+                                elementoEquipo.dataset.estado = equipo.estado;
+
+                                const badge = elementoEquipo.querySelector('.badge');
+                                if (badge) {
+                                    if (equipo.estado === 'disponible') {
+                                        badge.className = 'badge bg-success';
+                                        badge.textContent = 'Disponible';
+                                    } else if (equipo.estado === 'prestado') {
+                                        badge.className = 'badge bg-danger';
+                                        badge.textContent = 'Prestado';
+                                    } else if (equipo.estado === 'mantenimiento') {
+                                        badge.className = 'badge bg-warning text-dark';
+                                        badge.textContent = 'Mantenimiento';
+                                    } else if (equipo.estado === 'baja') {
+                                        badge.className = 'badge bg-secondary';
+                                        badge.textContent = 'Baja';
+                                    }
+                                }
+
+                                const botonSeleccionar = elementoEquipo.querySelector('.btn-outline-success');
+                                if (botonSeleccionar) {
+                                    if (equipo.estado !== 'disponible') {
+                                        botonSeleccionar.disabled = true;
+                                        botonSeleccionar.classList.add('disabled');
+                                    } else {
+                                        botonSeleccionar.disabled = false;
+                                        botonSeleccionar.classList.remove('disabled');
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => console.error('Error actualizando estados:', error));
+        }
+
+        function iniciarPolling() {
+            actualizarEstadosEquipos();
+            intervaloPolling = setInterval(actualizarEstadosEquipos, 10000);
+        }
+
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) {
+                if (intervaloPolling) {
+                    clearInterval(intervaloPolling);
+                }
+            } else {
+                iniciarPolling();
+            }
+        });
+
+        iniciarPolling();
     </script>
 @endsection

@@ -117,4 +117,29 @@ class EquipoController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Obtener estados de todos los equipos para polling
+     * Retorna solo id y estado para optimizar rendimiento
+     */
+    public function obtenerEstados()
+    {
+        try {
+            $equipos = Equipo::select('id', 'estado')
+                ->get()
+                ->map(function ($equipo) {
+                    return [
+                        'id' => $equipo->id,
+                        'estado' => $equipo->estado
+                    ];
+                });
+
+            return response()->json($equipos);
+        } catch (\Exception $e) {
+            Log::error('Error obteniendo estados de equipos: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Error obteniendo estados'
+            ], 500);
+        }
+    }
 }

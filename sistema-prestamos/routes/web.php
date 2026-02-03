@@ -28,6 +28,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/api/estudiantes/buscar', [EstudianteController::class, 'buscarAjax'])->name('estudiantes.buscar');
     Route::get('/api/equipos/buscar', [EquipoController::class, 'buscarAjax'])->name('equipos.buscar');
 
+    // Ruta API para polling de estados de equipos
+    Route::get('/api/equipos/estados', [EquipoController::class, 'obtenerEstados'])->name('equipos.estados');
+
     // Gestión de Inventario (Equipos)
     Route::resource('equipos', EquipoController::class);
 
