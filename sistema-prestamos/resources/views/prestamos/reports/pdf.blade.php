@@ -194,14 +194,15 @@
         <table>
             <thead>
                 <tr>
-                    <th style="width: 12%;">Equipo</th>
-                    <th style="width: 14%;">Estudiante</th>
-                    <th style="width: 12%;">Practicante</th>
-                    <th style="width: 12%;">Fecha Préstamo</th>
-                    <th style="width: 10%;">Fecha Esperada</th>
-                    <th style="width: 12%;">Fecha Real</th>
-                    <th style="width: 8%;">Estado</th>
-                    <th style="width: 10%;">Cumplimiento</th>
+                    <th style="width: 11%;">Equipo</th>
+                    <th style="width: 12%;">Estudiante</th>
+                    <th style="width: 11%;">Practicante</th>
+                    <th style="width: 11%;">Fecha Préstamo</th>
+                    <th style="width: 9%;">Fecha Esperada</th>
+                    <th style="width: 11%;">Fecha Real</th>
+                    <th style="width: 7%;">Estado</th>
+                    <th style="width: 9%;">Cumplimiento</th>
+                    <th style="width: 9%;">Tiempo</th>
                     <th style="width: 10%;">Observaciones</th>
                 </tr>
             </thead>
@@ -210,11 +211,37 @@
                     @php
                         $cumplimiento = 'Pendiente';
                         $badgeClass = 'badge-info';
+                        $tiempoPrestamo = '-';
 
                         if ($prestamo->estado == 'finalizado' && $prestamo->fecha_devolucion_real) {
                             $fechaReal = \Carbon\Carbon::parse($prestamo->fecha_devolucion_real)->startOfDay();
                             $fechaEsperada = \Carbon\Carbon::parse($prestamo->fecha_devolucion_esperada)->startOfDay();
 
+                            // Calcular tiempo de préstamo
+                            $inicio = \Carbon\Carbon::parse($prestamo->fecha_prestamo);
+                            $fin = \Carbon\Carbon::parse($prestamo->fecha_devolucion_real);
+
+                            $minutosTotales = floor($inicio->diffInMinutes($fin));
+                            $horasTotales = floor($inicio->diffInHours($fin));
+                            $diasTotales = floor($inicio->diffInDays($fin));
+
+                            if ($minutosTotales < 1) {
+                                $tiempoPrestamo = 'Menos de 1 min';
+                            } elseif ($minutosTotales == 1) {
+                                $tiempoPrestamo = '1 min';
+                            } elseif ($minutosTotales < 60) {
+                                $tiempoPrestamo = $minutosTotales . ' min';
+                            } elseif ($horasTotales == 1) {
+                                $tiempoPrestamo = '1 hora';
+                            } elseif ($horasTotales < 24) {
+                                $tiempoPrestamo = $horasTotales . ' hrs';
+                            } elseif ($diasTotales == 1) {
+                                $tiempoPrestamo = '1 día';
+                            } else {
+                                $tiempoPrestamo = $diasTotales . ' días';
+                            }
+
+                            // Calcular cumplimiento
                             if ($fechaReal->lte($fechaEsperada)) {
                                 $cumplimiento = 'A tiempo';
                                 $badgeClass = 'badge-success';
@@ -267,6 +294,9 @@
                         </td>
                         <td class="text-center">
                             <span class="badge {{ $badgeClass }}">{{ $cumplimiento }}</span>
+                        </td>
+                        <td class="small-text text-center">
+                            {{ $tiempoPrestamo }}
                         </td>
                         <td class="small-text">
                             @if($prestamo->observaciones_prestamo)

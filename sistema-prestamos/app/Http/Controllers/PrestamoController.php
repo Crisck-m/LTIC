@@ -195,7 +195,7 @@ class PrestamoController extends Controller
         // Preparar datos para la vista
         $fechaGeneracion = Carbon::now()->format('d/m/Y');
         $horaGeneracion = Carbon::now()->format('H:i A');
-        $rolUsuario = 'Admin/Practicante'; // Simple, como solicitado
+        $rolUsuario = auth()->user()->name; // Nombre del usuario que genera el reporte
 
         $filtrosAplicados = $request->search || $request->estado || $request->fecha_desde || $request->fecha_hasta;
         $filtros = [
@@ -260,6 +260,32 @@ class PrestamoController extends Controller
 
         $prestamos = $query->latest()->get();
 
+        // Calcular estadísticas
+        $total = $prestamos->count();
+        $activos = $prestamos->where('estado', 'activo')->count();
+        $finalizados = $prestamos->where('estado', 'finalizado')->count();
+        $aTiempo = $prestamos->filter(function ($p) {
+            if ($p->estado == 'finalizado' && $p->fecha_devolucion_real) {
+                $fechaReal = Carbon::parse($p->fecha_devolucion_real)->startOfDay();
+                $fechaEsperada = Carbon::parse($p->fecha_devolucion_esperada)->startOfDay();
+                return $fechaReal->lte($fechaEsperada);
+            }
+            return false;
+        })->count();
+        $conRetraso = $prestamos->filter(function ($p) {
+            if ($p->estado == 'finalizado' && $p->fecha_devolucion_real) {
+                $fechaReal = Carbon::parse($p->fecha_devolucion_real)->startOfDay();
+                $fechaEsperada = Carbon::parse($p->fecha_devolucion_esperada)->startOfDay();
+                return $fechaReal->gt($fechaEsperada);
+            }
+            return false;
+        })->count();
+
+        // Preparar metadata
+        $fechaGeneracion = Carbon::now()->format('d/m/Y');
+        $horaGeneracion = Carbon::now()->format('H:i A');
+        $usuarioGenerador = auth()->user()->name;
+
         // Crear CSV en memoria
         $nombreArchivo = 'reporte_prestamos_' . Carbon::now()->format('Y-m-d_His') . '.csv';
 
@@ -271,45 +297,108 @@ class PrestamoController extends Controller
             'Expires' => '0'
         ];
 
-        $callback = function () use ($prestamos) {
+        $callback = function () use ($prestamos, $fechaGeneracion, $horaGeneracion, $usuarioGenerador, $total, $activos, $finalizados, $aTiempo, $conRetraso, $request) {
             $file = fopen('php://output', 'w');
 
             // BOM para UTF-8 (para que Excel muestre correctamente los acentos)
             fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
 
-            // Encabezados
+            // USAR PUNTO Y COMA COMO DELIMITADOR (estándar Excel en español)
+            $delimiter = ';';
+
+            // === SECCIÓN DE METADATA ===
+            fputcsv($file, ['SISTEMA DE PRÉSTAMOS LTIC'], $delimiter);
+            fputcsv($file, ['Reporte de Préstamos'], $delimiter);
+            fputcsv($file, [], $delimiter); // Línea vacía
+
+            fputcsv($file, ['Fecha de Generación:', $fechaGeneracion], $delimiter);
+            fputcsv($file, ['Hora de Generación:', $horaGeneracion], $delimiter);
+            fputcsv($file, ['Generado por:', $usuarioGenerador], $delimiter);
+            fputcsv($file, [], $delimiter); // Línea vacía
+
+            // Filtros aplicados
+            if ($request->search || $request->estado || $request->fecha_desde || $request->fecha_hasta) {
+                fputcsv($file, ['FILTROS APLICADOS:'], $delimiter);
+                if ($request->search) {
+                    fputcsv($file, ['Búsqueda:', $request->search], $delimiter);
+                }
+                if ($request->estado) {
+                    fputcsv($file, ['Estado:', $request->estado == 'activo' ? 'En Curso' : 'Devueltos'], $delimiter);
+                }
+                if ($request->fecha_desde) {
+                    fputcsv($file, ['Desde:', Carbon::parse($request->fecha_desde)->format('d/m/Y')], $delimiter);
+                }
+                if ($request->fecha_hasta) {
+                    fputcsv($file, ['Hasta:', Carbon::parse($request->fecha_hasta)->format('d/m/Y')], $delimiter);
+                }
+            } else {
+                fputcsv($file, ['FILTROS APLICADOS:', 'Sin filtros (Reporte completo)'], $delimiter);
+            }
+
+            fputcsv($file, ['Total de Registros:', $total . ' préstamo(s)'], $delimiter);
+            fputcsv($file, [], $delimiter); // Línea vacía
+            fputcsv($file, [], $delimiter); // Línea vacía
+
+            // === ENCABEZADOS DE LA TABLA ===
             fputcsv($file, [
-                'ID',
+                'ID Préstamo',
                 'Tipo Equipo',
-                'Equipo (Marca/Modelo)',
+                'Marca',
+                'Modelo',
                 'Código Equipo',
-                'Estudiante Solicitante',
+                'Estudiante',
                 'Carrera',
                 'Practicante Registra',
-                'Fecha y Hora Préstamo',
+                'Fecha Préstamo',
+                'Hora Préstamo',
                 'Fecha Esperada Devolución',
                 'Fecha Real Devolución',
+                'Hora Real Devolución',
                 'Practicante Recibe',
                 'Estado',
                 'Cumplimiento',
-                'Días de Préstamo',
+                'Tiempo de Préstamo',
                 'Observaciones Préstamo',
                 'Observaciones Devolución',
-            ]);
+            ], $delimiter);
 
-            // Datos
+            // === DATOS ===
             foreach ($prestamos as $prestamo) {
                 // Calcular cumplimiento
                 $cumplimiento = 'Pendiente';
-                $diasPrestamo = '-';
+                $tiempoPrestamo = '-';
 
                 if ($prestamo->estado == 'finalizado' && $prestamo->fecha_devolucion_real) {
                     $fechaReal = Carbon::parse($prestamo->fecha_devolucion_real)->startOfDay();
                     $fechaEsperada = Carbon::parse($prestamo->fecha_devolucion_esperada)->startOfDay();
-                    $fechaPrestamo = Carbon::parse($prestamo->fecha_prestamo);
 
-                    $diasPrestamo = $fechaPrestamo->diffInDays($fechaReal);
+                    // Calcular tiempo de préstamo (con horas exactas)
+                    $inicio = Carbon::parse($prestamo->fecha_prestamo);
+                    $fin = Carbon::parse($prestamo->fecha_devolucion_real);
 
+                    // Redondear a enteros para evitar decimales
+                    $minutosTotales = floor($inicio->diffInMinutes($fin));
+                    $horasTotales = floor($inicio->diffInHours($fin));
+                    $diasTotales = floor($inicio->diffInDays($fin));
+
+                    // Formatear según la duración con gramática correcta
+                    if ($minutosTotales < 1) {
+                        $tiempoPrestamo = 'Menos de 1 minuto';
+                    } elseif ($minutosTotales == 1) {
+                        $tiempoPrestamo = '1 minuto';
+                    } elseif ($minutosTotales < 60) {
+                        $tiempoPrestamo = $minutosTotales . ' minutos';
+                    } elseif ($horasTotales == 1) {
+                        $tiempoPrestamo = '1 hora';
+                    } elseif ($horasTotales < 24) {
+                        $tiempoPrestamo = $horasTotales . ' horas';
+                    } elseif ($diasTotales == 1) {
+                        $tiempoPrestamo = '1 día';
+                    } else {
+                        $tiempoPrestamo = $diasTotales . ' días';
+                    }
+
+                    // Calcular cumplimiento (solo comparar fechas)
                     if ($fechaReal->lte($fechaEsperada)) {
                         $cumplimiento = 'A tiempo';
                     } else {
@@ -321,22 +410,35 @@ class PrestamoController extends Controller
                 fputcsv($file, [
                     $prestamo->id,
                     $prestamo->equipo->tipo ?? '-',
-                    ($prestamo->equipo->marca ?? '-') . ' / ' . ($prestamo->equipo->modelo ?? '-'),
+                    $prestamo->equipo->marca ?? '-',
+                    $prestamo->equipo->modelo ?? '-',
                     $prestamo->equipo->nombre_equipo ?? '-',
                     ($prestamo->estudiante->nombre ?? '') . ' ' . ($prestamo->estudiante->apellido ?? ''),
                     $prestamo->estudiante->carrera ?? '-',
                     ($prestamo->practicante->nombre ?? '') . ' ' . ($prestamo->practicante->apellido ?? ''),
-                    $prestamo->fecha_prestamo ? Carbon::parse($prestamo->fecha_prestamo)->format('d/m/Y H:i') : '-',
+                    $prestamo->fecha_prestamo ? Carbon::parse($prestamo->fecha_prestamo)->format('d/m/Y') : '-',
+                    $prestamo->fecha_prestamo ? Carbon::parse($prestamo->fecha_prestamo)->format('H:i') : '-',
                     $prestamo->fecha_devolucion_esperada ? Carbon::parse($prestamo->fecha_devolucion_esperada)->format('d/m/Y') : '-',
-                    $prestamo->fecha_devolucion_real ? Carbon::parse($prestamo->fecha_devolucion_real)->format('d/m/Y H:i') : 'Pendiente',
+                    $prestamo->fecha_devolucion_real ? Carbon::parse($prestamo->fecha_devolucion_real)->format('d/m/Y') : 'Pendiente',
+                    $prestamo->fecha_devolucion_real ? Carbon::parse($prestamo->fecha_devolucion_real)->format('H:i') : '-',
                     $prestamo->practicanteDevolucion ? ($prestamo->practicanteDevolucion->nombre . ' ' . $prestamo->practicanteDevolucion->apellido) : 'Pendiente',
                     $prestamo->estado == 'activo' ? 'En Curso' : 'Devuelto',
                     $cumplimiento,
-                    $diasPrestamo,
+                    $tiempoPrestamo,
                     $prestamo->observaciones_prestamo ?? '-',
                     $prestamo->observaciones_devolucion ?? '-',
-                ]);
+                ], $delimiter);
             }
+
+            // === SECCIÓN DE ESTADÍSTICAS ===
+            fputcsv($file, [], $delimiter); // Línea vacía
+            fputcsv($file, [], $delimiter); // Línea vacía
+            fputcsv($file, ['RESUMEN ESTADÍSTICO'], $delimiter);
+            fputcsv($file, ['Total de Préstamos:', $total], $delimiter);
+            fputcsv($file, ['Préstamos Activos:', $activos], $delimiter);
+            fputcsv($file, ['Préstamos Finalizados:', $finalizados], $delimiter);
+            fputcsv($file, ['Devueltos a Tiempo:', $aTiempo], $delimiter);
+            fputcsv($file, ['Devueltos con Retraso:', $conRetraso], $delimiter);
 
             fclose($file);
         };
