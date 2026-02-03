@@ -8,9 +8,32 @@
             <h5 class="mb-0 text-secondary">
                 <i class="fas fa-history me-2"></i>Historial de Préstamos
             </h5>
-            <a href="{{ route('prestamos.create') }}" class="btn btn-primary">
-                <i class="fas fa-plus me-2"></i> Nuevo Préstamo
-            </a>
+            <div class="d-flex gap-2">
+                <!-- Botón Dropdown de Exportación -->
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        <i class="fas fa-download me-2"></i>Exportar Reporte
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="#" onclick="confirmarExportacion('pdf'); return false;">
+                                <i class="fas fa-file-pdf text-danger me-2"></i>Descargar PDF
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#" onclick="confirmarExportacion('excel'); return false;">
+                                <i class="fas fa-file-excel text-success me-2"></i>Descargar Excel
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Botón Nuevo Préstamo -->
+                <a href="{{ route('prestamos.create') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i> Nuevo Préstamo
+                </a>
+            </div>
         </div>
 
         <div class="card-body">
@@ -183,6 +206,9 @@
 
     @push('scripts')
         <script>
+            // ========================================
+            // VALIDACIÓN DE FECHAS (existente)
+            // ========================================
             function validarFechas() {
                 const fechaDesde = document.getElementById('fecha_desde');
                 const fechaHasta = document.getElementById('fecha_hasta');
@@ -218,6 +244,71 @@
                     fechaHasta.min = fechaDesde.value;
                 }
             });
+
+            // ========================================
+            // EXPORTACIÓN DE REPORTES (nuevo)
+            // ========================================
+
+            /**
+             * Confirma la exportación según si hay filtros aplicados o no
+             * @param {string} formato - 'pdf' o 'excel'
+             */
+            function confirmarExportacion(formato) {
+                // Detectar si hay filtros activos
+                const search = document.querySelector('input[name="search"]').value;
+                const estado = document.querySelector('select[name="estado"]').value;
+                const fechaDesde = document.querySelector('input[name="fecha_desde"]').value;
+                const fechaHasta = document.querySelector('input[name="fecha_hasta"]').value;
+
+                const hayFiltros = search || estado || fechaDesde || fechaHasta;
+
+                if (!hayFiltros) {
+                    // Sin filtros: mostrar confirmación
+                    const confirmar = confirm(
+                        'Te recomendamos filtrar el reporte por fechas específicas, si no será muy largo.\n\n' +
+                        '¿Deseas continuar con este reporte completo?'
+                    );
+
+                    if (!confirmar) {
+                        // Usuario canceló, no hacer nada
+                        return;
+                    }
+                }
+
+                // Usuario confirmó o hay filtros: proceder con descarga
+                const url = construirURLExportacion(formato);
+                window.location.href = url;
+            }
+
+            /**
+             * Construye la URL de exportación con los parámetros de filtro actuales
+             * @param {string} formato - 'pdf' o 'excel'
+             * @returns {string} URL completa con query parameters
+             */
+            function construirURLExportacion(formato) {
+                // Base URL según el formato
+                const baseUrl = formato === 'pdf' 
+                    ? '{{ route("prestamos.export.pdf") }}'
+                    : '{{ route("prestamos.export.excel") }}';
+
+                // Obtener valores actuales de los filtros
+                const search = document.querySelector('input[name="search"]').value;
+                const estado = document.querySelector('select[name="estado"]').value;
+                const fechaDesde = document.querySelector('input[name="fecha_desde"]').value;
+                const fechaHasta = document.querySelector('input[name="fecha_hasta"]').value;
+
+                // Construir query string
+                const params = new URLSearchParams();
+                
+                if (search) params.append('search', search);
+                if (estado) params.append('estado', estado);
+                if (fechaDesde) params.append('fecha_desde', fechaDesde);
+                if (fechaHasta) params.append('fecha_hasta', fechaHasta);
+
+                // Retornar URL completa
+                const queryString = params.toString();
+                return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+            }
         </script>
     @endpush
 @endsection

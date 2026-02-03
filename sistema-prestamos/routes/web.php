@@ -37,6 +37,10 @@ Route::middleware(['auth'])->group(function () {
     // Gestión de Préstamos (CRUD completo)
     Route::resource('prestamos', PrestamoController::class);
 
+    // Rutas de exportación de reportes
+    Route::get('/prestamos/export/pdf', [PrestamoController::class, 'exportPDF'])->name('prestamos.export.pdf');
+    Route::get('/prestamos/export/excel', [PrestamoController::class, 'exportExcel'])->name('prestamos.export.excel');
+
     // Rutas personalizadas para Devoluciones
     // 1. Bandeja de devoluciones pendientes
     Route::get('/devoluciones', [DevolucionController::class, 'index'])->name('devoluciones.index');
