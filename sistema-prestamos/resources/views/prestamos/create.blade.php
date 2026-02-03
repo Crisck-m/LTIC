@@ -8,9 +8,14 @@
             <div class="col-md-10">
                 <div class="card shadow-sm">
                     <div class="card-header bg-white py-3">
-                        <h5 class="mb-0 text-secondary">
-                            <i class="fas fa-hand-holding me-2"></i>Registrar Salida de Equipo
-                        </h5>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 text-secondary">
+                                <i class="fas fa-hand-holding me-2"></i>Registrar Salida de Equipo
+                            </h5>
+                            <a href="{{ route('estudiantes.create') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-user-plus me-2"></i>Registrar estudiante
+                            </a>
+                        </div>
                     </div>
 
                     {{-- Mostrar errores de validación --}}
@@ -287,11 +292,11 @@
                         let html = '';
                         data.forEach(estudiante => {
                             html += `
-                                                        <div class="search-result-item" onclick="seleccionarEstudiante(${estudiante.id}, '${estudiante.nombre}', '${estudiante.apellido}', '${estudiante.cedula}', '${estudiante.carrera}')">
-                                                            <strong>${estudiante.nombre} ${estudiante.apellido}</strong>
-                                                            <small>Cédula: ${estudiante.cedula} | ${estudiante.carrera}</small>
-                                                        </div>
-                                                    `;
+                                                            <div class="search-result-item" onclick="seleccionarEstudiante(${estudiante.id}, '${estudiante.nombre}', '${estudiante.apellido}', '${estudiante.cedula}', '${estudiante.carrera}')">
+                                                                <strong>${estudiante.nombre} ${estudiante.apellido}</strong>
+                                                                <small>Cédula: ${estudiante.cedula} | ${estudiante.carrera}</small>
+                                                            </div>
+                                                        `;
                         });
                         resultadosDiv.innerHTML = html;
                     })
@@ -349,11 +354,11 @@
                         let html = '';
                         data.forEach(equipo => {
                             html += `
-                                                        <div class="search-result-item" onclick="seleccionarEquipo(${equipo.id}, '${equipo.tipo}', '${equipo.marca}', '${equipo.modelo || ''}', '${equipo.nombre_equipo}')">
-                                                            <strong>Nombre: ${equipo.nombre_equipo}</strong>
-                                                            <small>${equipo.tipo} ${equipo.marca} - Modelo ${equipo.modelo || 'N/A'}</small>
-                                                        </div>
-                                                    `;
+                                                            <div class="search-result-item" onclick="seleccionarEquipo(${equipo.id}, '${equipo.tipo}', '${equipo.marca}', '${equipo.modelo || ''}', '${equipo.nombre_equipo}')">
+                                                                <strong>Nombre: ${equipo.nombre_equipo}</strong>
+                                                                <small>${equipo.tipo} ${equipo.marca} - Modelo ${equipo.modelo || 'N/A'}</small>
+                                                            </div>
+                                                        `;
                         });
                         resultadosDiv.innerHTML = html;
                     })
