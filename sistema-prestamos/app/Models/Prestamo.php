@@ -13,9 +13,9 @@ class Prestamo extends Model
 
     protected $casts = [
         'fecha_prestamo' => 'datetime',
-        'fecha_devolucion_esperada' => 'datetime',
+        'fecha_devolucion_esperada' => 'date',
         'fecha_devolucion_real' => 'datetime',
-        'notificar_retorno' => 'boolean',
+        'recordatorio_enviado' => 'boolean',
     ];
 
     // Relación: Equipo prestado

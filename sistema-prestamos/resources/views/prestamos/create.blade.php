@@ -164,25 +164,6 @@
                                     <textarea name="observaciones" rows="2" class="form-control"
                                         placeholder="Ej: Se entrega con cargador original, sin mouse..."></textarea>
                                 </div>
-
-                                <div class="col-md-6">
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" name="notificar_retorno"
-                                            id="notificar_retorno" value="1" onchange="togglePeriodo()">
-                                        <label class="form-check-label fw-bold" for="notificar_retorno">
-                                            Activar notificaciones por email para recordatorio de retorno
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-6" id="periodoDiv" style="display: none;">
-                                    <label class="form-label fw-bold">Período de notificación</label>
-                                    <select name="periodo_notificacion" id="periodo_notificacion" class="form-select">
-                                        <option value="1_dia">1 día antes</option>
-                                        <option value="1_semana">1 semana antes</option>
-                                        <option value="1_mes">1 mes antes</option>
-                                    </select>
-                                </div>
                             </div>
 
                             <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
@@ -292,11 +273,11 @@
                         let html = '';
                         data.forEach(estudiante => {
                             html += `
-                                                            <div class="search-result-item" onclick="seleccionarEstudiante(${estudiante.id}, '${estudiante.nombre}', '${estudiante.apellido}', '${estudiante.cedula}', '${estudiante.carrera}')">
-                                                                <strong>${estudiante.nombre} ${estudiante.apellido}</strong>
-                                                                <small>Cédula: ${estudiante.cedula} | ${estudiante.carrera}</small>
-                                                            </div>
-                                                        `;
+                                                                <div class="search-result-item" onclick="seleccionarEstudiante(${estudiante.id}, '${estudiante.nombre}', '${estudiante.apellido}', '${estudiante.cedula}', '${estudiante.carrera}')">
+                                                                    <strong>${estudiante.nombre} ${estudiante.apellido}</strong>
+                                                                    <small>Cédula: ${estudiante.cedula} | ${estudiante.carrera}</small>
+                                                                </div>
+                                                            `;
                         });
                         resultadosDiv.innerHTML = html;
                     })
@@ -354,11 +335,11 @@
                         let html = '';
                         data.forEach(equipo => {
                             html += `
-                                                            <div class="search-result-item" onclick="seleccionarEquipo(${equipo.id}, '${equipo.tipo}', '${equipo.marca}', '${equipo.modelo || ''}', '${equipo.nombre_equipo}')">
-                                                                <strong>Nombre: ${equipo.nombre_equipo}</strong>
-                                                                <small>${equipo.tipo} ${equipo.marca} - Modelo ${equipo.modelo || 'N/A'}</small>
-                                                            </div>
-                                                        `;
+                                                                <div class="search-result-item" onclick="seleccionarEquipo(${equipo.id}, '${equipo.tipo}', '${equipo.marca}', '${equipo.modelo || ''}', '${equipo.nombre_equipo}')">
+                                                                    <strong>Nombre: ${equipo.nombre_equipo}</strong>
+                                                                    <small>${equipo.tipo} ${equipo.marca} - Modelo ${equipo.modelo || 'N/A'}</small>
+                                                                </div>
+                                                            `;
                         });
                         resultadosDiv.innerHTML = html;
                     })
@@ -398,25 +379,6 @@
                 document.getElementById('resultadosEquipo').classList.remove('show');
             }
         });
-
-        // ============================================
-        // FUNCIÓN ORIGINAL
-        // ============================================
-        function togglePeriodo() {
-            const checkbox = document.getElementById('notificar_retorno');
-            const div = document.getElementById('periodoDiv');
-            const select = document.getElementById('periodo_notificacion');
-            if (checkbox.checked) {
-                div.style.display = 'block';
-                select.required = true;
-                select.disabled = false;
-                if (!select.value) select.value = '1_dia';
-            } else {
-                div.style.display = 'none';
-                select.required = false;
-                select.disabled = true; // no se envía en el form cuando está oculto
-            }
-        }
 
         // ============================================
         // VALIDACIÓN DE FORMULARIO

@@ -71,7 +71,6 @@ class PrestamoService
                 'fecha_devolucion_esperada' => $datos['fecha_devolucion_esperada'],
                 'estado' => 'activo',
                 'observaciones_prestamo' => $datos['observaciones'] ?? null,
-                'notificar_retorno' => $datos['notificar_retorno'] ?? false,
                 'periodo_notificacion' => $datos['periodo_notificacion'] ?? null
             ]);
 
