@@ -90,7 +90,7 @@
                         <tr>
                             <th>Equipo</th>
                             <th>Estudiante Solicitante</th>
-                            <th>Estudiante Receptor</th>
+                            <th>Practicante Receptor</th>
                             <th>Fecha y Atención</th>
                             <th>Fecha de Devolución</th>
                             <th class="text-center">Estado</th>
@@ -175,10 +175,16 @@
 
                                 <td class="text-end">
                                     @if($prestamo->estado == 'activo')
-                                        <a href="{{ route('prestamos.finalizar', $prestamo) }}" class="btn btn-sm btn-success"
-                                            title="Registrar Devolución">
-                                            <i class="fas fa-undo me-1"></i> Devolver
-                                        </a>
+                                        <div class="d-flex gap-1 justify-content-end">
+                                            <a href="{{ route('prestamos.finalizar', $prestamo) }}" class="btn btn-sm btn-success"
+                                                title="Registrar Devolución">
+                                                <i class="fas fa-undo me-1"></i> Devolver
+                                            </a>
+                                            <a href="{{ route('prestamos.edit', $prestamo) }}"
+                                                class="btn btn-sm btn-warning text-dark" title="Editar Préstamo">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </div>
                                     @else
                                         <button class="btn btn-sm btn-outline-secondary" disabled>
                                             <i class="fas fa-check-double"></i>
@@ -287,7 +293,7 @@
              */
             function construirURLExportacion(formato) {
                 // Base URL según el formato
-                const baseUrl = formato === 'pdf' 
+                const baseUrl = formato === 'pdf'
                     ? '{{ route("prestamos.export.pdf") }}'
                     : '{{ route("prestamos.export.excel") }}';
 
@@ -299,7 +305,7 @@
 
                 // Construir query string
                 const params = new URLSearchParams();
-                
+
                 if (search) params.append('search', search);
                 if (estado) params.append('estado', estado);
                 if (fechaDesde) params.append('fecha_desde', fechaDesde);

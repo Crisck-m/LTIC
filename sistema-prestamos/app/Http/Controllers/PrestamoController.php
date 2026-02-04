@@ -9,6 +9,7 @@ use App\Services\PrestamoService;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class PrestamoController extends Controller
 {
@@ -54,31 +55,133 @@ class PrestamoController extends Controller
         // Validación directa
         $datos = $request->validate([
             'estudiante_id' => 'required|exists:estudiantes,id',
-            'equipo_id' => 'required|exists:equipos,id',
+            'equipo_id' => 'required|array|min:1',
+            'equipo_id.*' => 'exists:equipos,id',
             'practicante_id' => 'required|exists:estudiantes,id',
             'fecha_devolucion_esperada' => 'required|date|after_or_equal:today',
             'observaciones' => 'nullable|string|max:500',
             'periodo_notificacion' => 'nullable|in:1_dia,1_semana,1_mes',
         ], [
             'fecha_devolucion_esperada.after_or_equal' => 'La fecha de devolución no puede ser anterior al día de hoy.',
+            'equipo_id.required' => 'Debes seleccionar al menos un equipo.',
         ]);
 
-        // Validación previa: verificar que el equipo está disponible
-        $equipo = Equipo::find($datos['equipo_id']);
-        if ($equipo->estado !== 'disponible') {
-            return redirect()
-                ->back()
-                ->withErrors([
-                    'equipo_id' => 'Este equipo fue prestado recientemente por otro usuario. Por favor, selecciona otro equipo disponible.'
-                ])
-                ->withInput();
+        // Validación previa: verificar que TODOS los equipos están disponibles
+        foreach ($request->equipo_id as $idEquipo) {
+            $equipo = Equipo::find($idEquipo);
+            if ($equipo->estado !== 'disponible') {
+                return redirect()
+                    ->back()
+                    ->withErrors([
+                        'equipo_id' => "El equipo '{$equipo->nombre_equipo}' (ID: {$equipo->id}) ya no está disponible."
+                    ])
+                    ->withInput();
+            }
         }
 
         try {
-            $this->prestamoService->registrarSalida($datos);
+            DB::transaction(function () use ($request, $datos) {
+                foreach ($request->equipo_id as $idEquipo) {
+                    $datosIndividuales = $datos;
+                    $datosIndividuales['equipo_id'] = $idEquipo;
+
+                    // PrestamoService->registrarSalida espera 'equipo_id' singular
+                    $this->prestamoService->registrarSalida($datosIndividuales);
+                }
+            });
 
             return redirect()->route('dashboard')
-                ->with('success', 'Préstamo registrado correctamente.');
+                ->with('success', 'Préstamo(s) registrado(s) correctamente.');
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->withErrors(['error' => $e->getMessage()])
+                ->withInput();
+        }
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(Prestamo $prestamo)
+    {
+        if ($prestamo->estado !== 'activo') {
+            return redirect()->back()->with('error', 'Solo se pueden editar préstamos activos.');
+        }
+
+        $prestamo->load(['estudiante', 'equipo', 'practicante']);
+
+        return view('prestamos.edit', compact('prestamo'));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, Prestamo $prestamo)
+    {
+        $datos = $request->validate([
+            'estudiante_id' => 'required|exists:estudiantes,id',
+            'practicante_id' => 'required|exists:estudiantes,id',
+            'equipo_id' => 'required|array|min:1',
+            'equipo_id.*' => 'exists:equipos,id',
+            'fecha_devolucion_esperada' => 'required|date|after_or_equal:today',
+            'observaciones' => 'nullable|string|max:500',
+        ], [
+            'fecha_devolucion_esperada.after_or_equal' => 'La fecha de devolución no puede ser anterior al día de hoy.',
+            'equipo_id.required' => 'El préstamo no puede quedar vacío.',
+        ]);
+
+        foreach ($request->equipo_id as $index => $idEquipo) {
+            if ($index === 0 && $idEquipo == $prestamo->equipo_id) {
+                continue;
+            }
+
+            $equipo = Equipo::find($idEquipo);
+            if ($equipo->estado !== 'disponible') {
+                if ($idEquipo != $prestamo->equipo_id) {
+                    return redirect()
+                        ->back()
+                        ->withErrors([
+                            'equipo_id' => "El equipo '{$equipo->nombre_equipo}' no está disponible."
+                        ])
+                        ->withInput();
+                }
+            }
+        }
+
+        try {
+            DB::transaction(function () use ($request, $prestamo, $datos) {
+                // 1. Actualizar Prestamo Original
+                $equiposList = $request->equipo_id;
+                $primerEquipoId = array_shift($equiposList);
+
+                if ($prestamo->equipo_id != $primerEquipoId) {
+                    $equipoAnterior = Equipo::find($prestamo->equipo_id);
+                    $equipoAnterior->estado = 'disponible';
+                    $equipoAnterior->save();
+
+                    $equipoNuevo = Equipo::find($primerEquipoId);
+                    $equipoNuevo->estado = 'prestado';
+                    $equipoNuevo->save();
+
+                    $prestamo->equipo_id = $primerEquipoId;
+                }
+
+                $prestamo->fecha_devolucion_esperada = $datos['fecha_devolucion_esperada'];
+                $prestamo->observaciones_prestamo = $datos['observaciones'];
+                $prestamo->save();
+
+                // 2. Crear Nuevos Prestamos
+                foreach ($equiposList as $idNuevoEquipo) {
+                    $datosNuevo = $datos;
+                    $datosNuevo['equipo_id'] = $idNuevoEquipo;
+                    $this->prestamoService->registrarSalida($datosNuevo);
+                }
+            });
+
+            return redirect()->route('prestamos.index')
+                ->with('success', 'Préstamo actualizado correctamente.');
+
         } catch (\Exception $e) {
             return redirect()
                 ->back()

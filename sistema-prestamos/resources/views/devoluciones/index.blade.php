@@ -43,7 +43,8 @@
                                         <div>
                                             <div class="fw-bold">{{ $prestamo->equipo->tipo }}</div>
                                             <div class="text-muted small">{{ $prestamo->equipo->marca }} -
-                                                {{ $prestamo->equipo->modelo }}</div>
+                                                {{ $prestamo->equipo->modelo }}
+                                            </div>
                                             <span
                                                 class="badge bg-secondary text-light">{{ $prestamo->equipo->nombre_equipo }}</span>
                                         </div>
@@ -52,7 +53,8 @@
 
                                 <td>
                                     <div class="fw-bold">{{ $prestamo->estudiante->nombre }}
-                                        {{ $prestamo->estudiante->apellido }}</div>
+                                        {{ $prestamo->estudiante->apellido }}
+                                    </div>
                                     <div class="text-muted small">
                                         <i class="fas fa-graduation-cap me-1"></i> {{ $prestamo->estudiante->carrera }}
                                     </div>
@@ -83,10 +85,16 @@
                                 </td>
 
                                 <td class="text-end">
-                                    <a href="{{ route('prestamos.finalizar', $prestamo) }}"
-                                        class="btn btn-success text-white shadow-sm">
-                                        <i class="fas fa-check-circle me-1"></i> Recibir Equipo
-                                    </a>
+                                    <div class="d-flex gap-2 justify-content-end">
+                                        <a href="{{ route('prestamos.finalizar', $prestamo) }}"
+                                            class="btn btn-success text-white shadow-sm">
+                                            <i class="fas fa-check-circle me-1"></i> Recibir Equipo
+                                        </a>
+                                        <a href="{{ route('prestamos.edit', $prestamo) }}"
+                                            class="btn btn-warning text-dark shadow-sm" title="Editar Préstamo">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @empty

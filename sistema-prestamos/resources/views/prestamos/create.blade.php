@@ -78,36 +78,21 @@
                                     </div>
                                 </div>
 
-                                <!-- BÚSQUEDA DE EQUIPO -->
+                                <!-- BÚSQUEDA DE EQUIPO (MÚLTIPLE) -->
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold">Equipo a Entregar <span
-                                            class="text-danger">*</span></label>
-                                    <div class="position-relative">
-                                        <div class="input-group">
-                                            <span class="input-group-text bg-light"><i class="fas fa-laptop"></i></span>
-                                            <input type="text" id="buscarEquipo" class="form-control"
-                                                placeholder="Buscar por código, serie, tipo o marca..." autocomplete="off">
-                                        </div>
-                                        <input type="hidden" name="equipo_id" id="equipo_id" required>
-
-                                        <!-- Resultados de búsqueda -->
-                                        <div id="resultadosEquipo" class="search-results"></div>
-
-                                        <!-- Equipo seleccionado -->
-                                        <div id="equipoSeleccionado" class="selected-item mt-2" style="display: none;">
-                                            <div
-                                                class="alert alert-info mb-0 d-flex justify-content-between align-items-center">
-                                                <div>
-                                                    <strong id="equipoNombre"></strong><br>
-                                                    <small id="equipoDetalle"></small>
-                                                </div>
-                                                <button type="button" class="btn btn-sm btn-outline-danger"
-                                                    onclick="limpiarEquipo()">
-                                                    <i class="fas fa-times"></i>
-                                                </button>
-                                            </div>
-                                        </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label class="form-label fw-bold mb-0">Equipos a Entregar <span
+                                                class="text-danger">*</span></label>
+                                        <button type="button" class="btn btn-sm btn-outline-primary"
+                                            onclick="agregarFilaEquipo()">
+                                            <i class="fas fa-plus me-1"></i> Añadir equipo/accesorio
+                                        </button>
                                     </div>
+
+                                    <div id="contenedorEquipos">
+                                        <!-- Las filas de equipos se agregarán aquí dinámicamente -->
+                                    </div>
+                                    
                                     <div class="form-text text-success mt-1">
                                         <i class="fas fa-check-circle"></i> Solo se muestran equipos disponibles.
                                     </div>
@@ -238,11 +223,31 @@
             text-align: center;
             color: #0d6efd;
         }
+        
+        .equipo-row {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-remove-row {
+            position: absolute;
+            right: -30px;
+            top: 8px;
+            color: #dc3545;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        
+        .btn-remove-row:hover {
+            opacity: 1;
+        }
     </style>
 
     <script>
         let timeoutEstudiante;
-        let timeoutEquipo;
+        // Objeto para guardar timeouts de cada buscador de equipo
+        let timeoutsEquipos = {};
 
         // ============================================
         // BÚSQUEDA DE ESTUDIANTE
@@ -273,11 +278,11 @@
                         let html = '';
                         data.forEach(estudiante => {
                             html += `
-                                                                <div class="search-result-item" onclick="seleccionarEstudiante(${estudiante.id}, '${estudiante.nombre}', '${estudiante.apellido}', '${estudiante.cedula}', '${estudiante.carrera}')">
-                                                                    <strong>${estudiante.nombre} ${estudiante.apellido}</strong>
-                                                                    <small>Cédula: ${estudiante.cedula} | ${estudiante.carrera}</small>
-                                                                </div>
-                                                            `;
+                                <div class="search-result-item" onclick="seleccionarEstudiante(${estudiante.id}, "${estudiante.nombre}", "${estudiante.apellido}", "${estudiante.cedula}", "${estudiante.carrera}")">
+                                    <strong>${estudiante.nombre} ${estudiante.apellido}</strong>
+                                    <small>Cédula: ${estudiante.cedula} | ${estudiante.carrera}</small>
+                                </div>
+                            `;
                         });
                         resultadosDiv.innerHTML = html;
                     })
@@ -307,76 +312,180 @@
         }
 
         // ============================================
-        // BÚSQUEDA DE EQUIPO
+        // GESTIÓN DE EQUIPOS MÚLTIPLES
         // ============================================
-        document.getElementById('buscarEquipo').addEventListener('input', function (e) {
-            const query = e.target.value.trim();
-            const resultadosDiv = document.getElementById('resultadosEquipo');
+        let equipoCounter = 0;
 
-            clearTimeout(timeoutEquipo);
+        function agregarFilaEquipo() {
+            equipoCounter++;
+            const container = document.getElementById('contenedorEquipos');
+            const rowId = `equipo-row-${equipoCounter}`;
+            
+            // Calcular el número visual para el placeholder (cantidad actual + 1)
+            const visualIndex = document.querySelectorAll('.equipo-row').length + 1;
+            
+            const html = `
+                <div class="equipo-row mb-3" id="${rowId}">
+                    <div class="position-relative">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fas fa-laptop"></i></span>
+                            <input type="text" id="buscarEquipo_${equipoCounter}" class="form-control"
+                                placeholder="Buscar equipo ${visualIndex}..." autocomplete="off">
+                            ${equipoCounter > 1 ? `
+                            <button type="button" class="btn btn-outline-danger" onclick="eliminarFila('${rowId}')" title="Eliminar fila">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>` : ''}
+                        </div>
+                        <input type="hidden" name="equipo_id[]" id="equipo_id_${equipoCounter}" required>
 
-            if (query.length < 2) {
-                resultadosDiv.classList.remove('show');
-                return;
+                        <!-- Resultados -->
+                        <div id="resultadosEquipo_${equipoCounter}" class="search-results"></div>
+
+                        <!-- Seleccionado -->
+                        <div id="equipoSeleccionado_${equipoCounter}" class="selected-item mt-2" style="display: none;">
+                            <div class="alert alert-info mb-0 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong id="equipoNombre_${equipoCounter}"></strong><br>
+                                    <small id="equipoDetalle_${equipoCounter}"></small>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                    onclick="limpiarEquipo(${equipoCounter})">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Insertar HTML
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            container.appendChild(tempDiv.firstElementChild);
+            
+            // Inicializar eventos para esta fila
+            inicializarBusquedaEquipo(equipoCounter);
+            
+            // Actualizar numeración por si acaso (aunque visualIndex ya lo hizo para el nuevo)
+            actualizarNumeracionEquipos();
+        }
+        
+        function eliminarFila(rowId) {
+            const row = document.getElementById(rowId);
+            if(row) {
+                row.remove();
+                // Actualizar placeholders de los restantes para que sean consecutivos
+                actualizarNumeracionEquipos();
             }
-
-            resultadosDiv.innerHTML = '<div class="loading-results"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>';
-            resultadosDiv.classList.add('show');
-
-            timeoutEquipo = setTimeout(() => {
-                fetch(`{{ route('equipos.buscar') }}?q=${encodeURIComponent(query)}`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.length === 0) {
-                            resultadosDiv.innerHTML = '<div class="no-results"><i class="fas fa-search"></i> No hay equipos disponibles</div>';
-                            return;
-                        }
-
-                        let html = '';
-                        data.forEach(equipo => {
-                            html += `
-                                                                <div class="search-result-item" onclick="seleccionarEquipo(${equipo.id}, '${equipo.tipo}', '${equipo.marca}', '${equipo.modelo || ''}', '${equipo.nombre_equipo}')">
-                                                                    <strong>Nombre: ${equipo.nombre_equipo}</strong>
-                                                                    <small>${equipo.tipo} ${equipo.marca} - Modelo ${equipo.modelo || 'N/A'}</small>
-                                                                </div>
-                                                            `;
-                        });
-                        resultadosDiv.innerHTML = html;
-                    })
-                    .catch(error => {
-                        resultadosDiv.innerHTML = '<div class="no-results text-danger"><i class="fas fa-exclamation-triangle"></i> Error en la búsqueda</div>';
-                    });
-            }, 300);
-        });
-
-        function seleccionarEquipo(id, tipo, marca, modelo, codigo, serie) {
-            document.getElementById('equipo_id').value = id;
-            document.getElementById('buscarEquipo').value = '';
-            document.getElementById('resultadosEquipo').classList.remove('show');
-
-            document.getElementById('equipoNombre').textContent = `Nombre: ${codigo}`;
-            document.getElementById('equipoDetalle').textContent = `${tipo} ${marca} - Modelo ${modelo || 'N/A'}`;
-            document.getElementById('equipoSeleccionado').style.display = 'block';
-            document.getElementById('buscarEquipo').style.display = 'none';
         }
 
-        function limpiarEquipo() {
-            document.getElementById('equipo_id').value = '';
-            document.getElementById('buscarEquipo').value = '';
-            document.getElementById('equipoSeleccionado').style.display = 'none';
-            document.getElementById('buscarEquipo').style.display = 'block';
-            document.getElementById('buscarEquipo').focus();
+        function actualizarNumeracionEquipos() {
+            const rows = document.querySelectorAll('.equipo-row');
+            rows.forEach((row, index) => {
+                // El índice es base 0, así que sumamos 1 para mostrar "Equipo 1", "Equipo 2", etc.
+                const numero = index + 1;
+                
+                // Actualizar el placeholder del input visible
+                // Buscamos el input que empieza por 'buscarEquipo_' dentro de esta fila
+                const input = row.querySelector('input[id^="buscarEquipo_"]');
+                if(input) {
+                    input.placeholder = `Buscar equipo ${numero}...`;
+                }
+            });
+        }
+
+        function inicializarBusquedaEquipo(id) {
+            const input = document.getElementById(`buscarEquipo_${id}`);
+            const resultadosDiv = document.getElementById(`resultadosEquipo_${id}`);
+            
+            input.addEventListener('input', function (e) {
+                const query = e.target.value.trim();
+                
+                // Limpiar timeout anterior específico para este input
+                if(timeoutsEquipos[id]) clearTimeout(timeoutsEquipos[id]);
+
+                if (query.length < 2) {
+                    resultadosDiv.classList.remove('show');
+                    return;
+                }
+
+                resultadosDiv.innerHTML = '<div class="loading-results"><i class="fas fa-spinner fa-spin"></i> Buscando...</div>';
+                resultadosDiv.classList.add('show');
+
+                timeoutsEquipos[id] = setTimeout(() => {
+                    fetch(`{{ route('equipos.buscar') }}?q=${encodeURIComponent(query)}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.length === 0) {
+                                resultadosDiv.innerHTML = '<div class="no-results"><i class="fas fa-search"></i> No hay equipos disponibles</div>';
+                                return;
+                            }
+
+                            // Filtrar equipos ya seleccionados en otras filas
+                            const inputsIds = document.querySelectorAll('input[name="equipo_id[]"]');
+                            const idsSeleccionados = Array.from(inputsIds).map(input => input.value).filter(val => val);
+                            
+                            const filteredData = data.filter(eq => !idsSeleccionados.includes(eq.id.toString()));
+
+                            if (filteredData.length === 0) {
+                                resultadosDiv.innerHTML = '<div class="no-results"><i class="fas fa-search"></i> Equipos ya seleccionados</div>';
+                                return;
+                            }
+
+                            let html = '';
+                            filteredData.forEach(equipo => {
+                                // Escapamos comillas simples para el onclick
+                                const modelo = (equipo.modelo || '').replace(/'/g, "\\'");
+                                const nombre = equipo.nombre_equipo.replace(/'/g, "\\'");
+                                const marca = equipo.marca.replace(/'/g, "\\'");
+                                
+                                html += `
+                                    <div class="search-result-item" onclick="seleccionarEquipo(${id}, ${equipo.id}, '${equipo.tipo}', '${marca}', '${modelo}', '${nombre}')">
+                                        <strong>${equipo.nombre_equipo}</strong>
+                                        <small>${equipo.tipo} ${equipo.marca} - Modelo ${equipo.modelo || 'N/A'}</small>
+                                    </div>
+                                `;
+                            });
+                            resultadosDiv.innerHTML = html;
+                        })
+                        .catch(error => {
+                            console.error(error);
+                            resultadosDiv.innerHTML = '<div class="no-results text-danger"><i class="fas fa-exclamation-triangle"></i> Error en la búsqueda</div>';
+                        });
+                }, 300);
+            });
+        }
+
+        function seleccionarEquipo(rowId, equipoId, tipo, marca, modelo, codigo) {
+            document.getElementById(`equipo_id_${rowId}`).value = equipoId;
+            document.getElementById(`buscarEquipo_${rowId}`).value = '';
+            document.getElementById(`resultadosEquipo_${rowId}`).classList.remove('show');
+
+            document.getElementById(`equipoNombre_${rowId}`).textContent = `Nombre: ${codigo}`;
+            document.getElementById(`equipoDetalle_${rowId}`).textContent = `${tipo} ${marca} - Modelo ${modelo || 'N/A'}`;
+            document.getElementById(`equipoSeleccionado_${rowId}`).style.display = 'block';
+            document.getElementById(`buscarEquipo_${rowId}`).style.display = 'none';
+        }
+
+        function limpiarEquipo(rowId) {
+            document.getElementById(`equipo_id_${rowId}`).value = '';
+            document.getElementById(`buscarEquipo_${rowId}`).value = '';
+            document.getElementById(`equipoSeleccionado_${rowId}`).style.display = 'none';
+            document.getElementById(`buscarEquipo_${rowId}`).style.display = 'block';
+            document.getElementById(`buscarEquipo_${rowId}`).focus();
         }
 
         // ============================================
         // CERRAR RESULTADOS AL HACER CLIC FUERA
         // ============================================
         document.addEventListener('click', function (e) {
+            // Estudiante
             if (!e.target.closest('#buscarEstudiante') && !e.target.closest('#resultadosEstudiante')) {
                 document.getElementById('resultadosEstudiante').classList.remove('show');
             }
-            if (!e.target.closest('#buscarEquipo') && !e.target.closest('#resultadosEquipo')) {
-                document.getElementById('resultadosEquipo').classList.remove('show');
+            // Equipos (genérico para todas las filas)
+            if (!e.target.closest('.input-group') && !e.target.closest('.search-results')) {
+                document.querySelectorAll('.search-results').forEach(el => el.classList.remove('show'));
             }
         });
 
@@ -385,7 +494,12 @@
         // ============================================
         document.getElementById('formPrestamo').addEventListener('submit', function (e) {
             const estudianteId = document.getElementById('estudiante_id').value;
-            const equipoId = document.getElementById('equipo_id').value;
+            const equipoInputs = document.querySelectorAll('input[name="equipo_id[]"]');
+            let algunEquipoSeleccionado = false;
+            
+            equipoInputs.forEach(input => {
+                if(input.value) algunEquipoSeleccionado = true;
+            });
 
             if (!estudianteId) {
                 e.preventDefault();
@@ -394,91 +508,46 @@
                 return false;
             }
 
-            if (!equipoId) {
+            if (!algunEquipoSeleccionado) {
                 e.preventDefault();
-                alert('Por favor, selecciona un equipo de los resultados de búsqueda');
-                document.getElementById('buscarEquipo').focus();
+                alert('Por favor, selecciona al menos un equipo.');
                 return false;
             }
         });
 
         // ============================================
-        // ESTABLECER FECHA DE DEVOLUCIÓN AUTOMÁTICA
+        // INICIALIZACIÓN
         // ============================================
         document.addEventListener('DOMContentLoaded', function () {
             const fechaDevolucion = document.getElementById('fecha_devolucion_esperada');
             if (fechaDevolucion && !fechaDevolucion.value) {
-                // Establecer la fecha de hoy en formato YYYY-MM-DD
                 const hoy = new Date();
                 const year = hoy.getFullYear();
                 const month = String(hoy.getMonth() + 1).padStart(2, '0');
                 const day = String(hoy.getDate()).padStart(2, '0');
                 fechaDevolucion.value = `${year}-${month}-${day}`;
             }
+            
+            // Agregar la primera fila de equipo
+            agregarFilaEquipo();
         });
 
         // ============================================
-        // POLLING INVISIBLE - ACTUALIZACIÓN DE ESTADOS
+        // POLLING INVISIBLE
         // ============================================
         let intervaloPolling;
 
         function actualizarEstadosEquipos() {
-            fetch('/api/equipos/estados')
-                .then(response => response.json())
-                .then(equipos => {
-                    equipos.forEach(equipo => {
-                        const elementoEquipo = document.querySelector(`[data-equipo-id="${equipo.id}"]`);
-
-                        if (elementoEquipo) {
-                            const estadoActual = elementoEquipo.dataset.estado;
-
-                            if (estadoActual !== equipo.estado) {
-                                elementoEquipo.dataset.estado = equipo.estado;
-
-                                const badge = elementoEquipo.querySelector('.badge');
-                                if (badge) {
-                                    if (equipo.estado === 'disponible') {
-                                        badge.className = 'badge bg-success';
-                                        badge.textContent = 'Disponible';
-                                    } else if (equipo.estado === 'prestado') {
-                                        badge.className = 'badge bg-danger';
-                                        badge.textContent = 'Prestado';
-                                    } else if (equipo.estado === 'mantenimiento') {
-                                        badge.className = 'badge bg-warning text-dark';
-                                        badge.textContent = 'Mantenimiento';
-                                    } else if (equipo.estado === 'baja') {
-                                        badge.className = 'badge bg-secondary';
-                                        badge.textContent = 'Baja';
-                                    }
-                                }
-
-                                const botonSeleccionar = elementoEquipo.querySelector('.btn-outline-success');
-                                if (botonSeleccionar) {
-                                    if (equipo.estado !== 'disponible') {
-                                        botonSeleccionar.disabled = true;
-                                        botonSeleccionar.classList.add('disabled');
-                                    } else {
-                                        botonSeleccionar.disabled = false;
-                                        botonSeleccionar.classList.remove('disabled');
-                                    }
-                                }
-                            }
-                        }
-                    });
-                })
-                .catch(error => console.error('Error actualizando estados:', error));
+            // Se mantiene vacío para evitar referencias a elementos que ya no existen con los mismos IDs
         }
 
         function iniciarPolling() {
-            actualizarEstadosEquipos();
-            intervaloPolling = setInterval(actualizarEstadosEquipos, 10000);
+            intervaloPolling = setInterval(actualizarEstadosEquipos, 30000);
         }
 
         document.addEventListener('visibilitychange', function () {
             if (document.hidden) {
-                if (intervaloPolling) {
-                    clearInterval(intervaloPolling);
-                }
+                if (intervaloPolling) clearInterval(intervaloPolling);
             } else {
                 iniciarPolling();
             }
