@@ -83,24 +83,38 @@
                                 <td>
                                     @php
                                         $equiposActivos = $prestamo->prestamoEquipos()->where('estado', 'activo')->with('equipo')->get();
-                                        $totalEquipos = $prestamo->prestamoEquipos()->where('estado', 'activo')->count(); // ✅ Solo activos
+                                        $totalEquipos = $prestamo->prestamoEquipos()->where('estado', 'activo')->count();
                                         $equiposDevueltos = $prestamo->prestamoEquipos()->where('estado', 'devuelto')->count();
+
+                                        // ===================================================================
+                                        // AGRUPAR EQUIPOS POR ID (para contar duplicados)
+                                        // ===================================================================
+                                        $equiposAgrupados = $equiposActivos->groupBy('equipo_id')->map(function ($grupo) {
+                                            return [
+                                                'equipo' => $grupo->first()->equipo,
+                                                'cantidad' => $grupo->count()
+                                            ];
+                                        });
                                     @endphp
 
-                                    @if($equiposActivos->count() > 0)
-                                        @foreach($equiposActivos->take(2) as $pe)
+                                    @if($equiposAgrupados->count() > 0)
+                                        @foreach($equiposAgrupados->take(2) as $item)
                                             <div class="fw-bold text-primary">
-                                                <i class="fas fa-laptop me-1"></i> {{ $pe->equipo->tipo }}
+                                                <i class="fas fa-laptop me-1"></i> {{ $item['equipo']->tipo }}
+                                                @if($item['cantidad'] > 1)
+                                                    <span class="badge bg-primary rounded-pill ms-1">x{{ $item['cantidad'] }}</span>
+                                                @endif
                                             </div>
                                             <div class="small text-muted">
-                                                {{ $pe->equipo->marca }} - {{ $pe->equipo->modelo }}
-                                                <span class="badge bg-light text-dark border">{{ $pe->equipo->nombre_equipo }}</span>
+                                                {{ $item['equipo']->marca }} - {{ $item['equipo']->modelo }}
+                                                <span
+                                                    class="badge bg-light text-dark border">{{ $item['equipo']->nombre_equipo }}</span>
                                             </div>
                                         @endforeach
 
-                                        @if($equiposActivos->count() > 2)
+                                        @if($equiposAgrupados->count() > 2)
                                             <div class="small text-muted mt-1">
-                                                <i class="fas fa-plus-circle me-1"></i> +{{ $equiposActivos->count() - 2 }} equipo(s)
+                                                <i class="fas fa-plus-circle me-1"></i> +{{ $equiposAgrupados->count() - 2 }} tipo(s)
                                                 más
                                             </div>
                                         @endif

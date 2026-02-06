@@ -187,10 +187,16 @@ class PrestamoController extends Controller
         $equiposActualesMarcados = array_filter($equiposActualesMarcados);
         $equiposNuevosAgregados = array_filter($equiposNuevosAgregados);
 
-        // Combinar ambos arrays
+        // ===================================================================
+        // COMBINAR PERMITIENDO DUPLICADOS PARA EQUIPOS POR CANTIDAD
+        // ===================================================================
         $todosLosEquipos = array_merge($equiposActualesMarcados, $equiposNuevosAgregados);
-        $todosLosEquipos = array_unique($todosLosEquipos); // Eliminar duplicados
-        $todosLosEquipos = array_values($todosLosEquipos); // Reindexar
+
+        // NO usar array_unique() aquí - permite múltiples unidades del mismo equipo
+        // Para laptops individuales, el ID es único de todas formas
+        // Para equipos por cantidad (Mouse, etc.), cada ID representa una unidad adicional
+
+        $todosLosEquipos = array_values($todosLosEquipos); // Solo reindexar
 
         // Validar que haya al menos 1 equipo
         if (empty($todosLosEquipos)) {
@@ -200,36 +206,73 @@ class PrestamoController extends Controller
                 ->withInput();
         }
 
-        // Validar disponibilidad de equipos NUEVOS (no validar los que ya están en el préstamo)
+        // ===================================================================
+        // VALIDAR DISPONIBILIDAD DE EQUIPOS NUEVOS
+        // Solo validar los equipos que NO están ya en el préstamo
+        // ===================================================================
         $equiposYaEnPrestamo = $prestamo->prestamoEquipos()
             ->where('estado', 'activo')
             ->pluck('equipo_id')
             ->toArray();
 
-        $equiposRealmenteNuevos = array_diff($todosLosEquipos, $equiposYaEnPrestamo);
+        // Contar cuántas veces aparece cada equipo nuevo
+        $equiposNuevosCounts = array_count_values($equiposNuevosAgregados);
 
-        foreach ($equiposRealmenteNuevos as $equipoId) {
+        foreach ($equiposNuevosCounts as $equipoId => $cantidad) {
+            // Si ya está en el préstamo, no validar (ya lo tiene)
+            if (in_array($equipoId, $equiposYaEnPrestamo)) {
+                continue;
+            }
+
+            // Validar disponibilidad
             $equipo = Equipo::find($equipoId);
-            if ($equipo->estado !== 'disponible') {
+
+            if (!$equipo) {
                 return redirect()
                     ->back()
-                    ->withErrors([
-                        'equipo_id' => "El equipo '{$equipo->nombre_equipo}' no está disponible."
-                    ])
+                    ->withErrors(['equipo_id' => "El equipo con ID {$equipoId} no existe."])
                     ->withInput();
+            }
+
+            if ($equipo->es_individual) {
+                // LAPTOP: Solo verificar que esté disponible
+                if ($equipo->estado !== 'disponible') {
+                    return redirect()
+                        ->back()
+                        ->withErrors([
+                            'equipo_id' => "El equipo '{$equipo->nombre_equipo}' no está disponible."
+                        ])
+                        ->withInput();
+                }
+            } else {
+                // EQUIPOS POR CANTIDAD: Verificar que haya suficiente stock
+                if ($equipo->cantidad_disponible < $cantidad) {
+                    return redirect()
+                        ->back()
+                        ->withErrors([
+                            'equipo_id' => "No hay suficiente stock de '{$equipo->nombre_equipo}'. Solicitados: {$cantidad}, Disponibles: {$equipo->cantidad_disponible}"
+                        ])
+                        ->withInput();
+                }
             }
         }
 
         try {
-            // Pasar el array combinado al service
+            // Pasar el array combinado (CON duplicados permitidos) al service
             $datos['equipo_id'] = $todosLosEquipos;
 
             $this->prestamoService->actualizarPrestamo($prestamo, $datos);
 
+            $cantidadNuevos = count($equiposNuevosAgregados);
+            $mensaje = $cantidadNuevos > 0
+                ? "Préstamo actualizado correctamente. Se agregaron {$cantidadNuevos} equipo(s) nuevo(s)."
+                : 'Préstamo actualizado correctamente.';
+
             return redirect()->route('prestamos.index')
-                ->with('success', 'Préstamo actualizado correctamente.');
+                ->with('success', $mensaje);
 
         } catch (\Exception $e) {
+            \Log::error('Error al actualizar préstamo: ' . $e->getMessage());
             return redirect()
                 ->back()
                 ->withErrors(['error' => $e->getMessage()])
@@ -262,14 +305,27 @@ class PrestamoController extends Controller
         }
 
         try {
-            // Si no se especifican equipos, devolver TODOS
-            $equiposDevolver = $request->equipos_devolver ?? null;
+            // Si no se especifican equipos, devolver TODOS los activos
+            $equiposDevolver = $request->equipos_devolver;
 
+            if (empty($equiposDevolver)) {
+                $equiposDevolver = $prestamo->prestamoEquipos()
+                    ->where('estado', 'activo')
+                    ->pluck('equipo_id')
+                    ->toArray();
+            }
+
+            // Preparar datos para el servicio
+            $datos = [
+                'practicante_recibe_id' => $request->practicante_recibe_id,
+                'observaciones_devolucion' => $request->observaciones_devolucion,
+            ];
+
+            // ✅ ORDEN CORRECTO DE PARÁMETROS
             $this->prestamoService->registrarDevolucion(
                 $prestamo,
-                $request->observaciones_devolucion,
-                $request->practicante_recibe_id,
-                $equiposDevolver
+                $equiposDevolver,  // array de IDs de equipos
+                $datos             // array con practicante_recibe_id y observaciones
             );
 
             return redirect()->route('prestamos.index')

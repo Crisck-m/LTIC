@@ -353,15 +353,15 @@
                     alertaReemplazo.id = 'alertaReemplazo';
                     alertaReemplazo.className = 'alert alert-warning d-flex align-items-start mt-3';
                     alertaReemplazo.innerHTML = `
-                        <i class="fas fa-exchange-alt me-2 mt-1 fa-lg"></i>
-                        <div>
-                            <strong>🔄 Reemplazo de Equipo Original</strong>
-                            <p class="mb-0 mt-1">
-                                Estás <strong>reemplazando</strong> el equipo original por el nuevo equipo seleccionado.
-                                El equipo original se marcará como devuelto y el nuevo se asignará al préstamo.
-                            </p>
-                        </div>
-                    `;
+                                <i class="fas fa-exchange-alt me-2 mt-1 fa-lg"></i>
+                                <div>
+                                    <strong>🔄 Reemplazo de Equipo Original</strong>
+                                    <p class="mb-0 mt-1">
+                                        Estás <strong>reemplazando</strong> el equipo original por el nuevo equipo seleccionado.
+                                        El equipo original se marcará como devuelto y el nuevo se asignará al préstamo.
+                                    </p>
+                                </div>
+                            `;
 
                     const container = document.getElementById('equiposActualesContainer');
                     container.appendChild(alertaReemplazo);
@@ -465,34 +465,34 @@
             const rowId = `nuevo-equipo-${equipoNuevoCounter}`;
 
             const html = `
-                <div class="card nuevo-equipo-card border-2 mb-3" id="${rowId}">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <span class="badge bg-success">
-                                <i class="fas fa-plus me-1"></i> Nuevo Equipo
-                            </span>
-                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarNuevoEquipo('${rowId}', ${equipoNuevoCounter})">
-                                <i class="fas fa-times"></i> Quitar
-                            </button>
-                        </div>
+                        <div class="card nuevo-equipo-card border-2 mb-3" id="${rowId}">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-plus me-1"></i> Nuevo Equipo
+                                    </span>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarNuevoEquipo('${rowId}', ${equipoNuevoCounter})">
+                                        <i class="fas fa-times"></i> Quitar
+                                    </button>
+                                </div>
 
-                        <div class="position-relative">
-                            <input type="text" id="buscarNuevo_${equipoNuevoCounter}" class="form-control"
-                                placeholder="Buscar equipo de reemplazo..." autocomplete="off">
-                            <input type="hidden" name="equipos_nuevos[]" id="equipoNuevo_${equipoNuevoCounter}" value="">
+                                <div class="position-relative">
+                                    <input type="text" id="buscarNuevo_${equipoNuevoCounter}" class="form-control"
+                                        placeholder="Buscar equipo de reemplazo..." autocomplete="off">
+                                    <input type="hidden" name="equipos_nuevos[]" id="equipoNuevo_${equipoNuevoCounter}" value="">
 
-                            <div id="resultadosNuevo_${equipoNuevoCounter}" class="search-results"></div>
+                                    <div id="resultadosNuevo_${equipoNuevoCounter}" class="search-results"></div>
 
-                            <div id="seleccionadoNuevo_${equipoNuevoCounter}" class="mt-2" style="display: none;">
-                                <div class="alert alert-success mb-0">
-                                    <strong id="nombreNuevo_${equipoNuevoCounter}"></strong><br>
-                                    <small id="detalleNuevo_${equipoNuevoCounter}"></small>
+                                    <div id="seleccionadoNuevo_${equipoNuevoCounter}" class="mt-2" style="display: none;">
+                                        <div class="alert alert-success mb-0">
+                                            <strong id="nombreNuevo_${equipoNuevoCounter}"></strong><br>
+                                            <small id="detalleNuevo_${equipoNuevoCounter}"></small>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            `;
+                    `;
 
             container.insertAdjacentHTML('beforeend', html);
             inicializarBusquedaNuevo(equipoNuevoCounter);
@@ -542,31 +542,58 @@
                                 return;
                             }
 
-                            // Filtrar equipos ya seleccionados
+                            // Obtener IDs de equipos actuales marcados
                             const idsActuales = Array.from(document.querySelectorAll('.equipo-checkbox-edit:checked')).map(cb => cb.value);
-                            const idsNuevos = Array.from(document.querySelectorAll('input[name="equipos_nuevos[]"]')).map(input => input.value).filter(v => v);
+
+                            // Obtener IDs de equipos nuevos agregados
+                            const idsNuevos = Array.from(document.querySelectorAll('input[name="equipos_nuevos[]"]'))
+                                .map(input => input.value)
+                                .filter(v => v);
+
                             const todosIds = [...idsActuales, ...idsNuevos];
 
-                            const filteredData = data.filter(eq => !todosIds.includes(eq.id.toString()));
+                            // ===================================================================
+                            // FILTRADO INTELIGENTE: Individual vs Por Cantidad
+                            // ===================================================================
+                            const filteredData = data.filter(eq => {
+                                if (eq.es_individual) {
+                                    // LAPTOP: No permitir duplicar (bloquear por ID)
+                                    return !todosIds.includes(eq.id.toString());
+                                } else {
+                                    // EQUIPOS POR CANTIDAD: Siempre mostrar si hay stock
+                                    // Esto permite agregar múltiples unidades del mismo tipo
+                                    return eq.cantidad_disponible > 0;
+                                }
+                            });
 
                             if (filteredData.length === 0) {
-                                resultadosDiv.innerHTML = '<div class="p-3 text-center text-muted">Equipos ya seleccionados</div>';
+                                resultadosDiv.innerHTML = '<div class="p-3 text-center text-muted">No hay equipos disponibles o todos ya seleccionados</div>';
                                 return;
                             }
 
                             let html = '';
                             filteredData.forEach(equipo => {
-                                const modelo = (equipo.modelo || '').replace(/'/g, '&#39;');
-                                const nombre = equipo.nombre_equipo.replace(/'/g, '&#39;');
-                                const marca = equipo.marca.replace(/'/g, '&#39;');
-                                const tipo = equipo.tipo.replace(/'/g, '&#39;');
+                                // Escapar comillas
+                                const equipoJSON = JSON.stringify(equipo).replace(/'/g, '&#39;');
+
+                                // Construir texto de visualización
+                                let displayText = '';
+                                if (equipo.es_individual) {
+                                    // LAPTOP: Mostrar solo nombre
+                                    displayText = `<strong>${equipo.nombre_equipo}</strong><br>
+                                          <small>${equipo.tipo} ${equipo.marca} - Modelo ${equipo.modelo || 'N/A'}</small>`;
+                                } else {
+                                    // OTROS: Mostrar con cantidad disponible
+                                    displayText = `<strong>${equipo.nombre_equipo}</strong><br>
+                                          <small>${equipo.tipo} ${equipo.marca} - Modelo ${equipo.modelo || 'N/A'}</small><br>
+                                          <span class="badge bg-info mt-1">Disponibles: ${equipo.cantidad_disponible}/${equipo.cantidad_total}</span>`;
+                                }
 
                                 html += `
-                                    <div class="search-result-item" onclick='seleccionarNuevo(${id}, ${equipo.id}, "${tipo}", "${marca}", "${modelo}", "${nombre}")'>
-                                        <strong>${equipo.nombre_equipo}</strong><br>
-                                        <small>${equipo.tipo} ${equipo.marca}</small>
-                                    </div>
-                                `;
+                            <div class="search-result-item" onclick='seleccionarNuevoEquipo(${equipoJSON}, ${id})'>
+                                ${displayText}
+                            </div>
+                        `;
                             });
                             resultadosDiv.innerHTML = html;
                         })
@@ -578,13 +605,12 @@
             });
         }
 
-        function seleccionarNuevo(id, equipoId, tipo, marca, modelo, nombre) {
+        function seleccionarNuevoEquipo(equipo, id) {
             // CRÍTICO: Guardar el ID en el input hidden
             const inputHidden = document.getElementById(`equipoNuevo_${id}`);
-            inputHidden.value = equipoId;
+            inputHidden.value = equipo.id;
 
-            console.log(`Equipo ${equipoId} guardado en equipoNuevo_${id}`);
-            console.log('Valor del input:', inputHidden.value);
+            console.log(`Equipo ${equipo.id} guardado en equipoNuevo_${id}`);
 
             // Deshabilitar búsqueda
             const inputBusqueda = document.getElementById(`buscarNuevo_${id}`);
@@ -594,9 +620,22 @@
             // Ocultar resultados
             document.getElementById(`resultadosNuevo_${id}`).classList.remove('show');
 
+            // Construir texto de visualización
+            let displayText = '';
+            if (equipo.es_individual) {
+                // LAPTOP
+                displayText = `<strong>${equipo.nombre_equipo}</strong><br>
+                          <small>${equipo.tipo} ${equipo.marca} - Modelo ${equipo.modelo || 'N/A'}</small>`;
+            } else {
+                // OTROS: Con cantidad disponible
+                displayText = `<strong>${equipo.nombre_equipo}</strong><br>
+                          <small>${equipo.tipo} ${equipo.marca} - Modelo ${equipo.modelo || 'N/A'}</small><br>
+                          <span class="badge bg-info mt-1">Disponible: ${equipo.cantidad_disponible}/${equipo.cantidad_total}</span>`;
+            }
+
             // Mostrar equipo seleccionado
-            document.getElementById(`nombreNuevo_${id}`).textContent = `${nombre}`;
-            document.getElementById(`detalleNuevo_${id}`).textContent = `${tipo} ${marca} - Modelo ${modelo || 'N/A'}`;
+            document.getElementById(`nombreNuevo_${id}`).innerHTML = displayText;
+            document.getElementById(`detalleNuevo_${id}`).style.display = 'none'; // Ya no se necesita
             document.getElementById(`seleccionadoNuevo_${id}`).style.display = 'block';
 
             // CRÍTICO: Actualizar estado después de seleccionar

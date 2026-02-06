@@ -46,6 +46,7 @@ class EquipoController extends Controller
                 'estado' => 'required|in:disponible,prestado,mantenimiento,dado_de_baja',
             ], [
                 'nombre_equipo.unique' => 'Ya existe un equipo con ese nombre/código.',
+                'nombre_equipo.required' => 'El nombre/código es obligatorio para laptops.',
             ]);
 
             $datos['es_individual'] = true;
@@ -62,6 +63,9 @@ class EquipoController extends Controller
                 'modelo' => 'required|string|max:50',
                 'caracteristicas' => 'nullable|string',
                 'estado' => 'required|in:disponible,prestado,mantenimiento,dado_de_baja',
+            ], [
+                'cantidad_total.required' => 'La cantidad es obligatoria.',
+                'cantidad_total.min' => 'La cantidad debe ser al menos 1.',
             ]);
 
             // Determinar el tipo real
@@ -99,6 +103,7 @@ class EquipoController extends Controller
 
                 return redirect()->route('equipos.index')
                     ->with('success', "✅ Se agregaron {$request->cantidad_total} unidad(es) al inventario existente.\n\n" .
+                        "• Tipo: {$tipoReal}\n" .
                         "• Total: {$equipoExistente->cantidad_total} unidades\n" .
                         "• Disponibles: {$equipoExistente->cantidad_disponible} unidades");
             }
@@ -108,28 +113,34 @@ class EquipoController extends Controller
         }
 
         // Remover campo temporal
-        unset($datos['tipo_otro']);
+        if (isset($datos['tipo_otro'])) {
+            unset($datos['tipo_otro']);
+        }
+
         $datos['user_id'] = auth()->id();
 
         try {
-            Equipo::create($datos);
+            $equipoCreado = Equipo::create($datos);
 
             if ($request->tipo === 'Laptop') {
                 return redirect()->route('equipos.index')
-                    ->with('success', 'Laptop registrada correctamente.');
+                    ->with('success', '✅ Laptop registrada correctamente.');
             } else {
                 return redirect()->route('equipos.index')
-                    ->with('success', "Equipo registrado correctamente.\n\n" .
+                    ->with('success', "✅ Equipo registrado correctamente.\n\n" .
                         "• Tipo: {$datos['nombre_equipo']}\n" .
-                        "• Cantidad: {$datos['cantidad_total']} unidades");
+                        "• Cantidad: {$datos['cantidad_total']} unidades\n" .
+                        "• Disponibles: {$datos['cantidad_disponible']} unidades");
             }
         } catch (\Exception $e) {
+            \Log::error('Error al crear equipo: ' . $e->getMessage());
+            \Log::error('Datos intentados: ' . json_encode($datos));
+
             return redirect()->back()
-                ->withErrors(['error' => 'Error al registrar: ' . $e->getMessage()])
+                ->withErrors(['error' => 'Error al registrar el equipo: ' . $e->getMessage()])
                 ->withInput();
         }
     }
-
     public function edit(Equipo $equipo)
     {
         return view('equipos.edit', compact('equipo'));
@@ -186,8 +197,48 @@ class EquipoController extends Controller
                         ->orWhere('marca', 'LIKE', "%{$search}%")
                         ->orWhere('modelo', 'LIKE', "%{$search}%");
                 })
+                ->where(function ($query) {
+                    // Solo mostrar equipos que tengan stock disponible
+                    $query->where(function ($subQuery) {
+                        // Equipos individuales (laptops)
+                        $subQuery->where('es_individual', true)
+                            ->where('cantidad_disponible', '>', 0);
+                    })
+                        ->orWhere(function ($subQuery) {
+                        // Equipos por cantidad
+                        $subQuery->where('es_individual', false)
+                            ->where('cantidad_disponible', '>', 0);
+                    });
+                })
                 ->limit(10)
-                ->get(['id', 'tipo', 'marca', 'modelo', 'nombre_equipo']);
+                ->get()
+                ->map(function ($equipo) {
+                    if ($equipo->es_individual) {
+                        // LAPTOP: Mostrar nombre único
+                        return [
+                            'id' => $equipo->id,
+                            'tipo' => $equipo->tipo,
+                            'marca' => $equipo->marca,
+                            'modelo' => $equipo->modelo,
+                            'nombre_equipo' => $equipo->nombre_equipo,
+                            'es_individual' => true,
+                            'display' => "{$equipo->nombre_equipo} - {$equipo->marca} {$equipo->modelo}"
+                        ];
+                    } else {
+                        // OTROS: Mostrar tipo + cantidad disponible
+                        return [
+                            'id' => $equipo->id,
+                            'tipo' => $equipo->tipo,
+                            'marca' => $equipo->marca,
+                            'modelo' => $equipo->modelo,
+                            'nombre_equipo' => $equipo->nombre_equipo,
+                            'es_individual' => false,
+                            'cantidad_disponible' => $equipo->cantidad_disponible,
+                            'cantidad_total' => $equipo->cantidad_total,
+                            'display' => "{$equipo->nombre_equipo} {$equipo->marca} - Modelo {$equipo->modelo} | Disponibles: {$equipo->cantidad_disponible}/{$equipo->cantidad_total}"
+                        ];
+                    }
+                });
 
             return response()->json($equipos);
 

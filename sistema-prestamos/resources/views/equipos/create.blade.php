@@ -14,6 +14,20 @@
                     </div>
 
                     <div class="card-body p-4">
+
+                        {{-- MOSTRAR ERRORES DE VALIDACIÓN --}}
+                        @if ($errors->any())
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                <strong>¡Error!</strong> Por favor corrige los siguientes problemas:
+                                <ul class="mb-0 mt-2">
+                                    @foreach ($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        @endif
+
                         <form action="{{ route('equipos.store') }}" method="POST">
                             @csrf
 
@@ -25,8 +39,8 @@
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Tipo de Equipo <span
                                             class="text-danger">*</span></label>
-                                    <select name="tipo" id="tipo" class="form-select" required
-                                        onchange="toggleTipoOtro(); toggleCampoIndividual();">
+                                    <select name="tipo" id="tipo" class="form-select @error('tipo') is-invalid @enderror"
+                                        required onchange="toggleTipoOtro(); toggleCampoIndividual();">
                                         <option value="" disabled selected>Seleccione un tipo...</option>
                                         <option value="Laptop" {{ old('tipo') == 'Laptop' ? 'selected' : '' }}>💻 Laptop
                                         </option>
@@ -38,13 +52,17 @@
                                             Cable HDMI</option>
                                         <option value="Otro" {{ old('tipo') == 'Otro' ? 'selected' : '' }}>📦 Otro</option>
                                     </select>
+                                    @error('tipo')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
 
                                 {{-- TIPO PERSONALIZADO (si es "Otro") --}}
                                 <div class="col-md-6" id="tipoOtroContainer" style="display: none;">
                                     <label class="form-label fw-bold">Especifique el tipo <span
                                             class="text-danger">*</span></label>
-                                    <input type="text" name="tipo_otro" id="tipo_otro" class="form-control"
+                                    <input type="text" name="tipo_otro" id="tipo_otro"
+                                        class="form-control @error('tipo_otro') is-invalid @enderror"
                                         placeholder="Ej: Proyector, Router..." value="{{ old('tipo_otro') }}"
                                         list="tiposPersonalizadosSugeridos">
                                     <datalist id="tiposPersonalizadosSugeridos">
@@ -55,25 +73,36 @@
                                         <option value="Teclado">
                                         <option value="Parlantes">
                                     </datalist>
+                                    @error('tipo_otro')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
 
                                 {{-- NOMBRE/CÓDIGO (solo para Laptops) --}}
                                 <div class="col-md-6" id="nombreContainer">
                                     <label class="form-label fw-bold" id="nombreLabel">Nombre / Código <span
                                             class="text-danger">*</span></label>
-                                    <input type="text" name="nombre_equipo" id="nombre_equipo" class="form-control"
+                                    <input type="text" name="nombre_equipo" id="nombre_equipo"
+                                        class="form-control @error('nombre_equipo') is-invalid @enderror"
                                         placeholder="Ej: LAP-001" value="{{ old('nombre_equipo') }}">
                                     <small class="form-text text-muted" id="nombreHelp">Identificador único del
                                         equipo</small>
+                                    @error('nombre_equipo')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
                                 </div>
 
                                 {{-- CANTIDAD (solo para NO Laptops) --}}
                                 <div class="col-md-6" id="cantidadContainer" style="display: none;">
                                     <label class="form-label fw-bold">Cantidad <span class="text-danger">*</span></label>
-                                    <input type="number" name="cantidad_total" id="cantidad_total" class="form-control"
-                                        min="1" value="{{ old('cantidad_total', 1) }}" placeholder="Ej: 5">
+                                    <input type="number" name="cantidad_total" id="cantidad_total"
+                                        class="form-control @error('cantidad_total') is-invalid @enderror" min="1"
+                                        value="{{ old('cantidad_total', 1) }}" placeholder="Ej: 5">
                                     <small class="form-text text-muted">¿Cuántos equipos de este tipo estás
                                         registrando?</small>
+                                    @error('cantidad_total')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
 
@@ -83,28 +112,44 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Marca <span class="text-danger">*</span></label>
-                                    <input type="text" name="marca" class="form-control" placeholder="Ej: HP, Dell, Epson"
-                                        value="{{ old('marca') }}" required>
+                                    <input type="text" name="marca"
+                                        class="form-control @error('marca') is-invalid @enderror"
+                                        placeholder="Ej: HP, Dell, Epson" value="{{ old('marca') }}" required>
+                                    @error('marca')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
 
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Modelo <span class="text-danger">*</span></label>
-                                    <input type="text" name="modelo" class="form-control" placeholder="Ej: Pavilion 15"
-                                        value="{{ old('modelo') }}" required>
+                                    <input type="text" name="modelo"
+                                        class="form-control @error('modelo') is-invalid @enderror"
+                                        placeholder="Ej: Pavilion 15" value="{{ old('modelo') }}" required>
+                                    @error('modelo')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
 
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Estado Inicial</label>
-                                    <select name="estado" class="form-select" required>
+                                    <select name="estado" class="form-select @error('estado') is-invalid @enderror"
+                                        required>
                                         <option value="disponible" selected>🟢 Disponible</option>
                                         <option value="mantenimiento">🔵 Mantenimiento</option>
                                     </select>
+                                    @error('estado')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
 
                                 <div class="col-md-12">
                                     <label class="form-label fw-bold">Características (Procesador, RAM, Detalles)</label>
-                                    <textarea name="caracteristicas" rows="3" class="form-control"
+                                    <textarea name="caracteristicas" rows="3"
+                                        class="form-control @error('caracteristicas') is-invalid @enderror"
                                         placeholder="Ej: Core i7, 16GB RAM, SSD 512GB">{{ old('caracteristicas') }}</textarea>
+                                    @error('caracteristicas')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
                             </div>
 
