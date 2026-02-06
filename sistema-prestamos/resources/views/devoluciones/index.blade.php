@@ -16,7 +16,7 @@
                 <div class="alert alert-warning d-flex align-items-center" role="alert">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     <div>
-                        Hay <strong>{{ $pendientes->total() }}</strong> equipos prestados actualmente.
+                        Hay <strong>{{ $pendientes->total() }}</strong> préstamo(s) activo(s) con equipos pendientes.
                     </div>
                 </div>
             @endif
@@ -25,7 +25,7 @@
                 <table class="table table-hover align-middle">
                     <thead class="table-light">
                         <tr>
-                            <th>Equipo</th>
+                            <th>Equipo(s)</th>
                             <th>Estudiante Solicitante</th>
                             <th>Practicante que Atendió</th>
                             <th>Tiempo Transcurrido</th>
@@ -36,26 +36,47 @@
                         @forelse ($pendientes as $prestamo)
                             <tr>
                                 <td>
-                                    <div class="d-flex align-items-center">
-                                        <div class="bg-light p-2 rounded me-3 text-primary">
-                                            <i class="fas fa-laptop fa-lg"></i>
-                                        </div>
-                                        <div>
-                                            <div class="fw-bold">{{ $prestamo->equipo->tipo }}</div>
-                                            <div class="text-muted small">{{ $prestamo->equipo->marca }} -
-                                                {{ $prestamo->equipo->modelo }}
+                                    @php
+                                        $equiposActivos = $prestamo->prestamoEquipos->where('estado', 'activo');
+                                    @endphp
+                                    
+                                    @if($equiposActivos->count() > 0)
+                                        @foreach($equiposActivos->take(2) as $pe)
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="bg-light p-2 rounded me-3 text-primary">
+                                                    <i class="fas fa-laptop fa-lg"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold">{{ $pe->equipo->tipo }}</div>
+                                                    <div class="text-muted small">
+                                                        {{ $pe->equipo->marca }} - {{ $pe->equipo->modelo }}
+                                                    </div>
+                                                    <span class="badge bg-secondary text-light">{{ $pe->equipo->nombre_equipo }}</span>
+                                                </div>
                                             </div>
-                                            <span
-                                                class="badge bg-secondary text-light">{{ $prestamo->equipo->nombre_equipo }}</span>
+                                        @endforeach
+                                        
+                                        @if($equiposActivos->count() > 2)
+                                            <div class="small text-muted mt-1">
+                                                <i class="fas fa-plus-circle me-1"></i> +{{ $equiposActivos->count() - 2 }} equipo(s) más
+                                            </div>
+                                        @endif
+                                        
+                                        <div class="small text-info mt-2">
+                                            <i class="fas fa-info-circle me-1"></i> Total: {{ $equiposActivos->count() }} equipo(s) pendiente(s)
                                         </div>
-                                    </div>
+                                    @else
+                                        <div class="text-muted">
+                                            <i class="fas fa-check-circle me-1"></i> Sin equipos pendientes
+                                        </div>
+                                    @endif
                                 </td>
 
                                 <td>
                                     <div class="fw-bold">{{ $prestamo->estudiante->nombre }}
                                         {{ $prestamo->estudiante->apellido }}
                                     </div>
-                                    <div class="text-muted small">
+                                    <div class="small text-muted">
                                         <i class="fas fa-graduation-cap me-1"></i> {{ $prestamo->estudiante->carrera }}
                                     </div>
                                     @if($prestamo->estudiante->telefono)
@@ -80,7 +101,10 @@
                                         {{ \Carbon\Carbon::parse($prestamo->fecha_prestamo)->diffForHumans() }}
                                     </div>
                                     <div class="text-muted small">
-                                        Salida: {{ \Carbon\Carbon::parse($prestamo->fecha_prestamo)->format('h:i A') }}
+                                        Salida: {{ \Carbon\Carbon::parse($prestamo->fecha_prestamo)->format('d/m/Y h:i A') }}
+                                    </div>
+                                    <div class="text-muted small">
+                                        Esperada: {{ \Carbon\Carbon::parse($prestamo->fecha_devolucion_esperada)->format('d/m/Y') }}
                                     </div>
                                 </td>
 
@@ -88,7 +112,7 @@
                                     <div class="d-flex gap-2 justify-content-end">
                                         <a href="{{ route('prestamos.finalizar', $prestamo) }}"
                                             class="btn btn-success text-white shadow-sm">
-                                            <i class="fas fa-check-circle me-1"></i> Recibir Equipo
+                                            <i class="fas fa-check-circle me-1"></i> Recibir Equipo(s)
                                         </a>
                                         <a href="{{ route('prestamos.edit', $prestamo) }}"
                                             class="btn btn-warning text-dark shadow-sm" title="Editar Préstamo">

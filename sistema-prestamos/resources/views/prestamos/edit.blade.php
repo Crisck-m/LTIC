@@ -5,14 +5,12 @@
 @section('contenido')
     <div class="container-fluid">
         <div class="row justify-content-center">
-            <div class="col-md-10">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-white py-3">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0 text-secondary">
-                                <i class="fas fa-edit me-2"></i>Editar Préstamo
-                            </h5>
-                        </div>
+            <div class="col-md-11">
+                <div class="card shadow-sm border-primary">
+                    <div class="card-header bg-primary bg-opacity-10 py-3">
+                        <h5 class="mb-0 text-primary">
+                            <i class="fas fa-edit me-2"></i>Editar Préstamo Activo
+                        </h5>
                     </div>
 
                     {{-- Mostrar errores de validación --}}
@@ -39,123 +37,169 @@
                             @method('PUT')
 
                             <div class="row g-4">
+                                <!-- DATOS DEL PRÉSTAMO (SOLO LECTURA) -->
                                 <div class="col-12">
-                                    <h6 class="text-primary border-bottom pb-2 mb-3">Datos del Préstamo (Solo Lectura)</h6>
+                                    <h6 class="text-secondary border-bottom pb-2 mb-3">
+                                        <i class="fas fa-info-circle me-2"></i>Datos del Préstamo (Solo Lectura)
+                                    </h6>
                                 </div>
 
-                                <!-- ESTUDIANTE SOLICITANTE -->
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold">Estudiante Solicitante</label>
-                                    <div class="alert alert-secondary d-flex align-items-center mb-0 p-2">
-                                        <i class="fas fa-user-graduate me-3 fa-lg text-secondary"></i>
-                                        <div>
-                                            <div class="fw-bold">{{ $prestamo->estudiante->nombre }}
-                                                {{ $prestamo->estudiante->apellido }}
+                                    <label class="form-label fw-bold text-secondary">Estudiante Solicitante</label>
+                                    <div class="card border-2 border-secondary">
+                                        <div class="card-body p-3">
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-secondary bg-opacity-10 p-3 rounded me-3">
+                                                    <i class="fas fa-user-graduate fa-2x text-secondary"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold fs-6">
+                                                        {{ $prestamo->estudiante->nombre }}
+                                                        {{ $prestamo->estudiante->apellido }}
+                                                    </div>
+                                                    <div class="text-muted small">
+                                                        <i class="fas fa-graduation-cap me-1"></i>
+                                                        {{ $prestamo->estudiante->carrera }}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <small>{{ $prestamo->estudiante->carrera }}</small>
                                         </div>
                                     </div>
                                     <input type="hidden" name="estudiante_id" value="{{ $prestamo->estudiante_id }}">
                                 </div>
 
-                                <!-- PRACTICANTE RESPONSABLE -->
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold">Atendido por (Practicante)</label>
-                                    <div class="alert alert-secondary d-flex align-items-center mb-0 p-2">
-                                        <i class="fas fa-user-tie me-3 fa-lg text-info"></i>
-                                        <div>
-                                            <div class="fw-bold">{{ $prestamo->practicante->nombre }}
-                                                {{ $prestamo->practicante->apellido }}
+                                    <label class="form-label fw-bold text-info">Atendido por (Practicante)</label>
+                                    <div class="card border-2 border-info">
+                                        <div class="card-body p-3">
+                                            <div class="d-flex align-items-center">
+                                                <div class="bg-info bg-opacity-10 p-3 rounded me-3">
+                                                    <i class="fas fa-user-tie fa-2x text-info"></i>
+                                                </div>
+                                                <div>
+                                                    <div class="fw-bold fs-6">
+                                                        {{ $prestamo->practicante->nombre }}
+                                                        {{ $prestamo->practicante->apellido }}
+                                                    </div>
+                                                    <div class="text-muted small">
+                                                        <i class="fas fa-hand-holding me-1"></i>
+                                                        Responsable del registro original
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <small>Responsable original del registro</small>
                                         </div>
                                     </div>
                                     <input type="hidden" name="practicante_id" value="{{ $prestamo->practicante_id }}">
                                 </div>
 
-                                <!-- EQUIPOS -->
+                                <!-- EQUIPOS EN EL PRÉSTAMO -->
                                 <div class="col-12 mt-4">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <h6 class="text-primary border-bottom pb-2 mb-0 w-100">
-                                            <i class="fas fa-laptop me-2"></i>Equipos en Préstamo
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h6 class="text-primary border-bottom pb-2 mb-0 flex-grow-1">
+                                            <i class="fas fa-laptop me-2"></i>Equipos en este Préstamo
                                         </h6>
-                                    </div>
-                                    <div class="d-flex justify-content-end mb-3 mt-2">
-                                        <button type="button" class="btn btn-sm btn-outline-primary"
-                                            onclick="agregarFilaEquipo()">
-                                            <i class="fas fa-plus me-1"></i> Añadir equipo/accesorio
+                                        <button type="button" class="btn btn-sm btn-primary"
+                                            onclick="mostrarAgregarEquipo()">
+                                            <i class="fas fa-plus me-1"></i> Agregar Equipo
                                         </button>
                                     </div>
 
-                                    <div id="contenedorEquipos">
-                                        <!-- EQUIPO ACTUAL (PRIMERO) -->
-                                        <div class="equipo-row mb-3" id="equipo-row-1">
-                                            <div class="position-relative">
-                                                <div class="input-group">
-                                                    <span class="input-group-text bg-light"><i
-                                                            class="fas fa-laptop"></i></span>
-                                                    <!-- Mostramos el equipo actual como "placeholder" pero permitimos buscar para cambiarlo -->
-                                                    <input type="text" id="buscarEquipo_1" class="form-control"
-                                                        placeholder="Buscar equipo/accesorio 1..." autocomplete="off">
-
-                                                    <!-- Nota aclaratoria específica para el equipo 1 -->
-                                                    <div class="form-text text-warning mt-1 ms-1">
-                                                        <i class="fas fa-exclamation-circle me-1"></i>
-                                                        Si cambias este equipo/accesorio, reemplazarás al equipo original
-                                                        del préstamo.
-                                                    </div>
-
-                                                    <!-- Botón eliminar solo si hay más de 1 equipo -->
-                                                    <button type="button" class="btn btn-outline-danger btn-remove-row"
-                                                        onclick="eliminarFila('equipo-row-1')" title="Eliminar este equipo">
-                                                        <i class="fas fa-trash-alt"></i>
-                                                    </button>
-                                                </div>
-
-                                                <input type="hidden" name="equipo_id[]" id="equipo_id_1"
-                                                    value="{{ $prestamo->equipo_id }}">
-
-                                                <!-- Resultados -->
-                                                <div id="resultadosEquipo_1" class="search-results"></div>
-
-                                                <!-- Seleccionado Inicialmente -->
-                                                <div id="equipoSeleccionado_1" class="selected-item mt-2"
-                                                    style="display: block;">
-                                                    <div
-                                                        class="alert alert-info mb-0 d-flex justify-content-between align-items-center">
-                                                        <div>
-                                                            <strong id="equipoNombre_1">Nombre:
-                                                                {{ $prestamo->equipo->nombre_equipo }}</strong><br>
-                                                            <small id="equipoDetalle_1">{{ $prestamo->equipo->tipo }}
-                                                                {{ $prestamo->equipo->marca }} - Modelo
-                                                                {{ $prestamo->equipo->modelo }}</small>
-                                                        </div>
-                                                        <button type="button" class="btn btn-sm btn-outline-danger"
-                                                            onclick="limpiarEquipo(1)">
-                                                            <i class="fas fa-times"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                    <div class="alert alert-info d-flex align-items-start">
+                                        <i class="fas fa-lightbulb me-2 mt-1"></i>
+                                        <div>
+                                            <strong>¿Cómo editar?</strong>
+                                            <ul class="mb-0 mt-1 small">
+                                                <li>Desmarca un equipo para <strong>quitarlo</strong> del préstamo</li>
+                                                <li>Haz clic en <strong>"Agregar Equipo"</strong> para añadir más</li>
+                                                <li>Los cambios se aplicarán al guardar</li>
+                                            </ul>
                                         </div>
                                     </div>
 
-                                    <div class="form-text text-success mt-1">
-                                        <div class="d-flex align-items-center">
-                                            <i class="fas fa-info-circle me-2"></i>
-                                            <span>
-                                                <strong>Nota:</strong> Si eliminas el equipo original y guardas, ese
-                                                préstamo específico se marcará como devuelto/cancelado.
-                                                Si añades nuevos equipos, se crearán nuevos préstamos.
-                                                Si cambias el equipo, se actualizará el registro.
-                                            </span>
+                                    @php
+                                        $equiposActivos = $prestamo->prestamoEquipos()->where('estado', 'activo')->with('equipo')->get();
+                                    @endphp
+
+                                    <!-- EQUIPOS ACTUALES -->
+                                    <div id="equiposActualesContainer">
+                                        @if($equiposActivos->count() > 0)
+                                            <div class="mb-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="mantenerTodos" checked>
+                                                    <label class="form-check-label fw-bold" for="mantenerTodos">
+                                                        Mantener todos los equipos ({{ $equiposActivos->count() }})
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div class="row g-3">
+                                                @foreach($equiposActivos as $index => $pe)
+                                                    <div class="col-md-6">
+                                                        <div class="card border-2 equipo-card-edit"
+                                                            data-equipo-id="{{ $pe->equipo_id }}">
+                                                            <div class="card-body">
+                                                                <div class="form-check">
+                                                                    <input class="form-check-input equipo-checkbox-edit"
+                                                                        type="checkbox" name="equipo_id[]"
+                                                                        value="{{ $pe->equipo_id }}"
+                                                                        id="equipo_actual_{{ $pe->equipo_id }}" checked>
+                                                                    <label class="form-check-label w-100"
+                                                                        for="equipo_actual_{{ $pe->equipo_id }}">
+                                                                        <div class="d-flex align-items-center">
+                                                                            <div class="bg-primary bg-opacity-10 p-2 rounded me-3">
+                                                                                <i class="fas fa-laptop fa-2x text-primary"></i>
+                                                                            </div>
+                                                                            <div class="flex-grow-1">
+                                                                                <div class="fw-bold">{{ $pe->equipo->tipo }}</div>
+                                                                                <div class="text-muted small">
+                                                                                    {{ $pe->equipo->marca }} -
+                                                                                    {{ $pe->equipo->modelo }}
+                                                                                </div>
+                                                                                <span
+                                                                                    class="badge bg-secondary">{{ $pe->equipo->nombre_equipo }}</span>
+                                                                                @if($loop->first)
+                                                                                    <span class="badge bg-warning text-dark ms-1">
+                                                                                        <i class="fas fa-star me-1"></i>Original
+                                                                                    </span>
+                                                                                @endif
+                                                                            </div>
+                                                                        </div>
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <div class="alert alert-warning">
+                                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                                No hay equipos activos en este préstamo.
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    <!-- NUEVOS EQUIPOS A AGREGAR -->
+                                    <div id="nuevosEquiposContainer" class="mt-4" style="display: none;">
+                                        <h6 class="text-success mb-3">
+                                            <i class="fas fa-plus-circle me-2"></i>Nuevos Equipos a Agregar
+                                        </h6>
+                                        <div id="contenedorNuevosEquipos"></div>
+                                    </div>
+
+                                    <div class="mt-3">
+                                        <div class="alert alert-warning d-none" id="alertaEquiposVacio">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            <strong>Atención:</strong> Debes mantener al menos un equipo en el préstamo.
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- FECHAS Y OBSERVACIONES -->
-                                <div class="col-12 mt-3">
-                                    <h6 class="text-primary border-bottom pb-2 mb-3">Detalles Adicionales (Compartidos)</h6>
+                                <!-- DETALLES ADICIONALES -->
+                                <div class="col-12 mt-4">
+                                    <h6 class="text-secondary border-bottom pb-2 mb-3">
+                                        <i class="fas fa-calendar-alt me-2"></i>Detalles del Préstamo
+                                    </h6>
                                 </div>
 
                                 <div class="col-md-6">
@@ -163,17 +207,18 @@
                                             class="text-danger">*</span></label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light"><i class="fas fa-calendar-alt"></i></span>
-                                        <input type="date" name="fecha_devolucion_esperada" id="fecha_devolucion_esperada"
-                                            class="form-control"
+                                        <input type="date" name="fecha_devolucion_esperada" class="form-control"
                                             value="{{ \Carbon\Carbon::parse($prestamo->fecha_devolucion_esperada)->format('Y-m-d') }}"
-                                            required>
+                                            min="{{ date('Y-m-d') }}" required>
                                     </div>
+                                    <div class="form-text text-muted small">Fecha límite para devolver los equipos</div>
                                 </div>
 
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Estado de entrega / Observaciones</label>
-                                    <textarea name="observaciones" rows="1" class="form-control"
-                                        placeholder="Ej: Se entrega con cargador original...">{{ $prestamo->observaciones_prestamo }}</textarea>
+                                    <textarea name="observaciones" rows="3" class="form-control"
+                                        placeholder="Ej: Se entrega con cargador, sin mouse...">{{ $prestamo->observaciones_prestamo }}</textarea>
+                                    <div class="form-text text-muted small">Detalles sobre el estado de los equipos</div>
                                 </div>
                             </div>
 
@@ -181,7 +226,7 @@
                                 <a href="{{ route('prestamos.index') }}" class="btn btn-secondary px-4">
                                     <i class="fas fa-times me-2"></i>Cancelar
                                 </a>
-                                <button type="submit" class="btn btn-primary px-4">
+                                <button type="submit" class="btn btn-primary px-4" id="btnGuardar">
                                     <i class="fas fa-save me-2"></i>Guardar Cambios
                                 </button>
                             </div>
@@ -193,7 +238,30 @@
     </div>
 
     <style>
-        /* Estilos para el autocompletado (mismos que en create) */
+        .equipo-card-edit {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .equipo-card-edit:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-color: #0d6efd !important;
+        }
+
+        .equipo-checkbox-edit:checked~label {
+            font-weight: bold;
+        }
+
+        .equipo-card-edit:has(.equipo-checkbox-edit:checked) {
+            background-color: #e7f3ff;
+            border-color: #0d6efd !important;
+        }
+
+        .equipo-card-edit:has(.equipo-checkbox-edit:not(:checked)) {
+            opacity: 0.6;
+            background-color: #f8f9fa;
+        }
+
         .search-results {
             position: absolute;
             top: 100%;
@@ -224,108 +292,234 @@
             background-color: #f8f9fa;
         }
 
-        .equipo-row {
-            position: relative;
-            transition: all 0.3s ease;
+        .nuevo-equipo-card {
+            background-color: #e8f5e9;
+            border-color: #4caf50 !important;
         }
     </style>
 
     <script>
+        let equipoNuevoCounter = 0;
         let timeoutsEquipos = {};
-        let equipoCounter = 1; // Empezamos en 1 porque ya tenemos el equipo 1 cargado
 
-        // Inicializar búsqueda del equipo 1
-        inicializarBusquedaEquipo(1);
+        document.addEventListener('DOMContentLoaded', function () {
+            const mantenerTodos = document.getElementById('mantenerTodos');
+            const checkboxesEquipos = document.querySelectorAll('.equipo-checkbox-edit');
+            const alertaVacio = document.getElementById('alertaEquiposVacio');
+            const btnGuardar = document.getElementById('btnGuardar');
+            const form = document.getElementById('formPrestamo');
 
-        function agregarFilaEquipo() {
-            equipoCounter++;
-            const container = document.getElementById('contenedorEquipos');
-            const rowId = `equipo-row-${equipoCounter}`;
+            // Función principal de verificación
+            function verificarYActualizarEstado() {
+                const equiposActivos = Array.from(checkboxesEquipos).filter(cb => cb.checked).length;
 
-            // Calcular visual index
-            const visualIndex = document.querySelectorAll('.equipo-row').length + 1;
+                // Contar equipos nuevos que REALMENTE tienen valor
+                const equiposNuevosInputs = document.querySelectorAll('input[name="equipos_nuevos[]"]');
+                const equiposNuevosConValor = Array.from(equiposNuevosInputs).filter(input => input.value && input.value.trim() !== '').length;
+
+                const totalEquipos = equiposActivos + equiposNuevosConValor;
+
+                console.log('DEBUG - Equipos activos:', equiposActivos);
+                console.log('DEBUG - Equipos nuevos con valor:', equiposNuevosConValor);
+                console.log('DEBUG - Total equipos:', totalEquipos);
+
+                // Verificar si se está reemplazando el equipo original
+                const primerCheckbox = checkboxesEquipos[0];
+                const equipoOriginalDesmarcado = primerCheckbox && !primerCheckbox.checked;
+
+                if (equipoOriginalDesmarcado && equiposNuevosConValor > 0) {
+                    // CASO: Reemplazo del equipo original
+                    mostrarMensajeReemplazo();
+                    alertaVacio.classList.add('d-none');
+                    btnGuardar.disabled = false;
+                } else if (totalEquipos === 0) {
+                    // CASO: No hay equipos
+                    ocultarMensajeReemplazo();
+                    alertaVacio.classList.remove('d-none');
+                    btnGuardar.disabled = true;
+                } else {
+                    // CASO: Todo normal
+                    ocultarMensajeReemplazo();
+                    alertaVacio.classList.add('d-none');
+                    btnGuardar.disabled = false;
+                }
+            }
+
+            function mostrarMensajeReemplazo() {
+                let alertaReemplazo = document.getElementById('alertaReemplazo');
+
+                if (!alertaReemplazo) {
+                    alertaReemplazo = document.createElement('div');
+                    alertaReemplazo.id = 'alertaReemplazo';
+                    alertaReemplazo.className = 'alert alert-warning d-flex align-items-start mt-3';
+                    alertaReemplazo.innerHTML = `
+                        <i class="fas fa-exchange-alt me-2 mt-1 fa-lg"></i>
+                        <div>
+                            <strong>🔄 Reemplazo de Equipo Original</strong>
+                            <p class="mb-0 mt-1">
+                                Estás <strong>reemplazando</strong> el equipo original por el nuevo equipo seleccionado.
+                                El equipo original se marcará como devuelto y el nuevo se asignará al préstamo.
+                            </p>
+                        </div>
+                    `;
+
+                    const container = document.getElementById('equiposActualesContainer');
+                    container.appendChild(alertaReemplazo);
+                } else {
+                    alertaReemplazo.classList.remove('d-none');
+                }
+            }
+
+            function ocultarMensajeReemplazo() {
+                const alertaReemplazo = document.getElementById('alertaReemplazo');
+                if (alertaReemplazo) {
+                    alertaReemplazo.classList.add('d-none');
+                }
+            }
+
+            // Event listeners para checkboxes
+            if (mantenerTodos) {
+                mantenerTodos.addEventListener('change', function () {
+                    checkboxesEquipos.forEach(checkbox => {
+                        checkbox.checked = this.checked;
+                    });
+                    verificarYActualizarEstado();
+                });
+            }
+
+            checkboxesEquipos.forEach(checkbox => {
+                checkbox.addEventListener('change', function () {
+                    const todosSeleccionados = Array.from(checkboxesEquipos).every(cb => cb.checked);
+                    const algunoSeleccionado = Array.from(checkboxesEquipos).some(cb => cb.checked);
+
+                    if (mantenerTodos) {
+                        mantenerTodos.checked = todosSeleccionados;
+                        mantenerTodos.indeterminate = algunoSeleccionado && !todosSeleccionados;
+                    }
+
+                    verificarYActualizarEstado();
+                });
+            });
+
+            // Click en card también marca checkbox
+            document.querySelectorAll('.equipo-card-edit').forEach(card => {
+                card.addEventListener('click', function (e) {
+                    if (e.target.type !== 'checkbox' && !e.target.closest('label')) {
+                        const checkbox = this.querySelector('.equipo-checkbox-edit');
+                        if (checkbox) {
+                            checkbox.checked = !checkbox.checked;
+                            checkbox.dispatchEvent(new Event('change'));
+                        }
+                    }
+                });
+            });
+
+            // Hacer función accesible globalmente
+            window.verificarYActualizarEstado = verificarYActualizarEstado;
+
+            // Validación al enviar
+            form.addEventListener('submit', function (e) {
+                const equiposActivos = Array.from(checkboxesEquipos).filter(cb => cb.checked).length;
+                const equiposNuevosInputs = document.querySelectorAll('input[name="equipos_nuevos[]"]');
+                const equiposNuevosConValor = Array.from(equiposNuevosInputs).filter(input => input.value && input.value.trim() !== '').length;
+
+                console.log('SUBMIT - Equipos activos:', equiposActivos);
+                console.log('SUBMIT - Equipos nuevos:', equiposNuevosConValor);
+
+                if (equiposActivos + equiposNuevosConValor === 0) {
+                    e.preventDefault();
+                    alert('⚠️ El préstamo no puede quedar vacío.\n\nDebes:\n• Mantener al menos un equipo actual, O\n• Agregar un equipo nuevo de reemplazo');
+                    return false;
+                }
+
+                // Confirmar si está reemplazando el original
+                const primerCheckbox = checkboxesEquipos[0];
+                const equipoOriginalDesmarcado = primerCheckbox && !primerCheckbox.checked;
+
+                if (equipoOriginalDesmarcado && equiposNuevosConValor > 0) {
+                    const confirmacion = confirm(
+                        '🔄 REEMPLAZO DE EQUIPO\n\n' +
+                        'Estás reemplazando el equipo original del préstamo.\n\n' +
+                        '¿Deseas continuar?'
+                    );
+
+                    if (!confirmacion) {
+                        e.preventDefault();
+                        return false;
+                    }
+                }
+            });
+
+            // Verificación inicial
+            verificarYActualizarEstado();
+        });
+
+        function mostrarAgregarEquipo() {
+            document.getElementById('nuevosEquiposContainer').style.display = 'block';
+            agregarNuevoEquipo();
+        }
+
+        function agregarNuevoEquipo() {
+            equipoNuevoCounter++;
+            const container = document.getElementById('contenedorNuevosEquipos');
+            const rowId = `nuevo-equipo-${equipoNuevoCounter}`;
 
             const html = `
-                    <div class="equipo-row mb-3" id="${rowId}">
+                <div class="card nuevo-equipo-card border-2 mb-3" id="${rowId}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="badge bg-success">
+                                <i class="fas fa-plus me-1"></i> Nuevo Equipo
+                            </span>
+                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="eliminarNuevoEquipo('${rowId}', ${equipoNuevoCounter})">
+                                <i class="fas fa-times"></i> Quitar
+                            </button>
+                        </div>
+
                         <div class="position-relative">
-                            <div class="input-group">
-                                <span class="input-group-text bg-light"><i class="fas fa-laptop"></i></span>
-                                <input type="text" id="buscarEquipo_${equipoCounter}" class="form-control"
-                                    placeholder="Buscar equipo/accesorio ${visualIndex}..." autocomplete="off">
+                            <input type="text" id="buscarNuevo_${equipoNuevoCounter}" class="form-control"
+                                placeholder="Buscar equipo de reemplazo..." autocomplete="off">
+                            <input type="hidden" name="equipos_nuevos[]" id="equipoNuevo_${equipoNuevoCounter}" value="">
 
-                                <button type="button" class="btn btn-outline-danger" onclick="eliminarFila('${rowId}')" title="Eliminar fila">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </div>
-                            <input type="hidden" name="equipo_id[]" id="equipo_id_${equipoCounter}" required>
+                            <div id="resultadosNuevo_${equipoNuevoCounter}" class="search-results"></div>
 
-                            <!-- Resultados -->
-                            <div id="resultadosEquipo_${equipoCounter}" class="search-results"></div>
-
-                            <!-- Seleccionado -->
-                            <div id="equipoSeleccionado_${equipoCounter}" class="selected-item mt-2" style="display: none;">
-                                <div class="alert alert-info mb-0 d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <strong id="equipoNombre_${equipoCounter}"></strong><br>
-                                        <small id="equipoDetalle_${equipoCounter}"></small>
-                                    </div>
-                                    <button type="button" class="btn btn-sm btn-outline-danger"
-                                        onclick="limpiarEquipo(${equipoCounter})">
-                                        <i class="fas fa-times"></i>
-                                    </button>
+                            <div id="seleccionadoNuevo_${equipoNuevoCounter}" class="mt-2" style="display: none;">
+                                <div class="alert alert-success mb-0">
+                                    <strong id="nombreNuevo_${equipoNuevoCounter}"></strong><br>
+                                    <small id="detalleNuevo_${equipoNuevoCounter}"></small>
                                 </div>
                             </div>
                         </div>
                     </div>
-                `;
+                </div>
+            `;
 
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = html;
-            container.appendChild(tempDiv.firstElementChild);
-
-            inicializarBusquedaEquipo(equipoCounter);
-            actualizarNumeracionEquipos();
-            verificarBotonesEliminar();
+            container.insertAdjacentHTML('beforeend', html);
+            inicializarBusquedaNuevo(equipoNuevoCounter);
         }
 
-        function eliminarFila(rowId) {
-            const rows = document.querySelectorAll('.equipo-row');
-            if (rows.length <= 1) {
-                alert('Debe haber al menos un equipo en el préstamo.');
-                return;
+        function eliminarNuevoEquipo(rowId, counterId) {
+            // Limpiar el input hidden antes de eliminar
+            const inputHidden = document.getElementById(`equipoNuevo_${counterId}`);
+            if (inputHidden) {
+                inputHidden.value = '';
             }
 
-            const row = document.getElementById(rowId);
-            if (row) {
-                row.remove();
-                actualizarNumeracionEquipos();
-                verificarBotonesEliminar();
+            document.getElementById(rowId).remove();
+
+            if (document.querySelectorAll('#contenedorNuevosEquipos .nuevo-equipo-card').length === 0) {
+                document.getElementById('nuevosEquiposContainer').style.display = 'none';
+            }
+
+            // Actualizar estado después de eliminar
+            if (window.verificarYActualizarEstado) {
+                window.verificarYActualizarEstado();
             }
         }
 
-        function actualizarNumeracionEquipos() {
-            const rows = document.querySelectorAll('.equipo-row');
-            rows.forEach((row, index) => {
-                const numero = index + 1;
-                const input = row.querySelector('input[id^="buscarEquipo_"]');
-                if (input) {
-                    input.placeholder = `Buscar equipo/accesorio ${numero}...`;
-                }
-            });
-        }
-
-        function verificarBotonesEliminar() {
-            const rows = document.querySelectorAll('.equipo-row');
-            // Si solo hay 1 fila, quizás querramos ocultar el botón de eliminar o no.
-            // El requerimiento dice "no quede vacío". Validamos en submit, pero visualmente ayuda.
-            // Si el usuario elimina la única fila, no puede agregar otra. Mejor dejar siempre visible y validar en eliminarFila.
-        }
-
-        function inicializarBusquedaEquipo(id) {
-            const input = document.getElementById(`buscarEquipo_${id}`);
-            if (!input) return;
-
-            const resultadosDiv = document.getElementById(`resultadosEquipo_${id}`);
+        function inicializarBusquedaNuevo(id) {
+            const input = document.getElementById(`buscarNuevo_${id}`);
+            const resultadosDiv = document.getElementById(`resultadosNuevo_${id}`);
 
             input.addEventListener('input', function (e) {
                 const query = e.target.value.trim();
@@ -349,14 +543,11 @@
                             }
 
                             // Filtrar equipos ya seleccionados
-                            const inputsIds = document.querySelectorAll('input[name="equipo_id[]"]');
-                            const idsSeleccionados = Array.from(inputsIds).map(input => input.value).filter(val => val);
+                            const idsActuales = Array.from(document.querySelectorAll('.equipo-checkbox-edit:checked')).map(cb => cb.value);
+                            const idsNuevos = Array.from(document.querySelectorAll('input[name="equipos_nuevos[]"]')).map(input => input.value).filter(v => v);
+                            const todosIds = [...idsActuales, ...idsNuevos];
 
-                            // Permitir mostrar el equipo actual de esta fila si estamos editando (aunque ya esté en value)
-                            // pero la búsqueda es para CAMBIAR, así que mejor filtramos todo lo que esté seleccionado
-                            // EXCEPTO quizás si buscamos el mismo nombre... pero bueno, filtrado estricto es más seguro.
-
-                            const filteredData = data.filter(eq => !idsSeleccionados.includes(eq.id.toString()));
+                            const filteredData = data.filter(eq => !todosIds.includes(eq.id.toString()));
 
                             if (filteredData.length === 0) {
                                 resultadosDiv.innerHTML = '<div class="p-3 text-center text-muted">Equipos ya seleccionados</div>';
@@ -365,62 +556,60 @@
 
                             let html = '';
                             filteredData.forEach(equipo => {
-                                const modelo = (equipo.modelo || '').replace(/'/g, "\\'");
-                                const nombre = equipo.nombre_equipo.replace(/'/g, "\\'");
-                                const marca = equipo.marca.replace(/'/g, "\\'");
+                                const modelo = (equipo.modelo || '').replace(/'/g, '&#39;');
+                                const nombre = equipo.nombre_equipo.replace(/'/g, '&#39;');
+                                const marca = equipo.marca.replace(/'/g, '&#39;');
+                                const tipo = equipo.tipo.replace(/'/g, '&#39;');
 
                                 html += `
-                                        <div class="search-result-item" onclick="seleccionarEquipo(${id}, ${equipo.id}, '${equipo.tipo}', '${marca}', '${modelo}', '${nombre}')">
-                                            <strong>${equipo.nombre_equipo}</strong>
-                                            <small>${equipo.tipo} ${equipo.marca}</small>
-                                        </div>
-                                    `;
+                                    <div class="search-result-item" onclick='seleccionarNuevo(${id}, ${equipo.id}, "${tipo}", "${marca}", "${modelo}", "${nombre}")'>
+                                        <strong>${equipo.nombre_equipo}</strong><br>
+                                        <small>${equipo.tipo} ${equipo.marca}</small>
+                                    </div>
+                                `;
                             });
                             resultadosDiv.innerHTML = html;
                         })
                         .catch(err => {
+                            console.error('Error en búsqueda:', err);
                             resultadosDiv.innerHTML = '<div class="p-3 text-center text-danger">Error de búsqueda</div>';
                         });
                 }, 300);
             });
         }
 
-        function seleccionarEquipo(rowId, equipoId, tipo, marca, modelo, codigo) {
-            document.getElementById(`equipo_id_${rowId}`).value = equipoId;
-            document.getElementById(`buscarEquipo_${rowId}`).value = '';
-            document.getElementById(`resultadosEquipo_${rowId}`).classList.remove('show');
+        function seleccionarNuevo(id, equipoId, tipo, marca, modelo, nombre) {
+            // CRÍTICO: Guardar el ID en el input hidden
+            const inputHidden = document.getElementById(`equipoNuevo_${id}`);
+            inputHidden.value = equipoId;
 
-            document.getElementById(`equipoNombre_${rowId}`).textContent = `Nombre: ${codigo}`;
-            document.getElementById(`equipoDetalle_${rowId}`).textContent = `${tipo} ${marca} - Modelo ${modelo || 'N/A'}`;
-            document.getElementById(`equipoSeleccionado_${rowId}`).style.display = 'block';
-            document.getElementById(`buscarEquipo_${rowId}`).style.display = 'none';
+            console.log(`Equipo ${equipoId} guardado en equipoNuevo_${id}`);
+            console.log('Valor del input:', inputHidden.value);
+
+            // Deshabilitar búsqueda
+            const inputBusqueda = document.getElementById(`buscarNuevo_${id}`);
+            inputBusqueda.value = '';
+            inputBusqueda.disabled = true;
+
+            // Ocultar resultados
+            document.getElementById(`resultadosNuevo_${id}`).classList.remove('show');
+
+            // Mostrar equipo seleccionado
+            document.getElementById(`nombreNuevo_${id}`).textContent = `${nombre}`;
+            document.getElementById(`detalleNuevo_${id}`).textContent = `${tipo} ${marca} - Modelo ${modelo || 'N/A'}`;
+            document.getElementById(`seleccionadoNuevo_${id}`).style.display = 'block';
+
+            // CRÍTICO: Actualizar estado después de seleccionar
+            setTimeout(() => {
+                if (window.verificarYActualizarEstado) {
+                    window.verificarYActualizarEstado();
+                }
+            }, 100);
         }
 
-        function limpiarEquipo(rowId) {
-            document.getElementById(`equipo_id_${rowId}`).value = '';
-            document.getElementById(`buscarEquipo_${rowId}`).value = '';
-            document.getElementById(`equipoSeleccionado_${rowId}`).style.display = 'none';
-            document.getElementById(`buscarEquipo_${rowId}`).style.display = 'block';
-            document.getElementById(`buscarEquipo_${rowId}`).focus();
-        }
-
-        // Validación al enviar
-        document.getElementById('formPrestamo').addEventListener('submit', function (e) {
-            const inputsIds = document.querySelectorAll('input[name="equipo_id[]"]');
-            let count = 0;
-            inputsIds.forEach(input => {
-                if (input.value) count++;
-            });
-
-            if (count === 0) {
-                e.preventDefault();
-                alert('El préstamo no puede quedar vacío. Debe haber al menos un equipo seleccionado.');
-            }
-        });
-
-        // Cerrar resultados click fuera
+        // Cerrar resultados al hacer clic fuera
         document.addEventListener('click', function (e) {
-            if (!e.target.closest('.input-group') && !e.target.closest('.search-results')) {
+            if (!e.target.closest('.position-relative')) {
                 document.querySelectorAll('.search-results').forEach(el => el.classList.remove('show'));
             }
         });

@@ -8,32 +8,9 @@
             <h5 class="mb-0 text-secondary">
                 <i class="fas fa-history me-2"></i>Historial de Préstamos
             </h5>
-            <div class="d-flex gap-2">
-                <!-- Botón Dropdown de Exportación -->
-                <div class="btn-group">
-                    <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown"
-                        aria-expanded="false">
-                        <i class="fas fa-download me-2"></i>Exportar Reporte
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li>
-                            <a class="dropdown-item" href="#" onclick="confirmarExportacion('pdf'); return false;">
-                                <i class="fas fa-file-pdf text-danger me-2"></i>Descargar PDF
-                            </a>
-                        </li>
-                        <li>
-                            <a class="dropdown-item" href="#" onclick="confirmarExportacion('excel'); return false;">
-                                <i class="fas fa-file-excel text-success me-2"></i>Descargar Excel
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-
-                <!-- Botón Nuevo Préstamo -->
-                <a href="{{ route('prestamos.create') }}" class="btn btn-primary">
-                    <i class="fas fa-plus me-2"></i> Nuevo Préstamo
-                </a>
-            </div>
+            <a href="{{ route('prestamos.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i> Nuevo Préstamo
+            </a>
         </div>
 
         <div class="card-body">
@@ -88,11 +65,11 @@
                 <table class="table table-hover align-middle">
                     <thead class="table-dark">
                         <tr>
-                            <th>Equipo</th>
+                            <th>Equipo(s)</th>
                             <th>Estudiante Solicitante</th>
                             <th>Practicante Receptor</th>
                             <th>Fecha y Atención</th>
-                            <th>Fecha de Devolución</th>
+                            <th>Fecha Devolución</th>
                             <th class="text-center">Estado</th>
                             <th class="text-end">Acciones</th>
                         </tr>
@@ -100,17 +77,48 @@
                     <tbody>
                         @forelse ($prestamos as $prestamo)
                             <tr>
+                                <!-- EQUIPOS -->
                                 <td>
-                                    <div class="fw-bold text-primary">
-                                        <i class="fas fa-laptop me-1"></i> {{ $prestamo->equipo->tipo }}
-                                    </div>
-                                    <div class="small text-muted">
-                                        {{ $prestamo->equipo->marca }} - {{ $prestamo->equipo->modelo }}
-                                        <span
-                                            class="badge bg-light text-dark border">{{ $prestamo->equipo->nombre_equipo }}</span>
-                                    </div>
+                                    @php
+                                        $equiposActivos = $prestamo->prestamoEquipos()->where('estado', 'activo')->with('equipo')->get();
+                                        $totalEquipos = $prestamo->prestamoEquipos()->where('estado', 'activo')->count(); // ✅ Solo activos
+                                        $equiposDevueltos = $prestamo->prestamoEquipos()->where('estado', 'devuelto')->count();
+                                    @endphp
+
+                                    @if($equiposActivos->count() > 0)
+                                        @foreach($equiposActivos->take(2) as $pe)
+                                            <div class="fw-bold text-primary">
+                                                <i class="fas fa-laptop me-1"></i> {{ $pe->equipo->tipo }}
+                                            </div>
+                                            <div class="small text-muted">
+                                                {{ $pe->equipo->marca }} - {{ $pe->equipo->modelo }}
+                                                <span class="badge bg-light text-dark border">{{ $pe->equipo->nombre_equipo }}</span>
+                                            </div>
+                                        @endforeach
+
+                                        @if($equiposActivos->count() > 2)
+                                            <div class="small text-muted mt-1">
+                                                <i class="fas fa-plus-circle me-1"></i> +{{ $equiposActivos->count() - 2 }} equipo(s)
+                                                más
+                                            </div>
+                                        @endif
+                                    @else
+                                        <div class="text-success">
+                                            <i class="fas fa-check-circle me-1"></i> Todos devueltos
+                                        </div>
+                                    @endif
+
+                                    @if($totalEquipos > 1)
+                                        <div class="small text-info mt-2">
+                                            <i class="fas fa-info-circle me-1"></i> Total: {{ $totalEquipos }} equipo(s)
+                                            @if($equiposDevueltos > 0)
+                                                ({{ $equiposDevueltos }} devuelto(s))
+                                            @endif
+                                        </div>
+                                    @endif
                                 </td>
 
+                                <!-- ESTUDIANTE SOLICITANTE -->
                                 <td>
                                     <div class="fw-bold">{{ $prestamo->estudiante->nombre }}
                                         {{ $prestamo->estudiante->apellido }}
@@ -118,21 +126,37 @@
                                     <div class="small text-muted">{{ $prestamo->estudiante->carrera }}</div>
                                 </td>
 
+                                <!-- PRACTICANTE RECEPTOR (NUEVO) -->
                                 <td>
-                                    @if($prestamo->practicanteDevolucion)
-                                        <div class="fw-bold text-success">
+                                    @php
+                                        $ultimaDevolucion = $prestamo->prestamoEquipos()
+                                            ->where('estado', 'devuelto')
+                                            ->whereNotNull('practicante_recibe_id')
+                                            ->orderBy('fecha_devolucion_real', 'desc')
+                                            ->with('practicanteRecibe')
+                                            ->first();
+                                    @endphp
+
+                                    @if($ultimaDevolucion && $ultimaDevolucion->practicanteRecibe)
+                                        <div class="text-success">
                                             <i class="fas fa-user-check me-1"></i>
-                                            {{ $prestamo->practicanteDevolucion->nombre }}
-                                            {{ $prestamo->practicanteDevolucion->apellido }}
+                                            <span class="fw-bold">
+                                                {{ $ultimaDevolucion->practicanteRecibe->nombre }}
+                                                {{ $ultimaDevolucion->practicanteRecibe->apellido }}
+                                            </span>
                                         </div>
-                                        <div class="small text-muted">Practicante receptor</div>
+                                        @if($equiposDevueltos > 1)
+                                            <small class="text-muted fst-italic">(última devolución)</small>
+                                        @endif
                                     @else
-                                        <div class="text-muted fst-italic">
-                                            <i class="fas fa-hourglass-half me-1"></i> Pendiente
+                                        <div class="text-warning">
+                                            <i class="fas fa-hourglass-half me-1"></i>
+                                            <span class="fw-bold">Pendiente</span>
                                         </div>
                                     @endif
                                 </td>
 
+                                <!-- FECHA Y ATENCIÓN -->
                                 <td>
                                     <div><i class="far fa-calendar-alt me-1 text-secondary"></i>
                                         {{ \Carbon\Carbon::parse($prestamo->fecha_prestamo)->format('d/m/Y') }}</div>
@@ -140,49 +164,80 @@
                                         {{ \Carbon\Carbon::parse($prestamo->fecha_prestamo)->format('h:i A') }}</div>
 
                                     <div class="small text-info fst-italic mt-1" style="font-size: 0.85em;">
-                                        <i class="fas fa-user-tie me-1"></i> Atendió:
+                                        <i class="fas fa-user-tie me-1"></i> Entregó:
                                         {{ $prestamo->practicante->nombre ?? 'Admin' }}
                                         {{ $prestamo->practicante->apellido ?? '' }}
                                     </div>
                                 </td>
 
+                                <!-- FECHA DEVOLUCIÓN (NUEVO) -->
                                 <td>
-                                    @if($prestamo->estado == 'finalizado' && $prestamo->fecha_devolucion_real)
-                                        <div><i class="far fa-calendar-check me-1 text-success"></i>
-                                            {{ \Carbon\Carbon::parse($prestamo->fecha_devolucion_real)->format('d/m/Y') }}</div>
-                                        <div class="small text-muted"><i class="far fa-clock me-1"></i>
-                                            {{ \Carbon\Carbon::parse($prestamo->fecha_devolucion_real)->format('h:i A') }}</div>
+                                    @if($ultimaDevolucion && $ultimaDevolucion->fecha_devolucion_real)
+                                        <div class="text-success">
+                                            <i class="fas fa-check-circle me-1"></i>
+                                            <span class="fw-bold">
+                                                {{ \Carbon\Carbon::parse($ultimaDevolucion->fecha_devolucion_real)->format('d/m/Y') }}
+                                            </span>
+                                        </div>
+                                        <div class="small text-muted">
+                                            {{ \Carbon\Carbon::parse($ultimaDevolucion->fecha_devolucion_real)->format('h:i A') }}
+                                        </div>
+                                        @if($equiposDevueltos > 1)
+                                            <small class="text-muted fst-italic">(última)</small>
+                                        @endif
                                     @else
-                                        <div class="text-muted fst-italic">
-                                            <i class="fas fa-hourglass-half me-1"></i> Pendiente
+                                        <div class="text-warning">
+                                            <i class="fas fa-hourglass-half me-1"></i>
+                                            <span class="fw-bold">Pendiente</span>
+                                        </div>
+                                        <div class="small text-muted">
+                                            Esperada:
+                                            {{ \Carbon\Carbon::parse($prestamo->fecha_devolucion_esperada)->format('d/m/Y') }}
                                         </div>
                                     @endif
                                 </td>
 
+                                <!-- ESTADO -->
                                 <td class="text-center">
                                     @if($prestamo->estado == 'activo')
-                                        <span class="badge bg-warning text-dark border border-warning rounded-pill px-3">
-                                            <i class="fas fa-spinner fa-spin me-1"></i> En Curso
-                                        </span>
+                                        @if($equiposDevueltos > 0)
+                                            {{-- Devolución parcial --}}
+                                            <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
+                                                <i class="fas fa-hourglass-half me-1"></i> Parcial
+                                                <br>
+                                                <small>({{ $equiposDevueltos }}/{{ $totalEquipos }})</small>
+                                            </span>
+                                        @else
+                                            {{-- En curso (ninguno devuelto) --}}
+                                            <span class="badge bg-info text-white rounded-pill px-3 py-2">
+                                                <i class="fas fa-spinner fa-pulse me-1"></i> En Curso
+                                                <br>
+                                                <small>(0/{{ $totalEquipos }})</small>
+                                            </span>
+                                        @endif
                                     @elseif($prestamo->estado == 'finalizado')
-                                        <span class="badge bg-success rounded-pill px-3">
-                                            <i class="fas fa-check me-1"></i> Devuelto
+                                        {{-- Todos devueltos --}}
+                                        <span class="badge bg-success rounded-pill px-3 py-2">
+                                            <i class="fas fa-check me-1"></i> Completo
+                                            <br>
+                                            <small>({{ $totalEquipos }}/{{ $totalEquipos }})</small>
                                         </span>
                                     @else
                                         <span class="badge bg-secondary rounded-pill px-3">{{ $prestamo->estado }}</span>
                                     @endif
                                 </td>
 
+                                <!-- ACCIONES -->
                                 <td class="text-end">
                                     @if($prestamo->estado == 'activo')
-                                        <div class="d-flex gap-1 justify-content-end">
-                                            <a href="{{ route('prestamos.finalizar', $prestamo) }}" class="btn btn-sm btn-success"
-                                                title="Registrar Devolución">
-                                                <i class="fas fa-undo me-1"></i> Devolver
-                                            </a>
+                                        <div class="d-flex gap-2 justify-content-end">
                                             <a href="{{ route('prestamos.edit', $prestamo) }}"
                                                 class="btn btn-sm btn-warning text-dark" title="Editar Préstamo">
                                                 <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{{ route('prestamos.finalizar', $prestamo) }}" class="btn btn-sm btn-success"
+                                                title="Registrar Devolución">
+                                                <i class="fas fa-undo me-1"></i> Devolver
                                             </a>
                                         </div>
                                     @else
@@ -212,21 +267,16 @@
 
     @push('scripts')
         <script>
-            // ========================================
-            // VALIDACIÓN DE FECHAS (existente)
-            // ========================================
             function validarFechas() {
                 const fechaDesde = document.getElementById('fecha_desde');
                 const fechaHasta = document.getElementById('fecha_hasta');
 
-                // Actualizar el atributo min de fecha_hasta cuando se selecciona fecha_desde
                 if (fechaDesde.value) {
                     fechaHasta.min = fechaDesde.value;
                 } else {
                     fechaHasta.removeAttribute('min');
                 }
 
-                // Validar que fecha_hasta no sea menor que fecha_desde
                 if (fechaDesde.value && fechaHasta.value) {
                     if (fechaHasta.value < fechaDesde.value) {
                         alert('La fecha "Hasta" no puede ser anterior a la fecha "Desde".');
@@ -235,13 +285,11 @@
                     }
                 }
 
-                // Si la validación pasa, enviar el formulario
                 if (fechaDesde.value || fechaHasta.value) {
                     fechaDesde.form.submit();
                 }
             }
 
-            // Establecer el min al cargar la página si ya hay un valor en fecha_desde
             document.addEventListener('DOMContentLoaded', function () {
                 const fechaDesde = document.getElementById('fecha_desde');
                 const fechaHasta = document.getElementById('fecha_hasta');
@@ -250,71 +298,6 @@
                     fechaHasta.min = fechaDesde.value;
                 }
             });
-
-            // ========================================
-            // EXPORTACIÓN DE REPORTES (nuevo)
-            // ========================================
-
-            /**
-             * Confirma la exportación según si hay filtros aplicados o no
-             * @param {string} formato - 'pdf' o 'excel'
-             */
-            function confirmarExportacion(formato) {
-                // Detectar si hay filtros activos
-                const search = document.querySelector('input[name="search"]').value;
-                const estado = document.querySelector('select[name="estado"]').value;
-                const fechaDesde = document.querySelector('input[name="fecha_desde"]').value;
-                const fechaHasta = document.querySelector('input[name="fecha_hasta"]').value;
-
-                const hayFiltros = search || estado || fechaDesde || fechaHasta;
-
-                if (!hayFiltros) {
-                    // Sin filtros: mostrar confirmación
-                    const confirmar = confirm(
-                        'Te recomendamos filtrar el reporte por fechas específicas, si no será muy largo.\n\n' +
-                        '¿Deseas continuar con este reporte completo?'
-                    );
-
-                    if (!confirmar) {
-                        // Usuario canceló, no hacer nada
-                        return;
-                    }
-                }
-
-                // Usuario confirmó o hay filtros: proceder con descarga
-                const url = construirURLExportacion(formato);
-                window.location.href = url;
-            }
-
-            /**
-             * Construye la URL de exportación con los parámetros de filtro actuales
-             * @param {string} formato - 'pdf' o 'excel'
-             * @returns {string} URL completa con query parameters
-             */
-            function construirURLExportacion(formato) {
-                // Base URL según el formato
-                const baseUrl = formato === 'pdf'
-                    ? '{{ route("prestamos.export.pdf") }}'
-                    : '{{ route("prestamos.export.excel") }}';
-
-                // Obtener valores actuales de los filtros
-                const search = document.querySelector('input[name="search"]').value;
-                const estado = document.querySelector('select[name="estado"]').value;
-                const fechaDesde = document.querySelector('input[name="fecha_desde"]').value;
-                const fechaHasta = document.querySelector('input[name="fecha_hasta"]').value;
-
-                // Construir query string
-                const params = new URLSearchParams();
-
-                if (search) params.append('search', search);
-                if (estado) params.append('estado', estado);
-                if (fechaDesde) params.append('fecha_desde', fechaDesde);
-                if (fechaHasta) params.append('fecha_hasta', fechaHasta);
-
-                // Retornar URL completa
-                const queryString = params.toString();
-                return queryString ? `${baseUrl}?${queryString}` : baseUrl;
-            }
         </script>
     @endpush
 @endsection

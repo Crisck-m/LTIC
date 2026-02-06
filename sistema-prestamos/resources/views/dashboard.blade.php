@@ -3,193 +3,217 @@
 @section('titulo', 'Home')
 
 @section('contenido')
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <a href="{{ route('estudiantes.index') }}" class="text-decoration-none">
-                <div class="card border-left-primary shadow h-100 py-2 border-0 border-start border-4 border-primary">
+    <div class="container-fluid">
+
+        {{-- ESTADÍSTICAS EN CARDS --}}
+        <div class="row g-4 mb-4">
+
+            {{-- EQUIPOS DISPONIBLES --}}
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100 border-start border-info border-4">
                     <div class="card-body">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                                    Estudiantes Registrados</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                    {{ $stats['total_estudiantes'] }}
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="rounded-circle bg-info bg-opacity-10 p-3">
+                                    <i class="fas fa-laptop fa-2x text-info"></i>
                                 </div>
                             </div>
-                            <div class="col-auto">
-                                <i class="fas fa-users fa-2x text-gray-300 text-primary opacity-50"></i>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="text-muted text-uppercase mb-1 small">Equipos Disponibles</h6>
+                                <h2 class="mb-0 fw-bold text-info">{{ $stats['equipos_disponibles'] }}</h2>
                             </div>
                         </div>
                     </div>
                 </div>
-            </a>
-        </div>
+            </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <a href="{{ route('equipos.index') }}" class="text-decoration-none">
-                <div class="card border-left-info shadow h-100 py-2 border-0 border-start border-4 border-info">
+            {{-- HISTORIAL PRÉSTAMOS (HOY) --}}
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100 border-start border-secondary border-4">
                     <div class="card-body">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                    Equipos Disponibles</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                    {{ $stats['equipos_disponibles'] }}
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="rounded-circle bg-secondary bg-opacity-10 p-3">
+                                    <i class="fas fa-history fa-2x text-secondary"></i>
                                 </div>
                             </div>
-                            <div class="col-auto">
-                                <i class="fas fa-laptop fa-2x text-gray-300 text-info opacity-50"></i>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="text-muted text-uppercase mb-1 small">Historial Préstamos (Hoy)</h6>
+                                <h2 class="mb-0 fw-bold text-secondary">{{ $stats['historial_prestamos'] }}</h2>
                             </div>
                         </div>
                     </div>
                 </div>
-            </a>
-        </div>
+            </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <a href="{{ route('prestamos.index') }}" class="text-decoration-none">
-                <div class="card border-left-secondary shadow h-100 py-2 border-0 border-start border-4 border-secondary">
+            {{-- DEVOLUCIONES PENDIENTES --}}
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100 border-start border-warning border-4">
                     <div class="card-body">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
-                                    Historial Préstamos (Hoy)</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                    {{ $stats['historial_prestamos'] }}
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="rounded-circle bg-warning bg-opacity-10 p-3">
+                                    <i class="fas fa-hand-holding fa-2x text-warning"></i>
                                 </div>
                             </div>
-                            <div class="col-auto">
-                                <i class="fas fa-history fa-2x text-gray-300 text-secondary opacity-50"></i>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="text-muted text-uppercase mb-1 small">Devoluciones Pendientes</h6>
+                                <h2 class="mb-0 fw-bold text-warning">{{ $stats['pendientes_devolucion'] }}</h2>
                             </div>
                         </div>
                     </div>
                 </div>
-            </a>
-        </div>
+            </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <a href="{{ route('devoluciones.index') }}" class="text-decoration-none">
-                <div class="card border-left-danger shadow h-100 py-2 border-0 border-start border-4 border-danger">
+            {{-- PRÉSTAMOS ATRASADOS (NUEVO) --}}
+            <div class="col-md-3">
+                <div class="card border-0 shadow-sm h-100 border-start border-danger border-4">
                     <div class="card-body">
-                        <div class="row no-gutters align-items-center">
-                            <div class="col mr-2">
-                                <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
-                                    Devoluciones Pendientes</div>
-                                <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                    {{ $stats['pendientes_devolucion'] }}
+                        <div class="d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="rounded-circle bg-danger bg-opacity-10 p-3">
+                                    <i class="fas fa-clock fa-2x text-danger"></i>
                                 </div>
                             </div>
-                            <div class="col-auto">
-                                <i class="fas fa-clock fa-2x text-gray-300 text-danger opacity-50"></i>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="text-muted text-uppercase mb-1 small">Préstamos Atrasados</h6>
+                                <h2 class="mb-0 fw-bold text-danger">{{ $stats['prestamos_atrasados'] }}</h2>
                             </div>
                         </div>
                     </div>
                 </div>
-            </a>
-        </div>
-    </div>
+            </div>
 
-    <div class="row">
-        <div class="col-12">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 bg-white">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-bolt text-warning me-2"></i>Acciones Rápidas
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-lg-3 col-md-6">
-                            <a href="{{ route('estudiantes.create') }}" class="btn btn-primary w-100 h-100 py-3">
-                                <i class="fas fa-user-plus fa-2x mb-2"></i><br>
-                                Registrar Estudiante
-                            </a>
-                        </div>
-                        <div class="col-lg-3 col-md-6">
-                            <a href="{{ route('equipos.create') }}" class="btn btn-primary w-100 h-100 py-3">
-                                <i class="fas fa-laptop fa-2x mb-2"></i><br>
-                                Agregar Equipo
-                            </a>
-                        </div>
-                        <div class="col-lg-3 col-md-6">
-                            <a href="{{ route('prestamos.create') }}" class="btn btn-primary w-100 h-100 py-3">
-                                <i class="fas fa-hand-holding fa-2x mb-2"></i><br>
-                                Nuevo Préstamo
-                            </a>
-                        </div>
-                        <div class="col-lg-3 col-md-6">
-                            <a href="{{ route('devoluciones.index') }}" class="btn btn-primary w-100 h-100 py-3">
-                                <i class="fas fa-undo fa-2x mb-2"></i><br>
-                                Registrar Devolución
-                            </a>
+        </div>
+
+        {{-- ACCIONES RÁPIDAS --}}
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3">
+                            <i class="fas fa-bolt text-warning me-2"></i>Acciones Rápidas
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <a href="{{ route('estudiantes.create') }}"
+                                    class="btn btn-primary w-100 py-3 d-flex flex-column align-items-center">
+                                    <i class="fas fa-user-plus fa-2x mb-2"></i>
+                                    <span>Registrar Estudiante</span>
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="{{ route('equipos.create') }}"
+                                    class="btn btn-primary w-100 py-3 d-flex flex-column align-items-center">
+                                    <i class="fas fa-laptop fa-2x mb-2"></i>
+                                    <span>Agregar Equipo</span>
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="{{ route('prestamos.create') }}"
+                                    class="btn btn-primary w-100 py-3 d-flex flex-column align-items-center">
+                                    <i class="fas fa-hand-holding fa-2x mb-2"></i>
+                                    <span>Nuevo Préstamo</span>
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="{{ route('devoluciones.index') }}"
+                                    class="btn btn-primary w-100 py-3 d-flex flex-column align-items-center">
+                                    <i class="fas fa-undo fa-2x mb-2"></i>
+                                    <span>Registrar Devolución</span>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="row mt-4">
-        <div class="col-md-8">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 bg-white">
-                    <h6 class="m-0 font-weight-bold text-primary">
-                        <i class="fas fa-history me-2"></i>Actividad Reciente
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        @foreach($stats['ultimos_movimientos'] as $p)
-                            <div class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    @if($p->estado == 'activo')
-                                        <i class="fas fa-hand-holding text-warning me-2"></i>
-                                        <strong>{{ $p->estudiante->nombre }} {{ $p->estudiante->apellido }}</strong> solicitó
-                                        {{ $p->equipo->nombre_equipo }}
-                                    @else
-                                        <i class="fas fa-undo text-success me-2"></i>
-                                        <strong>{{ $p->estudiante->nombre }} {{ $p->estudiante->apellido }}</strong> devolvió
-                                        {{ $p->equipo->nombre_equipo }}
-                                    @endif
+        {{-- ACTIVIDAD RECIENTE Y SISTEMA --}}
+        <div class="row g-4">
+
+            {{-- ACTIVIDAD RECIENTE --}}
+            <div class="col-md-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="mb-0">
+                            <i class="fas fa-clock text-primary me-2"></i>Actividad Reciente
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            @foreach($stats['ultimos_movimientos'] as $p)
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        @if($p->estado == 'activo')
+                                            <i class="fas fa-hand-holding text-warning me-2"></i>
+                                            <strong>{{ $p->estudiante->nombre }} {{ $p->estudiante->apellido }}</strong> solicitó
+                                            @php
+                                                $equiposActivos = $p->prestamoEquipos->where('estado', 'activo');
+                                                $primerEquipo = $equiposActivos->first();
+                                            @endphp
+                                            @if($primerEquipo && $primerEquipo->equipo)
+                                                {{ $primerEquipo->equipo->nombre_equipo }}
+                                                @if($equiposActivos->count() > 1)
+                                                    <small class="text-muted">(+{{ $equiposActivos->count() - 1 }} más)</small>
+                                                @endif
+                                            @else
+                                                <span class="text-muted">equipo(s)</span>
+                                            @endif
+                                        @else
+                                            <i class="fas fa-undo text-success me-2"></i>
+                                            <strong>{{ $p->estudiante->nombre }} {{ $p->estudiante->apellido }}</strong> devolvió
+                                            @php
+                                                $todosEquipos = $p->prestamoEquipos;
+                                                $primerEquipo = $todosEquipos->first();
+                                            @endphp
+                                            @if($primerEquipo && $primerEquipo->equipo)
+                                                {{ $primerEquipo->equipo->nombre_equipo }}
+                                                @if($todosEquipos->count() > 1)
+                                                    <small class="text-muted">(+{{ $todosEquipos->count() - 1 }} más)</small>
+                                                @endif
+                                            @else
+                                                <span class="text-muted">equipo(s)</span>
+                                            @endif
+                                        @endif
+                                    </div>
+                                    <small class="text-muted">{{ $p->updated_at->diffForHumans() }}</small>
                                 </div>
-                                <small class="text-muted">{{ $p->updated_at->diffForHumans() }}</small>
-                            </div>
-                        @endforeach
+                            @endforeach
 
-                        @if($stats['ultimos_movimientos']->isEmpty())
-                            <p class="text-center text-muted my-3">No hay actividad reciente.</p>
-                        @endif
+                            @if($stats['ultimos_movimientos']->isEmpty())
+                                <div class="list-group-item text-center py-5 text-muted">
+                                    <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                    <p class="mb-0">No hay actividad reciente</p>
+                                </div>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="col-md-4">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3 bg-white">
-                    <h6 class="m-0 font-weight-bold text-info">
-                        <i class="fas fa-info-circle me-2"></i>Sistema
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        <small class="text-muted">Versión</small>
-                        <div class="font-weight-bold">1.0.0</div>
+            {{-- INFORMACIÓN DEL SISTEMA --}}
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="mb-0">
+                            <i class="fas fa-info-circle text-info me-2"></i>Sesión Actual
+                        </h5>
                     </div>
-                    <div class="mb-3">
-                        <small class="text-muted">Fecha</small>
-                        <div>{{ now()->format('d/m/Y') }}</div>
-                    </div>
-                    <div class="mb-3">
-                        <small class="text-muted">Estado</small>
-                        <div><span class="badge bg-success">Operativo</span></div>
-                    </div>
-                    <div>
-                        <small class="text-muted">Soporte</small>
-                        <div><a href="mailto:soporte@ltic.edu">soporte@ltic.edu</a></div>
+                    <div class="card-body">
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-3">
+                                <strong class="d-block text-muted small">Fecha</strong>
+                                <span class="fs-5"><i
+                                        class="far fa-calendar text-info me-2"></i>{{ \Carbon\Carbon::now()->format('d/m/Y') }}</span>
+                            </li>
+                            <li>
+                                <strong class="d-block text-muted small">Hora</strong>
+                                <span class="fs-5"><i
+                                        class="far fa-clock text-success me-2"></i>{{ \Carbon\Carbon::now()->format('h:i A') }}</span>
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
 @endsection
