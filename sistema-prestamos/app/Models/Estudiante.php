@@ -15,7 +15,7 @@ class Estudiante extends Model
         'apellido',
         'email',
         'telefono',
-        'carrera',
+        'carrera_id',
         'tipo',
         'activo',
         'observaciones'
@@ -62,5 +62,13 @@ class Estudiante extends Model
     public function getNombreCompletoAttribute()
     {
         return "{$this->nombre} {$this->apellido}";
+    }
+
+    /**
+     * Relación: Un estudiante pertenece a una carrera
+     */
+    public function carrera()
+    {
+        return $this->belongsTo(Carrera::class);
     }
 }

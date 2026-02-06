@@ -59,7 +59,6 @@ class PrestamoController extends Controller
             'practicante_id' => 'required|exists:estudiantes,id',
             'fecha_devolucion_esperada' => 'required|date|after_or_equal:today',
             'observaciones' => 'nullable|string|max:500',
-            'periodo_notificacion' => 'nullable|in:1_dia,1_semana,1_mes',
         ], [
             'fecha_devolucion_esperada.after_or_equal' => 'La fecha de devolución no puede ser anterior al día de hoy.',
             'equipo_id.required' => 'Debes seleccionar al menos un equipo.',
@@ -79,15 +78,76 @@ class PrestamoController extends Controller
         }
 
         try {
-            // Registrar préstamo con TODOS los equipos
-            $this->prestamoService->registrarSalida($datos);
+            // ===================================================================
+            // VERIFICAR SI EL ESTUDIANTE YA TIENE UN PRÉSTAMO ACTIVO
+            // ===================================================================
+            $prestamoActivo = Prestamo::where('estudiante_id', $datos['estudiante_id'])
+                ->where('estado', 'activo')
+                ->first();
 
-            return redirect()->route('dashboard')
-                ->with('success', 'Préstamo registrado correctamente con ' . count($request->equipo_id) . ' equipo(s).');
+            if ($prestamoActivo) {
+                // ===============================================================
+                // CASO: EL ESTUDIANTE YA TIENE UN PRÉSTAMO ACTIVO
+                // Actualizar el préstamo existente agregando los nuevos equipos
+                // ===============================================================
+
+                // Obtener equipos actuales del préstamo
+                $equiposActuales = $prestamoActivo->prestamoEquipos()
+                    ->where('estado', 'activo')
+                    ->pluck('equipo_id')
+                    ->toArray();
+
+                // Combinar equipos actuales con los nuevos (sin duplicados)
+                $todosLosEquipos = array_unique(array_merge($equiposActuales, $datos['equipo_id']));
+
+                // Contar cuántos equipos nuevos se están agregando
+                $equiposNuevos = array_diff($datos['equipo_id'], $equiposActuales);
+                $cantidadNuevos = count($equiposNuevos);
+
+                // Actualizar el array de equipos
+                $datos['equipo_id'] = array_values($todosLosEquipos);
+
+                // Actualizar fecha de devolución esperada si es posterior a la actual
+                $fechaActual = \Carbon\Carbon::parse($prestamoActivo->fecha_devolucion_esperada);
+                $fechaNueva = \Carbon\Carbon::parse($datos['fecha_devolucion_esperada']);
+
+                if ($fechaNueva->greaterThan($fechaActual)) {
+                    $prestamoActivo->fecha_devolucion_esperada = $datos['fecha_devolucion_esperada'];
+                }
+
+                // Actualizar observaciones (concatenar si hay nuevas)
+                if (!empty($datos['observaciones'])) {
+                    $observacionActual = $prestamoActivo->observaciones_prestamo ?? '';
+                    $prestamoActivo->observaciones_prestamo = trim($observacionActual . "\n[Actualización] " . $datos['observaciones']);
+                }
+
+                $prestamoActivo->save();
+
+                // Usar el servicio para actualizar los equipos
+                $this->prestamoService->actualizarPrestamo($prestamoActivo, $datos);
+
+                return redirect()->route('dashboard')
+                    ->with('success', "✅ Préstamo actualizado correctamente.\n\n" .
+                        "• Se agregaron {$cantidadNuevos} equipo(s) nuevo(s)\n" .
+                        "• Total de equipos en préstamo: " . count($todosLosEquipos) . "\n" .
+                        "• Préstamo ID: #{$prestamoActivo->id}");
+            } else {
+                // ===============================================================
+                // CASO: EL ESTUDIANTE NO TIENE PRÉSTAMOS ACTIVOS
+                // Crear un nuevo préstamo
+                // ===============================================================
+
+                $prestamo = $this->prestamoService->registrarSalida($datos);
+
+                return redirect()->route('dashboard')
+                    ->with('success', "✅ Préstamo registrado correctamente.\n\n" .
+                        "• Equipos prestados: " . count($request->equipo_id) . "\n" .
+                        "• Préstamo ID: #{$prestamo->id}");
+            }
         } catch (\Exception $e) {
             return redirect()
                 ->back()
-                ->withErrors(['error' => $e->getMessage()])
+                ->withErrors(['error' => 'Error al procesar el préstamo: ' . $e->getMessage()])
                 ->withInput();
         }
     }

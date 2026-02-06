@@ -35,7 +35,13 @@ class PrestamoService
 
         // Filtro de estado
         if ($estado) {
-            $query->where('estado', $estado);
+            if ($estado === 'atrasado') {
+                // Préstamos activos cuya fecha esperada ya pasó
+                $query->where('estado', 'activo')
+                    ->where('fecha_devolucion_esperada', '<', now()->toDateString());
+            } else {
+                $query->where('estado', $estado);
+            }
         }
 
         // Filtro de fechas

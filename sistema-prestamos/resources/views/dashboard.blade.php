@@ -10,81 +10,101 @@
 
             {{-- EQUIPOS DISPONIBLES --}}
             <div class="col-md-3">
-                <div class="card border-0 shadow-sm h-100 border-start border-info border-4">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                                <div class="rounded-circle bg-info bg-opacity-10 p-3">
-                                    <i class="fas fa-laptop fa-2x text-info"></i>
+                <a href="{{ route('equipos.index') }}" class="text-decoration-none">
+                    <div class="card border-0 shadow-sm h-100 border-start border-info border-4 card-clickable">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="rounded-circle bg-info bg-opacity-10 p-3">
+                                        <i class="fas fa-laptop fa-2x text-info"></i>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <h6 class="text-muted text-uppercase mb-1 small">Equipos Disponibles</h6>
-                                <h2 class="mb-0 fw-bold text-info">{{ $stats['equipos_disponibles'] }}</h2>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="text-muted text-uppercase mb-1 small">Equipos Disponibles</h6>
+                                    <h2 class="mb-0 fw-bold text-info">{{ $stats['equipos_disponibles'] }}</h2>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
 
             {{-- HISTORIAL PRÉSTAMOS (HOY) --}}
             <div class="col-md-3">
-                <div class="card border-0 shadow-sm h-100 border-start border-secondary border-4">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                                <div class="rounded-circle bg-secondary bg-opacity-10 p-3">
-                                    <i class="fas fa-history fa-2x text-secondary"></i>
+                <a href="{{ route('prestamos.index') }}" class="text-decoration-none">
+                    <div class="card border-0 shadow-sm h-100 border-start border-secondary border-4 card-clickable">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="rounded-circle bg-secondary bg-opacity-10 p-3">
+                                        <i class="fas fa-history fa-2x text-secondary"></i>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <h6 class="text-muted text-uppercase mb-1 small">Historial Préstamos (Hoy)</h6>
-                                <h2 class="mb-0 fw-bold text-secondary">{{ $stats['historial_prestamos'] }}</h2>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="text-muted text-uppercase mb-1 small">Historial Préstamos (Hoy)</h6>
+                                    <h2 class="mb-0 fw-bold text-secondary">{{ $stats['historial_prestamos'] }}</h2>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
 
             {{-- DEVOLUCIONES PENDIENTES --}}
             <div class="col-md-3">
-                <div class="card border-0 shadow-sm h-100 border-start border-warning border-4">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                                <div class="rounded-circle bg-warning bg-opacity-10 p-3">
-                                    <i class="fas fa-hand-holding fa-2x text-warning"></i>
+                <a href="{{ route('devoluciones.index') }}" class="text-decoration-none">
+                    <div class="card border-0 shadow-sm h-100 border-start border-warning border-4 card-clickable">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="rounded-circle bg-warning bg-opacity-10 p-3">
+                                        <i class="fas fa-hand-holding fa-2x text-warning"></i>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <h6 class="text-muted text-uppercase mb-1 small">Devoluciones Pendientes</h6>
-                                <h2 class="mb-0 fw-bold text-warning">{{ $stats['pendientes_devolucion'] }}</h2>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="text-muted text-uppercase mb-1 small">Devoluciones Pendientes</h6>
+                                    <h2 class="mb-0 fw-bold text-warning">{{ $stats['pendientes_devolucion'] }}</h2>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
 
             {{-- PRÉSTAMOS ATRASADOS (NUEVO) --}}
             <div class="col-md-3">
-                <div class="card border-0 shadow-sm h-100 border-start border-danger border-4">
-                    <div class="card-body">
-                        <div class="d-flex align-items-center">
-                            <div class="flex-shrink-0">
-                                <div class="rounded-circle bg-danger bg-opacity-10 p-3">
-                                    <i class="fas fa-clock fa-2x text-danger"></i>
+                <a href="{{ route('prestamos.index', ['estado' => 'atrasado']) }}" class="text-decoration-none">
+                    <div class="card border-0 shadow-sm h-100 border-start border-danger border-4 card-clickable">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                <div class="flex-shrink-0">
+                                    <div class="rounded-circle bg-danger bg-opacity-10 p-3">
+                                        <i class="fas fa-clock fa-2x text-danger"></i>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="flex-grow-1 ms-3">
-                                <h6 class="text-muted text-uppercase mb-1 small">Préstamos Atrasados</h6>
-                                <h2 class="mb-0 fw-bold text-danger">{{ $stats['prestamos_atrasados'] }}</h2>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="text-muted text-uppercase mb-1 small">Préstamos Atrasados</h6>
+                                    <h2 class="mb-0 fw-bold text-danger">{{ $stats['prestamos_atrasados'] }}</h2>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </a>
             </div>
 
         </div>
+
+        <style>
+            .card-clickable {
+                transition: all 0.3s ease;
+                cursor: pointer;
+            }
+
+            .card-clickable:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15) !important;
+            }
+        </style>
 
         {{-- ACCIONES RÁPIDAS --}}
         <div class="row mb-4">

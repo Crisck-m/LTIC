@@ -16,7 +16,7 @@
         <div class="card-body">
 
             <form action="{{ route('equipos.index') }}" method="GET">
-                <div class="row mb-3">
+                <div class="row mb-3 g-2">
 
                     <div class="col-md-4">
                         <div class="input-group">
@@ -29,13 +29,13 @@
                     <div class="col-md-3">
                         <select name="tipo" class="form-select" onchange="this.form.submit()">
                             <option value="">Todos los tipos</option>
-                            <option value="Laptop" {{ request('tipo') == 'Laptop' ? 'selected' : '' }}>💻 Laptops</option>
-                            <option value="Proyector" {{ request('tipo') == 'Proyector' ? 'selected' : '' }}>📽️ Proyectores
+                            <option value="Laptop" {{ request('tipo') == 'Laptop' ? 'selected' : '' }}>Laptops</option>
+                            <option value="Mouse" {{ request('tipo') == 'Mouse' ? 'selected' : '' }}>Mouse</option>
+                            <option value="Cable de red" {{ request('tipo') == 'Cable de red' ? 'selected' : '' }}>Cables de
+                                red</option>
+                            <option value="Cable HDMI" {{ request('tipo') == 'Cable HDMI' ? 'selected' : '' }}>Cables HDMI
                             </option>
-                            <option value="Tablet" {{ request('tipo') == 'Tablet' ? 'selected' : '' }}>📱 Tablets</option>
-                            <option value="Accesorio" {{ request('tipo') == 'Accesorio' ? 'selected' : '' }}>🔌 Accesorios
-                            </option>
-                            <option value="Otro" {{ request('tipo') == 'Otro' ? 'selected' : '' }}>📦 Otros</option>
+                            <option value="Otro" {{ request('tipo') == 'Otro' ? 'selected' : '' }}>Otros</option>
                         </select>
                     </div>
 
@@ -82,21 +82,52 @@
                     <tbody>
                         @forelse ($equipos as $equipo)
                             <tr>
-                                <td class="fw-bold text-primary">{{ $equipo->nombre_equipo }}</td>
+                                {{-- COLUMNA: CÓDIGO --}}
+                                <td class="fw-bold text-primary">
+                                    @if($equipo->es_individual)
+                                        {{-- LAPTOP: Mostrar nombre único --}}
+                                        {{ $equipo->nombre_equipo }}
+                                    @else
+                                        {{-- OTROS: Mostrar tipo + cantidad --}}
+                                        {{ $equipo->nombre_equipo }}
+                                        <span class="badge bg-info ms-2">
+                                            Cantidad: {{ $equipo->cantidad_disponible }}/{{ $equipo->cantidad_total }}
+                                        </span>
+                                    @endif
+                                </td>
+
+                                {{-- COLUMNA: TIPO --}}
                                 <td>
+                                    {{-- ICONOS POR TIPO --}}
                                     @if($equipo->tipo == 'Laptop')
                                         <i class="fas fa-laptop me-1 text-secondary"></i>
-                                    @elseif($equipo->tipo == 'Proyector')
-                                        <i class="fas fa-video me-1 text-secondary"></i>
+                                    @elseif($equipo->tipo == 'Mouse')
+                                        <i class="fas fa-mouse me-1 text-secondary"></i>
+                                    @elseif($equipo->tipo == 'Cable de red' || $equipo->tipo == 'Cable HDMI')
+                                        <i class="fas fa-plug me-1 text-secondary"></i>
                                     @else
                                         <i class="fas fa-box me-1 text-secondary"></i>
                                     @endif
-                                    {{ $equipo->tipo }}
+
+                                    {{-- MOSTRAR TIPO (con tipo_personalizado si es "Otro") --}}
+                                    @if($equipo->tipo === 'Otro' && $equipo->tipo_personalizado)
+                                        <span class="badge bg-secondary">
+                                            {{ $equipo->tipo }} ({{ $equipo->tipo_personalizado }})
+                                        </span>
+                                    @else
+                                        {{ $equipo->tipo }}
+                                    @endif
                                 </td>
+
+                                {{-- COLUMNA: MARCA / MODELO --}}
                                 <td>{{ $equipo->marca }} - {{ $equipo->modelo }}</td>
+
+                                {{-- COLUMNA: CARACTERÍSTICAS --}}
                                 <td class="text-muted small text-truncate" style="max-width: 200px;">
                                     {{ $equipo->caracteristicas ?? 'Sin detalles' }}
                                 </td>
+
+                                {{-- COLUMNA: ESTADO --}}
                                 <td class="text-center">
                                     @if($equipo->estado == 'disponible')
                                         <span class="badge bg-success rounded-pill px-3">Disponible</span>
@@ -108,6 +139,8 @@
                                         <span class="badge bg-danger rounded-pill px-3">De Baja</span>
                                     @endif
                                 </td>
+
+                                {{-- COLUMNA: ACCIONES --}}
                                 <td class="text-end">
                                     <div class="d-flex justify-content-end gap-1">
                                         <a href="{{ route('equipos.edit', $equipo) }}" class="btn btn-sm btn-outline-warning"

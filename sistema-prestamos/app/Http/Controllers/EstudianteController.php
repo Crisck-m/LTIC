@@ -28,33 +28,57 @@ class EstudianteController extends Controller
 
     public function create()
     {
-        return view('estudiantes.create');
+        $carreras = \App\Models\Carrera::orderBy('nombre')->get();
+        return view('estudiantes.create', compact('carreras'));
     }
 
     public function store(Request $request)
     {
         $datos = $request->validate([
-            'cedula' => 'required|unique:estudiantes,cedula|digits:10',  // ✅ CAMBIADO
-            'nombre' => 'required|string',
-            'apellido' => 'required|string',
-            'email' => 'required|email|unique:estudiantes,email',
-            'carrera' => 'required',
-            'tipo' => 'required|in:estudiante,practicante',
-            'telefono' => 'nullable|string',
-            'observaciones' => 'nullable|string'
+            'cedula' => 'required|string|max:20|unique:estudiantes,cedula',
+            'nombre' => 'required|string|max:100',
+            'apellido' => 'required|string|max:100',
+            'email' => 'required|email|max:100',
+            'telefono' => 'nullable|string|max:15',
+            'carrera_id' => 'required_without:carrera_otra',
+            'carrera_otra' => 'required_if:carrera_id,otra|nullable|string|max:100',
+            'observaciones' => 'nullable|string|max:500',
+            'tipo' => 'required|in:estudiante,practicante'
+        ], [
+            'carrera_id.required_without' => 'Debes seleccionar una carrera o especificar una nueva.',
+            'carrera_otra.required_if' => 'Debes especificar el nombre de la carrera.',
         ]);
 
-        // Si carrera es 'Otra', usar el valor de otra_carrera
-        if ($request->carrera === 'Otra') {
-            $datos['carrera'] = $request->validate([
-                'otra_carrera' => 'required|string'
-            ])['otra_carrera'];
+        // ===================================================================
+        // LÓGICA: Si seleccionó "Otra", crear la carrera automáticamente
+        // ===================================================================
+        if ($request->carrera_id === 'otra' && !empty($request->carrera_otra)) {
+            // Verificar si la carrera ya existe (por si alguien más la creó)
+            $carrera = \App\Models\Carrera::firstOrCreate(
+                ['nombre' => trim($request->carrera_otra)]
+            );
+
+            $datos['carrera_id'] = $carrera->id;
+            $datos['carrera'] = $carrera->nombre; // Por compatibilidad
+        } else {
+            // Usar la carrera seleccionada
+            $carrera = \App\Models\Carrera::find($request->carrera_id);
+            $datos['carrera'] = $carrera ? $carrera->nombre : null;
         }
 
-        $estudiante = Estudiante::create($datos);
+        // Remover campo temporal
+        unset($datos['carrera_otra']);
 
-        return redirect()->route('estudiantes.index')
-            ->with('success', 'Estudiante registrado correctamente.');
+        try {
+            Estudiante::create($datos);
+
+            return redirect()->route('estudiantes.index')
+                ->with('success', 'Estudiante registrado correctamente.');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withErrors(['error' => 'Error al registrar el estudiante: ' . $e->getMessage()])
+                ->withInput();
+        }
     }
 
     public function edit(Estudiante $estudiante)
@@ -69,15 +93,15 @@ class EstudianteController extends Controller
             'nombre' => 'required|string',
             'apellido' => 'required|string',
             'email' => ['required', 'email', Rule::unique('estudiantes')->ignore($estudiante->id)],
-            'carrera' => 'required',
+            'carrera_id' => 'required',
             'tipo' => 'required|in:estudiante,practicante',
             'telefono' => 'nullable|string',
             'observaciones' => 'nullable|string'
         ]);
 
         // Si carrera es 'Otra', usar el valor de otra_carrera
-        if ($request->carrera === 'Otra') {
-            $datos['carrera'] = $request->validate([
+        if ($request->carrera_id === 'Otra') {
+            $datos['carrera_id'] = $request->validate([
                 'otra_carrera' => 'required|string'
             ])['otra_carrera'];
         }

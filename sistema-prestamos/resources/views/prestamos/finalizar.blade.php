@@ -146,7 +146,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold">Practicante que recibe <span
+                                    <label class="form-label fw-bold">Quien recibe el equipo <span
                                             class="text-danger">*</span></label>
                                     <select name="practicante_recibe_id" class="form-select" required>
                                         <option value="" disabled selected>Seleccione quién recibe...</option>

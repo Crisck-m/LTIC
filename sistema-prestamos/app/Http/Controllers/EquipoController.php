@@ -34,18 +34,100 @@ class EquipoController extends Controller
 
     public function store(Request $request)
     {
-        $datos = $request->validate([
-            'tipo' => 'required|string',
-            'marca' => 'required|string',
-            'modelo' => 'required|string',
-            'nombre_equipo' => 'required|unique:equipos,nombre_equipo',
-            'estado' => 'required|in:disponible,prestado,mantenimiento,baja',
-            'caracteristicas' => 'nullable|string'
-        ]);
+        // VALIDACIÓN SEPARADA POR TIPO
+        if ($request->tipo === 'Laptop') {
+            // LAPTOP: Validar nombre único
+            $datos = $request->validate([
+                'nombre_equipo' => 'required|string|max:100|unique:equipos,nombre_equipo',
+                'tipo' => 'required|string|max:50',
+                'marca' => 'required|string|max:50',
+                'modelo' => 'required|string|max:50',
+                'caracteristicas' => 'nullable|string',
+                'estado' => 'required|in:disponible,prestado,mantenimiento,dado_de_baja',
+            ], [
+                'nombre_equipo.unique' => 'Ya existe un equipo con ese nombre/código.',
+            ]);
 
-        $equipo = $this->equipoService->crearEquipo($datos);
+            $datos['es_individual'] = true;
+            $datos['cantidad_total'] = 1;
+            $datos['cantidad_disponible'] = ($datos['estado'] == 'disponible') ? 1 : 0;
 
-        return redirect()->route('equipos.index')->with('success', 'Equipo registrado correctamente.');
+        } else {
+            // EQUIPOS POR CANTIDAD: NO validar nombre único
+            $datos = $request->validate([
+                'tipo' => 'required|string|max:50',
+                'tipo_otro' => 'required_if:tipo,Otro|nullable|string|max:100',
+                'cantidad_total' => 'required|integer|min:1',
+                'marca' => 'required|string|max:50',
+                'modelo' => 'required|string|max:50',
+                'caracteristicas' => 'nullable|string',
+                'estado' => 'required|in:disponible,prestado,mantenimiento,dado_de_baja',
+            ]);
+
+            // Determinar el tipo real
+            $tipoReal = ($request->tipo === 'Otro' && !empty($request->tipo_otro))
+                ? trim($request->tipo_otro)
+                : $request->tipo;
+
+            $datos['nombre_equipo'] = $tipoReal;
+            $datos['es_individual'] = false;
+
+            // Si es "Otro", guardar tipo personalizado
+            if ($request->tipo === 'Otro' && !empty($request->tipo_otro)) {
+                $datos['tipo_personalizado'] = trim($request->tipo_otro);
+            }
+
+            // ===================================================================
+            // VERIFICAR SI YA EXISTE UN EQUIPO DEL MISMO TIPO/MARCA/MODELO
+            // Si existe, INCREMENTAR cantidad en lugar de crear nuevo registro
+            // ===================================================================
+            $equipoExistente = Equipo::where('nombre_equipo', $tipoReal)
+                ->where('marca', $datos['marca'])
+                ->where('modelo', $datos['modelo'])
+                ->where('es_individual', false)
+                ->first();
+
+            if ($equipoExistente) {
+                // INCREMENTAR cantidad del equipo existente
+                $equipoExistente->cantidad_total += $request->cantidad_total;
+
+                if ($datos['estado'] == 'disponible') {
+                    $equipoExistente->cantidad_disponible += $request->cantidad_total;
+                }
+
+                $equipoExistente->save();
+
+                return redirect()->route('equipos.index')
+                    ->with('success', "✅ Se agregaron {$request->cantidad_total} unidad(es) al inventario existente.\n\n" .
+                        "• Total: {$equipoExistente->cantidad_total} unidades\n" .
+                        "• Disponibles: {$equipoExistente->cantidad_disponible} unidades");
+            }
+
+            // Si NO existe, configurar cantidades para nuevo registro
+            $datos['cantidad_disponible'] = ($datos['estado'] == 'disponible') ? $request->cantidad_total : 0;
+        }
+
+        // Remover campo temporal
+        unset($datos['tipo_otro']);
+        $datos['user_id'] = auth()->id();
+
+        try {
+            Equipo::create($datos);
+
+            if ($request->tipo === 'Laptop') {
+                return redirect()->route('equipos.index')
+                    ->with('success', 'Laptop registrada correctamente.');
+            } else {
+                return redirect()->route('equipos.index')
+                    ->with('success', "Equipo registrado correctamente.\n\n" .
+                        "• Tipo: {$datos['nombre_equipo']}\n" .
+                        "• Cantidad: {$datos['cantidad_total']} unidades");
+            }
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withErrors(['error' => 'Error al registrar: ' . $e->getMessage()])
+                ->withInput();
+        }
     }
 
     public function edit(Equipo $equipo)

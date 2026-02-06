@@ -108,33 +108,50 @@
                                     @enderror
                                 </div>
 
-                                <!-- Carrera -->
-                                <div class="col-md-12">
+                                <div class="col-md-6">
                                     <label class="form-label fw-bold">Carrera <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light"><i class="fas fa-graduation-cap"></i></span>
-                                        <select name="carrera" id="carrera"
-                                            class="form-select @error('carrera') is-invalid @enderror" required
-                                            onchange="toggleOtraCarrera()">
-                                            <option value="" disabled selected>Seleccione una carrera...</option>
-                                            <option value="Ingeniería de Sistemas" {{ old('carrera') == 'Ingeniería de Sistemas' ? 'selected' : '' }}>Ingeniería de Sistemas</option>
-                                            <option value="Ingeniería Industrial" {{ old('carrera') == 'Ingeniería Industrial' ? 'selected' : '' }}>Ingeniería Industrial</option>
-                                            <option value="Ingeniería Civil" {{ old('carrera') == 'Ingeniería Civil' ? 'selected' : '' }}>Ingeniería Civil</option>
-                                            <option value="Administración de Empresas" {{ old('carrera') == 'Administración de Empresas' ? 'selected' : '' }}>Administración de Empresas</option>
-                                            <option value="Contabilidad" {{ old('carrera') == 'Contabilidad' ? 'selected' : '' }}>Contabilidad</option>
-                                            <option value="Derecho" {{ old('carrera') == 'Derecho' ? 'selected' : '' }}>
-                                                Derecho</option>
-                                            <option value="Medicina" {{ old('carrera') == 'Medicina' ? 'selected' : '' }}>
-                                                Medicina</option>
-                                            <option value="Enfermería" {{ old('carrera') == 'Enfermería' ? 'selected' : '' }}>
-                                                Enfermería</option>
-                                            <option value="Otra">Otra</option>
-                                        </select>
-                                    </div>
-                                    @error('carrera')
-                                        <div class="text-danger small mt-1">{{ $message }}</div>
-                                    @enderror
+                                    <select name="carrera_id" id="carrera_id" class="form-select" required
+                                        onchange="toggleCarreraOtra()">
+                                        <option value="" disabled selected>Seleccione una carrera...</option>
+                                        @foreach($carreras as $carrera)
+                                            <option value="{{ $carrera->id }}" {{ old('carrera_id') == $carrera->id ? 'selected' : '' }}>
+                                                {{ $carrera->nombre }}
+                                            </option>
+                                        @endforeach
+                                        <option value="otra" {{ old('carrera_id') == 'otra' ? 'selected' : '' }}>Otra</option>
+                                    </select>
                                 </div>
+
+                                <div class="col-md-6" id="carreraOtraContainer" style="display: none;">
+                                    <label class="form-label fw-bold">Especifique la carrera <span
+                                            class="text-danger">*</span></label>
+                                    <input type="text" name="carrera_otra" id="carrera_otra" class="form-control"
+                                        placeholder="Escriba el nombre de la carrera" value="{{ old('carrera_otra') }}">
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>Esta carrera se agregará automáticamente al
+                                        sistema
+                                    </small>
+                                </div>
+
+                                <script>
+                                    function toggleCarreraOtra() {
+                                        const select = document.getElementById('carrera_id');
+                                        const container = document.getElementById('carreraOtraContainer');
+                                        const input = document.getElementById('carrera_otra');
+
+                                        if (select.value === 'otra') {
+                                            container.style.display = 'block';
+                                            input.required = true;
+                                        } else {
+                                            container.style.display = 'none';
+                                            input.required = false;
+                                            input.value = '';
+                                        }
+                                    }
+
+                                    // Ejecutar al cargar la página por si hay old()
+                                    document.addEventListener('DOMContentLoaded', toggleCarreraOtra);
+                                </script>
 
                                 <!-- Campo para otra carrera (oculto por defecto) -->
                                 <div class="col-md-12" id="otraCarreraDiv" style="display: none;">

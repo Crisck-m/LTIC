@@ -12,10 +12,19 @@ class Equipo extends Model
     protected $fillable = [
         'nombre_equipo',
         'tipo',
+        'tipo_personalizado',
+        'es_individual',
+        'cantidad_total',
+        'cantidad_disponible',
         'marca',
         'modelo',
+        'caracteristicas',
         'estado',
-        'caracteristicas'
+        'user_id',
+    ];
+
+    protected $casts = [
+        'es_individual' => 'boolean',
     ];
 
     // Relación: Préstamos de este equipo

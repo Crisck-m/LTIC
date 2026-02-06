@@ -33,6 +33,8 @@
                             <option value="activo" {{ request('estado') == 'activo' ? 'selected' : '' }}>En Curso</option>
                             <option value="finalizado" {{ request('estado') == 'finalizado' ? 'selected' : '' }}>Devueltos
                             </option>
+                            <option value="atrasado" {{ request('estado') == 'atrasado' ? 'selected' : '' }}
+                                class="text-danger">Atrasados</option>
                         </select>
                     </div>
 
@@ -198,14 +200,49 @@
                                 </td>
 
                                 <!-- ESTADO -->
+                                <!-- ESTADO -->
                                 <td class="text-center">
-                                    @if($prestamo->estado == 'activo')
-                                        @if($equiposDevueltos > 0)
+                                    @php
+                                        $equiposActivosCount = $prestamo->prestamoEquipos()->where('estado', 'activo')->count();
+                                        $equiposDevueltosCount = $prestamo->prestamoEquipos()->where('estado', 'devuelto')->count();
+                                        $totalEquipos = $prestamo->prestamoEquipos()->whereIn('estado', ['activo', 'devuelto'])->count();
+
+                                        // Verificar si está atrasado (préstamos activos) - SOLO COMPARAR FECHAS
+                                        $fechaEsperada = \Carbon\Carbon::parse($prestamo->fecha_devolucion_esperada)->startOfDay();
+                                        $hoy = \Carbon\Carbon::now()->startOfDay();
+                                        $estaAtrasado = $prestamo->estado == 'activo' && $hoy->greaterThan($fechaEsperada);
+
+                                        // Verificar si fue devuelto tarde (préstamos finalizados) - SOLO COMPARAR FECHAS
+                                        $fueDevueltoTarde = false;
+                                        if ($prestamo->estado == 'finalizado') {
+                                            $ultimaDevolucion = $prestamo->prestamoEquipos()
+                                                ->where('estado', 'devuelto')
+                                                ->whereNotNull('fecha_devolucion_real')
+                                                ->orderBy('fecha_devolucion_real', 'desc')
+                                                ->first();
+
+                                            if ($ultimaDevolucion && $ultimaDevolucion->fecha_devolucion_real) {
+                                                $fechaDevolucionReal = \Carbon\Carbon::parse($ultimaDevolucion->fecha_devolucion_real)->startOfDay();
+                                                $fechaEsperadaFin = \Carbon\Carbon::parse($prestamo->fecha_devolucion_esperada)->startOfDay();
+                                                $fueDevueltoTarde = $fechaDevolucionReal->greaterThan($fechaEsperadaFin);
+                                            }
+                                        }
+                                    @endphp
+
+                                    @if($estaAtrasado)
+                                        {{-- ATRASADO (préstamos activos) --}}
+                                        <span class="badge bg-danger rounded-pill px-3 py-2 pulse-animation">
+                                            <i class="fas fa-exclamation-triangle me-1"></i> ATRASADO
+                                            <br>
+                                            <small>({{ $equiposActivosCount }}/{{ $totalEquipos }} pendientes)</small>
+                                        </span>
+                                    @elseif($prestamo->estado == 'activo')
+                                        @if($equiposDevueltosCount > 0)
                                             {{-- Devolución parcial --}}
                                             <span class="badge bg-warning text-dark rounded-pill px-3 py-2">
                                                 <i class="fas fa-hourglass-half me-1"></i> Parcial
                                                 <br>
-                                                <small>({{ $equiposDevueltos }}/{{ $totalEquipos }})</small>
+                                                <small>({{ $equiposDevueltosCount }}/{{ $totalEquipos }})</small>
                                             </span>
                                         @else
                                             {{-- En curso (ninguno devuelto) --}}
@@ -217,15 +254,46 @@
                                         @endif
                                     @elseif($prestamo->estado == 'finalizado')
                                         {{-- Todos devueltos --}}
-                                        <span class="badge bg-success rounded-pill px-3 py-2">
-                                            <i class="fas fa-check me-1"></i> Completo
-                                            <br>
-                                            <small>({{ $totalEquipos }}/{{ $totalEquipos }})</small>
-                                        </span>
+                                        @if($fueDevueltoTarde)
+                                            {{-- DEVUELTO TARDE (sin animación) --}}
+                                            <span class="badge bg-success rounded-pill px-3 py-2 position-relative">
+                                                <i class="fas fa-check me-1"></i> Completo
+                                                <br>
+                                                <small>({{ $totalEquipos }}/{{ $totalEquipos }})</small>
+                                                <br>
+                                                <span class="badge bg-warning text-dark mt-1 small">
+                                                    <i class="fas fa-clock"></i> Atrasado
+                                                </span>
+                                            </span>
+                                        @else
+                                            {{-- DEVUELTO A TIEMPO --}}
+                                            <span class="badge bg-success rounded-pill px-3 py-2">
+                                                <i class="fas fa-check me-1"></i> Completo
+                                                <br>
+                                                <small>({{ $totalEquipos }}/{{ $totalEquipos }})</small>
+                                            </span>
+                                        @endif
                                     @else
                                         <span class="badge bg-secondary rounded-pill px-3">{{ $prestamo->estado }}</span>
                                     @endif
                                 </td>
+                                <style>
+                                    @keyframes pulse {
+
+                                        0%,
+                                        100% {
+                                            transform: scale(1);
+                                        }
+
+                                        50% {
+                                            transform: scale(1.05);
+                                        }
+                                    }
+
+                                    .pulse-animation {
+                                        animation: pulse 2s infinite;
+                                    }
+                                </style>
 
                                 <!-- ACCIONES -->
                                 <td class="text-end">
