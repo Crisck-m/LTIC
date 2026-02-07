@@ -56,17 +56,25 @@ class PrestamoController extends Controller
             'estudiante_id' => 'required|exists:estudiantes,id',
             'equipo_id' => 'required|array|min:1',
             'equipo_id.*' => 'exists:equipos,id',
+            'equipo_cantidad' => 'required|array|min:1',  // NUEVO: Array de cantidades
+            'equipo_cantidad.*' => 'required|integer|min:1',  // NUEVO: Validar cada cantidad
             'practicante_id' => 'required|exists:estudiantes,id',
             'fecha_devolucion_esperada' => 'required|date|after_or_equal:today',
             'observaciones' => 'nullable|string|max:500',
         ], [
             'fecha_devolucion_esperada.after_or_equal' => 'La fecha de devolución no puede ser anterior al día de hoy.',
             'equipo_id.required' => 'Debes seleccionar al menos un equipo.',
+            'equipo_cantidad.required' => 'Debes especificar la cantidad para cada equipo.',
         ]);
 
-        // Validación previa: verificar que TODOS los equipos están disponibles
-        foreach ($request->equipo_id as $idEquipo) {
+        // ===================================================================
+        // VALIDACIÓN PREVIA: Verificar disponibilidad de TODOS los equipos
+        // ===================================================================
+        foreach ($request->equipo_id as $index => $idEquipo) {
             $equipo = Equipo::find($idEquipo);
+            $cantidadSolicitada = $request->equipo_cantidad[$index];
+
+            // Verificar que el equipo existe y está disponible
             if ($equipo->estado !== 'disponible') {
                 return redirect()
                     ->back()
@@ -74,6 +82,18 @@ class PrestamoController extends Controller
                         'equipo_id' => "El equipo '{$equipo->nombre_equipo}' (ID: {$equipo->id}) ya no está disponible."
                     ])
                     ->withInput();
+            }
+
+            // VALIDAR CANTIDAD para equipos no individuales
+            if (!$equipo->es_individual) {
+                if ($cantidadSolicitada > $equipo->cantidad_disponible) {
+                    return redirect()
+                        ->back()
+                        ->withErrors([
+                            'equipo_cantidad' => "Solo hay {$equipo->cantidad_disponible} unidad(es) disponible(s) de '{$equipo->nombre_equipo}'. Solicitaste {$cantidadSolicitada}."
+                        ])
+                        ->withInput();
+                }
             }
         }
 
@@ -124,12 +144,13 @@ class PrestamoController extends Controller
                 $prestamoActivo->save();
 
                 // Usar el servicio para actualizar los equipos
+                $datos['cantidades'] = $request->equipo_cantidad;  // NUEVO: Pasar cantidades
                 $this->prestamoService->actualizarPrestamo($prestamoActivo, $datos);
 
                 return redirect()->route('dashboard')
                     ->with('success', "✅ Préstamo actualizado correctamente.\n\n" .
                         "• Se agregaron {$cantidadNuevos} equipo(s) nuevo(s)\n" .
-                        "• Total de equipos en préstamo: " . count($todosLosEquipos) . "\n" .
+                        "• Total de equipos en préstamo: " . count($request->equipo_id) . "\n" .
                         "• Préstamo ID: #{$prestamoActivo->id}");
             } else {
                 // ===============================================================
@@ -137,6 +158,7 @@ class PrestamoController extends Controller
                 // Crear un nuevo préstamo
                 // ===============================================================
 
+                $datos['cantidades'] = $request->equipo_cantidad;  // NUEVO: Pasar cantidades
                 $prestamo = $this->prestamoService->registrarSalida($datos);
 
                 return redirect()->route('dashboard')
@@ -173,6 +195,8 @@ class PrestamoController extends Controller
             'equipo_id.*' => 'exists:equipos,id',
             'equipos_nuevos' => 'nullable|array', // Equipos nuevos agregados
             'equipos_nuevos.*' => 'exists:equipos,id',
+            'equipos_nuevos_cantidad' => 'nullable|array',  // NUEVO: Cantidades para equipos nuevos
+            'equipos_nuevos_cantidad.*' => 'nullable|integer|min:1',  // NUEVO
             'fecha_devolucion_esperada' => 'required|date|after_or_equal:today',
             'observaciones' => 'nullable|string|max:500',
         ], [
@@ -187,16 +211,11 @@ class PrestamoController extends Controller
         $equiposActualesMarcados = array_filter($equiposActualesMarcados);
         $equiposNuevosAgregados = array_filter($equiposNuevosAgregados);
 
-        // ===================================================================
-        // COMBINAR PERMITIENDO DUPLICADOS PARA EQUIPOS POR CANTIDAD
-        // ===================================================================
+        // =======================================
+        // Combinar IDs (actuales + nuevos)
+        // ====================================
         $todosLosEquipos = array_merge($equiposActualesMarcados, $equiposNuevosAgregados);
-
-        // NO usar array_unique() aquí - permite múltiples unidades del mismo equipo
-        // Para laptops individuales, el ID es único de todas formas
-        // Para equipos por cantidad (Mouse, etc.), cada ID representa una unidad adicional
-
-        $todosLosEquipos = array_values($todosLosEquipos); // Solo reindexar
+        $todosLosEquipos = array_values($todosLosEquipos); // Reindexar
 
         // Validar que haya al menos 1 equipo
         if (empty($todosLosEquipos)) {
@@ -204,6 +223,24 @@ class PrestamoController extends Controller
                 ->back()
                 ->withErrors(['equipo_id' => 'El préstamo no puede quedar vacío.'])
                 ->withInput();
+        }
+
+        // ===================================================================
+        // CREAR ARRAY DE CANTIDADES
+        // - Equipos actuales: cantidad = 1 (ya están prestados, no necesitan cantidad)
+        // - Equipos nuevos: usar la cantidad especificada o 1 por defecto
+        // ===================================================================
+        $cantidades = [];
+
+        // Para equipos actuales marcados: cantidad = 1 (no se usa realmente, solo es placeholder)
+        foreach ($equiposActualesMarcados as $equipoId) {
+            $cantidades[] = 1;
+        }
+
+        // Para equipos nuevos: usar cantidad especificada
+        $cantidadesNuevos = $request->equipos_nuevos_cantidad ?? [];
+        foreach ($equiposNuevosAgregados as $index => $equipoId) {
+            $cantidades[] = $cantidadesNuevos[$index] ?? 1;
         }
 
         // ===================================================================
@@ -215,16 +252,14 @@ class PrestamoController extends Controller
             ->pluck('equipo_id')
             ->toArray();
 
-        // Contar cuántas veces aparece cada equipo nuevo
-        $equiposNuevosCounts = array_count_values($equiposNuevosAgregados);
-
-        foreach ($equiposNuevosCounts as $equipoId => $cantidad) {
-            // Si ya está en el préstamo, no validar (ya lo tiene)
+        // Validar solo los nuevos
+        foreach ($equiposNuevosAgregados as $index => $equipoId) {
+            // Si ya está en el préstamo, no validar
             if (in_array($equipoId, $equiposYaEnPrestamo)) {
                 continue;
             }
 
-            // Validar disponibilidad
+            $cantidad = $cantidadesNuevos[$index] ?? 1;
             $equipo = Equipo::find($equipoId);
 
             if (!$equipo) {
@@ -260,6 +295,7 @@ class PrestamoController extends Controller
         try {
             // Pasar el array combinado (CON duplicados permitidos) al service
             $datos['equipo_id'] = $todosLosEquipos;
+            $datos['cantidades'] = $cantidades;  // NUEVO: Pasar cantidades
 
             $this->prestamoService->actualizarPrestamo($prestamo, $datos);
 
@@ -292,7 +328,7 @@ class PrestamoController extends Controller
             'practicante_recibe_id' => 'required|exists:estudiantes,id',
             'observaciones_devolucion' => 'nullable|string',
             'equipos_devolver' => 'nullable|array',
-            'equipos_devolver.*' => 'exists:equipos,id',
+            'equipos_devolver.*' => 'exists:prestamo_equipos,id',  // CAMBIADO: Ahora valida IDs de prestamo_equipos
         ]);
 
         // Validación previa: verificar que el préstamo está activo
@@ -305,13 +341,14 @@ class PrestamoController extends Controller
         }
 
         try {
-            // Si no se especifican equipos, devolver TODOS los activos
-            $equiposDevolver = $request->equipos_devolver;
+            // Si no se especifican equipos, devolver TODOS los activos del préstamo
+            $prestamoEquiposIds = $request->equipos_devolver;
 
-            if (empty($equiposDevolver)) {
-                $equiposDevolver = $prestamo->prestamoEquipos()
+            if (empty($prestamoEquiposIds)) {
+                // Si no se marca ninguno, obtener todos los prestamo_equipo activos
+                $prestamoEquiposIds = $prestamo->prestamoEquipos()
                     ->where('estado', 'activo')
-                    ->pluck('equipo_id')
+                    ->pluck('id')  // CAMBIADO: Obtener IDs de prestamo_equipos, no equipo_id
                     ->toArray();
             }
 
@@ -321,11 +358,11 @@ class PrestamoController extends Controller
                 'observaciones_devolucion' => $request->observaciones_devolucion,
             ];
 
-            // ✅ ORDEN CORRECTO DE PARÁMETROS
+            // Pasar los IDs de prestamo_equipos al servicio
             $this->prestamoService->registrarDevolucion(
                 $prestamo,
-                $equiposDevolver,  // array de IDs de equipos
-                $datos             // array con practicante_recibe_id y observaciones
+                $prestamoEquiposIds,  // array de IDs de prestamo_equipos
+                $datos                // array con practicante_recibe_id y observaciones
             );
 
             return redirect()->route('prestamos.index')

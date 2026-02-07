@@ -12,10 +12,9 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
-        'username',
+        'email',
         'password',
-        'role',
-        'activo'
+        'rol',
     ];
 
     protected $hidden = [
@@ -28,13 +27,19 @@ class User extends Authenticatable
         'activo' => 'boolean'
     ];
 
-    public function isAdmin()
+    /**
+     * Verificar si el usuario es admin
+     */
+    public function esAdmin(): bool
     {
-        return $this->role === 'admin';
+        return $this->rol === 'admin';
     }
 
-    public function isEncargado()
+    /**
+     * Verificar si el usuario es practicante
+     */
+    public function esPracticante(): bool
     {
-        return $this->role === 'encargado';
+        return $this->rol === 'practicante';
     }
 }

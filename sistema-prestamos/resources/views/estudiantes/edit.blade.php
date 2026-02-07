@@ -34,8 +34,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold">Cédula de Identidad <span
-                                            class="text-danger">*</span></label>
+                                    <label class="form-label fw-bold">Cédula de Identidad <span class="text-danger">*</span></label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light"><i class="fas fa-id-card"></i></span>
                                         <input type="text" name="cedula"
@@ -51,11 +50,33 @@
 
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Rol <span class="text-danger">*</span></label>
-                                    <select name="tipo" class="form-select" required>
-                                        <option value="estudiante" {{ $estudiante->tipo == 'estudiante' ? 'selected' : '' }}>
-                                            Estudiante Regular</option>
-                                        <option value="practicante" {{ $estudiante->tipo == 'practicante' ? 'selected' : '' }}>Practicante</option>
-                                    </select>
+                                    
+                                    @if(auth()->user()->esAdmin())
+                                        {{-- ADMIN: Puede editar el tipo --}}
+                                        <select name="tipo" class="form-select @error('tipo') is-invalid @enderror" required>
+                                            <option value="estudiante" {{ $estudiante->tipo == 'estudiante' ? 'selected' : '' }}>
+                                                Estudiante Regular
+                                            </option>
+                                            <option value="practicante" {{ $estudiante->tipo == 'practicante' ? 'selected' : '' }}>
+                                                Practicante
+                                            </option>
+                                        </select>
+                                        @error('tipo')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    @else
+                                        {{-- PRACTICANTE: Solo lectura --}}
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light"><i class="fas fa-lock"></i></span>
+                                            <input type="text" class="form-control bg-light" 
+                                                value="{{ $estudiante->tipo == 'estudiante' ? 'Estudiante Regular' : 'Practicante' }}" 
+                                                readonly>
+                                        </div>
+                                        <input type="hidden" name="tipo" value="{{ $estudiante->tipo }}">
+                                        <small class="form-text text-warning">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>Este campo solo puede ser modificado por administradores
+                                        </small>
+                                    @endif
                                 </div>
 
                                 <div class="col-md-6">
@@ -75,8 +96,7 @@
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label fw-bold">Correo Institucional <span
-                                            class="text-danger">*</span></label>
+                                    <label class="form-label fw-bold">Correo Institucional <span class="text-danger">*</span></label>
                                     <div class="input-group">
                                         <span class="input-group-text bg-light"><i class="fas fa-envelope"></i></span>
                                         <input type="email" name="email"
@@ -101,20 +121,16 @@
                                     <label class="form-label fw-bold">Carrera <span class="text-danger">*</span></label>
                                     <select name="carrera" id="carrera" class="form-select" required
                                         onchange="toggleOtraCarrera()">
-                                        <option value="Ingeniería en Sistemas" {{ old('carrera', $estudiante->carrera) == 'Ingeniería en Sistemas' ? 'selected' : '' }}>Ingeniería
-                                            en Sistemas</option>
-                                        <option value="Ingeniería Informática" {{ old('carrera', $estudiante->carrera) == 'Ingeniería Informática' ? 'selected' : '' }}>Ingeniería
-                                            Informática</option>
-                                        <option value="Tecnologías de la Información" {{ old('carrera', $estudiante->carrera) == 'Tecnologías de la Información' ? 'selected' : '' }}>
-                                            Tecnologías de la Información</option>
+                                        <option value="Ingeniería en Sistemas" {{ old('carrera', $estudiante->carrera) == 'Ingeniería en Sistemas' ? 'selected' : '' }}>Ingeniería en Sistemas</option>
+                                        <option value="Ingeniería Informática" {{ old('carrera', $estudiante->carrera) == 'Ingeniería Informática' ? 'selected' : '' }}>Ingeniería Informática</option>
+                                        <option value="Tecnologías de la Información" {{ old('carrera', $estudiante->carrera) == 'Tecnologías de la Información' ? 'selected' : '' }}>Tecnologías de la Información</option>
                                         <option value="Otra" {{ !in_array(old('carrera', $estudiante->carrera), ['Ingeniería en Sistemas', 'Ingeniería Informática', 'Tecnologías de la Información']) ? 'selected' : '' }}>Otra</option>
                                     </select>
                                 </div>
 
                                 <div class="col-md-12" id="otraCarreraDiv"
                                     style="display: {{ !in_array(old('carrera', $estudiante->carrera), ['Ingeniería en Sistemas', 'Ingeniería Informática', 'Tecnologías de la Información']) ? 'block' : 'none' }};">
-                                    <label for="otra_carrera" class="form-label fw-bold">Especificar Carrera <span
-                                            class="text-danger">*</span></label>
+                                    <label for="otra_carrera" class="form-label fw-bold">Especificar Carrera <span class="text-danger">*</span></label>
                                     <input type="text" name="otra_carrera" id="otra_carrera"
                                         class="form-control @error('otra_carrera') is-invalid @enderror"
                                         value="{{ !in_array(old('carrera', $estudiante->carrera), ['Ingeniería en Sistemas', 'Ingeniería Informática', 'Tecnologías de la Información']) ? old('otra_carrera', $estudiante->carrera) : old('otra_carrera') }}"

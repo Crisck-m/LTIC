@@ -71,7 +71,7 @@
                 </a>
             </div>
 
-            {{-- PRÉSTAMOS ATRASADOS (NUEVO) --}}
+            {{-- PRÉSTAMOS ATRASADOS --}}
             <div class="col-md-3">
                 <a href="{{ route('prestamos.index', ['estado' => 'atrasado']) }}" class="text-decoration-none">
                     <div class="card border-0 shadow-sm h-100 border-start border-danger border-4 card-clickable">
@@ -115,6 +115,7 @@
                             <i class="fas fa-bolt text-warning me-2"></i>Acciones Rápidas
                         </h5>
                         <div class="row g-3">
+                            {{-- Registrar Estudiante --}}
                             <div class="col-md-3">
                                 <a href="{{ route('estudiantes.create') }}"
                                     class="btn btn-primary w-100 py-3 d-flex flex-column align-items-center">
@@ -122,13 +123,27 @@
                                     <span>Registrar Estudiante</span>
                                 </a>
                             </div>
+
+                            {{-- Gestionar Equipos (condicional según rol) --}}
                             <div class="col-md-3">
-                                <a href="{{ route('equipos.create') }}"
-                                    class="btn btn-primary w-100 py-3 d-flex flex-column align-items-center">
-                                    <i class="fas fa-laptop fa-2x mb-2"></i>
-                                    <span>Agregar Equipo</span>
-                                </a>
+                                @if(auth()->user()->esAdmin())
+                                    {{-- ADMIN: Puede agregar equipos --}}
+                                    <a href="{{ route('equipos.create') }}"
+                                        class="btn btn-success w-100 py-3 d-flex flex-column align-items-center">
+                                        <i class="fas fa-plus-circle fa-2x mb-2"></i>
+                                        <span>Añadir Equipo</span>
+                                    </a>
+                                @else
+                                    {{-- PRACTICANTE: Ver inventario --}}
+                                    <a href="{{ route('equipos.index') }}"
+                                        class="btn btn-success w-100 py-3 d-flex flex-column align-items-center">
+                                        <i class="fas fa-boxes fa-2x mb-2"></i>
+                                        <span>Ver Inventario</span>
+                                    </a>
+                                @endif
                             </div>
+
+                            {{-- Nuevo Préstamo --}}
                             <div class="col-md-3">
                                 <a href="{{ route('prestamos.create') }}"
                                     class="btn btn-primary w-100 py-3 d-flex flex-column align-items-center">
@@ -136,9 +151,11 @@
                                     <span>Nuevo Préstamo</span>
                                 </a>
                             </div>
+
+                            {{-- Registrar Devolución --}}
                             <div class="col-md-3">
                                 <a href="{{ route('devoluciones.index') }}"
-                                    class="btn btn-primary w-100 py-3 d-flex flex-column align-items-center">
+                                    class="btn btn-warning w-100 py-3 d-flex flex-column align-items-center">
                                     <i class="fas fa-undo fa-2x mb-2"></i>
                                     <span>Registrar Devolución</span>
                                 </a>
@@ -223,6 +240,17 @@
                     <div class="card-body">
                         <ul class="list-unstyled mb-0">
                             <li class="mb-3">
+                                <strong class="d-block text-muted small">Usuario</strong>
+                                <span class="fs-5">
+                                    <i class="fas fa-user text-primary me-2"></i>{{ auth()->user()->name }}
+                                    @if(auth()->user()->esAdmin())
+                                        <span class="badge bg-danger ms-2">ADMIN</span>
+                                    @else
+                                        <span class="badge bg-warning text-dark ms-2">PRACTICANTE</span>
+                                    @endif
+                                </span>
+                            </li>
+                            <li class="mb-3">
                                 <strong class="d-block text-muted small">Fecha</strong>
                                 <span class="fs-5"><i
                                         class="far fa-calendar text-info me-2"></i>{{ \Carbon\Carbon::now()->format('d/m/Y') }}</span>
@@ -236,4 +264,6 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
 @endsection

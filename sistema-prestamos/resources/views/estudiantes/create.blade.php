@@ -36,20 +36,33 @@
                                 <!-- Tipo -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Tipo <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light"><i class="fas fa-user-tag"></i></span>
-                                        <select name="tipo" class="form-select @error('tipo') is-invalid @enderror"
-                                            required>
-                                            <option value="" disabled selected>Seleccione...</option>
-                                            <option value="estudiante" {{ old('tipo') == 'estudiante' ? 'selected' : '' }}>
-                                                Estudiante</option>
-                                            <option value="practicante" {{ old('tipo') == 'practicante' ? 'selected' : '' }}>
-                                                Practicante</option>
-                                        </select>
-                                    </div>
-                                    @error('tipo')
-                                        <div class="text-danger small mt-1">{{ $message }}</div>
-                                    @enderror
+                                    
+                                    @if(auth()->user()->rol === 'admin')
+                                        {{-- Admin puede seleccionar --}}
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light"><i class="fas fa-user-tag"></i></span>
+                                            <select name="tipo" class="form-select" required>
+                                                <option value="" disabled selected>Seleccione...</option>
+                                                <option value="Estudiante Regular" {{ old('tipo') == 'Estudiante Regular' ? 'selected' : '' }}>
+                                                    Estudiante
+                                                </option>
+                                                <option value="Practicante" {{ old('tipo') == 'Practicante' ? 'selected' : '' }}>
+                                                    Practicante
+                                                </option>
+                                            </select>
+                                        </div>
+                                    @else
+                                        {{-- Practicante solo puede crear "Estudiante Regular" --}}
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light"><i class="fas fa-user-tag"></i></span>
+                                            <input type="text" class="form-control bg-light" value="Estudiante Regular" readonly>
+                                        </div>
+                                        <input type="hidden" name="tipo" value="Estudiante Regular">
+                                        <div class="alert alert-warning mt-2 py-2 px-3 mb-0">
+                                            <i class="fas fa-lock me-1"></i>
+                                            <small>Este campo solo puede ser modificado por administradores</small>
+                                        </div>
+                                    @endif
                                 </div>
 
                                 <!-- Nombre -->
@@ -108,10 +121,10 @@
                                     @enderror
                                 </div>
 
+                                <!-- Carrera -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Carrera <span class="text-danger">*</span></label>
-                                    <select name="carrera_id" id="carrera_id" class="form-select" required
-                                        onchange="toggleCarreraOtra()">
+                                    <select name="carrera_id" id="carrera_id" class="form-select" required onchange="toggleCarreraOtra()">
                                         <option value="" disabled selected>Seleccione una carrera...</option>
                                         @foreach($carreras as $carrera)
                                             <option value="{{ $carrera->id }}" {{ old('carrera_id') == $carrera->id ? 'selected' : '' }}>
@@ -122,50 +135,14 @@
                                     </select>
                                 </div>
 
+                                <!-- Campo para especificar otra carrera (oculto por defecto) -->
                                 <div class="col-md-6" id="carreraOtraContainer" style="display: none;">
-                                    <label class="form-label fw-bold">Especifique la carrera <span
-                                            class="text-danger">*</span></label>
+                                    <label class="form-label fw-bold">Especifique la carrera <span class="text-danger">*</span></label>
                                     <input type="text" name="carrera_otra" id="carrera_otra" class="form-control"
                                         placeholder="Escriba el nombre de la carrera" value="{{ old('carrera_otra') }}">
                                     <small class="form-text text-muted">
-                                        <i class="fas fa-info-circle me-1"></i>Esta carrera se agregará automáticamente al
-                                        sistema
+                                        <i class="fas fa-info-circle me-1"></i>Esta carrera se agregará automáticamente al sistema
                                     </small>
-                                </div>
-
-                                <script>
-                                    function toggleCarreraOtra() {
-                                        const select = document.getElementById('carrera_id');
-                                        const container = document.getElementById('carreraOtraContainer');
-                                        const input = document.getElementById('carrera_otra');
-
-                                        if (select.value === 'otra') {
-                                            container.style.display = 'block';
-                                            input.required = true;
-                                        } else {
-                                            container.style.display = 'none';
-                                            input.required = false;
-                                            input.value = '';
-                                        }
-                                    }
-
-                                    // Ejecutar al cargar la página por si hay old()
-                                    document.addEventListener('DOMContentLoaded', toggleCarreraOtra);
-                                </script>
-
-                                <!-- Campo para otra carrera (oculto por defecto) -->
-                                <div class="col-md-12" id="otraCarreraDiv" style="display: none;">
-                                    <label class="form-label fw-bold">Especifique la carrera <span
-                                            class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text bg-light"><i class="fas fa-graduation-cap"></i></span>
-                                        <input type="text" name="otra_carrera" id="otra_carrera"
-                                            class="form-control @error('otra_carrera') is-invalid @enderror"
-                                            value="{{ old('otra_carrera') }}" placeholder="Escriba el nombre de la carrera">
-                                    </div>
-                                    @error('otra_carrera')
-                                        <div class="text-danger small mt-1">{{ $message }}</div>
-                                    @enderror
                                 </div>
 
                                 <!-- Observaciones -->
@@ -199,24 +176,22 @@
     </div>
 
     <script>
-        function toggleOtraCarrera() {
-            const carreraSelect = document.getElementById('carrera');
-            const otraCarreraDiv = document.getElementById('otraCarreraDiv');
-            const otraCarreraInput = document.getElementById('otra_carrera');
+        function toggleCarreraOtra() {
+            const select = document.getElementById('carrera_id');
+            const container = document.getElementById('carreraOtraContainer');
+            const input = document.getElementById('carrera_otra');
 
-            if (carreraSelect.value === 'Otra') {
-                otraCarreraDiv.style.display = 'block';
-                otraCarreraInput.required = true;
+            if (select.value === 'otra') {
+                container.style.display = 'block';
+                input.required = true;
             } else {
-                otraCarreraDiv.style.display = 'none';
-                otraCarreraInput.required = false;
-                otraCarreraInput.value = '';
+                container.style.display = 'none';
+                input.required = false;
+                input.value = '';
             }
         }
 
-        // Ejecutar al cargar la página para manejar el estado de old() después de errores de validación
-        document.addEventListener('DOMContentLoaded', function () {
-            toggleOtraCarrera();
-        });
+        // Ejecutar al cargar la página por si hay old()
+        document.addEventListener('DOMContentLoaded', toggleCarreraOtra);
     </script>
 @endsection

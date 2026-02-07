@@ -36,7 +36,7 @@ class EquipoController extends Controller
     {
         // VALIDACIÓN SEPARADA POR TIPO
         if ($request->tipo === 'Laptop') {
-            // LAPTOP: Validar nombre único
+            // LAPTOP: Validar todos los campos incluyendo marca/modelo
             $datos = $request->validate([
                 'nombre_equipo' => 'required|string|max:100|unique:equipos,nombre_equipo',
                 'tipo' => 'required|string|max:50',
@@ -54,15 +54,13 @@ class EquipoController extends Controller
             $datos['cantidad_disponible'] = ($datos['estado'] == 'disponible') ? 1 : 0;
 
         } else {
-            // EQUIPOS POR CANTIDAD: NO validar nombre único
+            // EQUIPOS POR CANTIDAD: Solo validar tipo y cantidad
+            // Marca y modelo NO son necesarios
             $datos = $request->validate([
                 'tipo' => 'required|string|max:50',
                 'tipo_otro' => 'required_if:tipo,Otro|nullable|string|max:100',
                 'cantidad_total' => 'required|integer|min:1',
-                'marca' => 'required|string|max:50',
-                'modelo' => 'required|string|max:50',
-                'caracteristicas' => 'nullable|string',
-                'estado' => 'required|in:disponible,prestado,mantenimiento,dado_de_baja',
+                'estado_simple' => 'nullable|in:disponible,mantenimiento',
             ], [
                 'cantidad_total.required' => 'La cantidad es obligatoria.',
                 'cantidad_total.min' => 'La cantidad debe ser al menos 1.',
@@ -76,18 +74,22 @@ class EquipoController extends Controller
             $datos['nombre_equipo'] = $tipoReal;
             $datos['es_individual'] = false;
 
+            // Valores por defecto para equipos por cantidad
+            $datos['marca'] = 'N/A';
+            $datos['modelo'] = 'N/A';
+            $datos['caracteristicas'] = null;
+            $datos['estado'] = $request->estado_simple ?? 'disponible';
+
             // Si es "Otro", guardar tipo personalizado
             if ($request->tipo === 'Otro' && !empty($request->tipo_otro)) {
                 $datos['tipo_personalizado'] = trim($request->tipo_otro);
             }
 
             // ===================================================================
-            // VERIFICAR SI YA EXISTE UN EQUIPO DEL MISMO TIPO/MARCA/MODELO
+            // VERIFICAR SI YA EXISTE UN EQUIPO DEL MISMO TIPO
             // Si existe, INCREMENTAR cantidad en lugar de crear nuevo registro
             // ===================================================================
             $equipoExistente = Equipo::where('nombre_equipo', $tipoReal)
-                ->where('marca', $datos['marca'])
-                ->where('modelo', $datos['modelo'])
                 ->where('es_individual', false)
                 ->first();
 
@@ -115,6 +117,9 @@ class EquipoController extends Controller
         // Remover campo temporal
         if (isset($datos['tipo_otro'])) {
             unset($datos['tipo_otro']);
+        }
+        if (isset($datos['estado_simple'])) {
+            unset($datos['estado_simple']);
         }
 
         $datos['user_id'] = auth()->id();
@@ -148,18 +153,64 @@ class EquipoController extends Controller
 
     public function update(Request $request, Equipo $equipo)
     {
-        $datos = $request->validate([
-            'tipo' => 'required|string',
-            'marca' => 'required|string',
-            'modelo' => 'required|string',
-            'nombre_equipo' => ['required', Rule::unique('equipos')->ignore($equipo->id)],
-            'estado' => 'required|in:disponible,prestado,mantenimiento,baja',
-            'caracteristicas' => 'nullable|string'
-        ]);
+        if ($equipo->es_individual) {
+            // ===================================================================
+            // LAPTOP (EQUIPO INDIVIDUAL): Actualizar todos los campos
+            // ===================================================================
+            $datos = $request->validate([
+                'tipo' => 'required|string',
+                'marca' => 'required|string',
+                'modelo' => 'required|string',
+                'nombre_equipo' => ['required', Rule::unique('equipos')->ignore($equipo->id)],
+                'estado' => 'required|in:disponible,prestado,mantenimiento,baja',
+                'caracteristicas' => 'nullable|string'
+            ]);
 
-        $this->equipoService->actualizarEquipo($equipo, $datos);
+            $this->equipoService->actualizarEquipo($equipo, $datos);
 
-        return redirect()->route('equipos.index')->with('success', 'Equipo actualizado correctamente.');
+            return redirect()->route('equipos.index')
+                ->with('success', '✅ Laptop actualizada correctamente.');
+
+        } else {
+            // ===================================================================
+            // EQUIPO POR CANTIDAD: Solo actualizar cantidad y estado
+            // ===================================================================
+
+            // Calcular cuántas unidades están prestadas actualmente
+            $cantidadPrestada = $equipo->cantidad_total - $equipo->cantidad_disponible;
+
+            $datos = $request->validate([
+                'cantidad_total' => [
+                    'required',
+                    'integer',
+                    'min:' . $cantidadPrestada
+                ],
+                'estado' => 'required|in:disponible,mantenimiento',
+            ], [
+                'cantidad_total.min' => "La cantidad no puede ser menor a {$cantidadPrestada} porque hay unidades actualmente prestadas.",
+            ]);
+
+            // Calcular nueva cantidad disponible
+            // Mantener la misma cantidad prestada, ajustar solo la disponible
+            $nuevaCantidadDisponible = $datos['cantidad_total'] - $cantidadPrestada;
+
+            // Si el estado cambia a mantenimiento, poner disponible en 0
+            if ($datos['estado'] == 'mantenimiento') {
+                $nuevaCantidadDisponible = 0;
+            }
+
+            $equipo->cantidad_total = $datos['cantidad_total'];
+            $equipo->cantidad_disponible = $nuevaCantidadDisponible;
+            $equipo->estado = $datos['estado'];
+            $equipo->save();
+
+            return redirect()->route('equipos.index')
+                ->with('success', "✅ Cantidad actualizada correctamente.\n\n" .
+                    "• Tipo: {$equipo->nombre_equipo}\n" .
+                    "• Cantidad Total: {$equipo->cantidad_total}\n" .
+                    "• Disponibles: {$equipo->cantidad_disponible}\n" .
+                    "• Prestadas: {$cantidadPrestada}");
+        }
     }
 
     public function destroy(Equipo $equipo)
@@ -167,15 +218,22 @@ class EquipoController extends Controller
         $codigo = $equipo->nombre_equipo;
         $desc = "{$equipo->tipo} {$equipo->marca}";
 
-        $eliminado = $this->equipoService->eliminarEquipo($equipo);
+        $resultado = $this->equipoService->eliminarEquipo($equipo);
 
-        if (!$eliminado) {
+        if ($resultado === 'dado_de_baja') {
             return redirect()->route('equipos.index')
-                ->with('error', 'No se puede eliminar: El equipo tiene préstamos asociados.');
+                ->with('success', "✅ Equipo dado de baja correctamente.\n\n" .
+                    "{$codigo} - {$desc}\n\n" .
+                    "ℹ️ El equipo tenía préstamos registrados, por lo que se marcó como 'Dado de Baja' en lugar de eliminarse del sistema.");
+        } elseif ($resultado === 'eliminado') {
+            return redirect()->route('equipos.index')
+                ->with('success', "✅ Equipo eliminado correctamente.\n\n" .
+                    "{$codigo} - {$desc}\n\n" .
+                    "El equipo fue eliminado permanentemente del sistema.");
+        } else {
+            return redirect()->route('equipos.index')
+                ->with('error', '❌ Error al procesar la solicitud. Intenta de nuevo.');
         }
-
-        return redirect()->route('equipos.index')
-            ->with('success', 'Equipo eliminado correctamente.');
     }
 
     /**

@@ -106,50 +106,67 @@
                                 </div>
                             </div>
 
-                            {{-- DETALLES TÉCNICOS --}}
-                            <h6 class="text-primary border-bottom pb-2 mb-3">Detalles Técnicos</h6>
+                            {{-- DETALLES TÉCNICOS (solo para Laptops) --}}
+                            <div id="detallesTecnicosContainer">
+                                <h6 class="text-primary border-bottom pb-2 mb-3">Detalles Técnicos</h6>
 
-                            <div class="row g-3 mb-4">
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold">Marca <span class="text-danger">*</span></label>
-                                    <input type="text" name="marca"
-                                        class="form-control @error('marca') is-invalid @enderror"
-                                        placeholder="Ej: HP, Dell, Epson" value="{{ old('marca') }}" required>
-                                    @error('marca')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Marca <span class="text-danger">*</span></label>
+                                        <input type="text" name="marca" id="marca"
+                                            class="form-control @error('marca') is-invalid @enderror"
+                                            placeholder="Ej: HP, Dell, Epson" value="{{ old('marca') }}">
+                                        @error('marca')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Modelo <span class="text-danger">*</span></label>
+                                        <input type="text" name="modelo" id="modelo"
+                                            class="form-control @error('modelo') is-invalid @enderror"
+                                            placeholder="Ej: Pavilion 15" value="{{ old('modelo') }}">
+                                        @error('modelo')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Estado Inicial</label>
+                                        <select name="estado" class="form-select @error('estado') is-invalid @enderror"
+                                            required>
+                                            <option value="disponible" selected>🟢 Disponible</option>
+                                            <option value="mantenimiento">🔵 Mantenimiento</option>
+                                        </select>
+                                        @error('estado')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="col-md-12">
+                                        <label class="form-label fw-bold">Características (Procesador, RAM,
+                                            Detalles)</label>
+                                        <textarea name="caracteristicas" id="caracteristicas" rows="3"
+                                            class="form-control @error('caracteristicas') is-invalid @enderror"
+                                            placeholder="Ej: Core i7, 16GB RAM, SSD 512GB">{{ old('caracteristicas') }}</textarea>
+                                        @error('caracteristicas')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
                                 </div>
+                            </div>
 
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold">Modelo <span class="text-danger">*</span></label>
-                                    <input type="text" name="modelo"
-                                        class="form-control @error('modelo') is-invalid @enderror"
-                                        placeholder="Ej: Pavilion 15" value="{{ old('modelo') }}" required>
-                                    @error('modelo')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="form-label fw-bold">Estado Inicial</label>
-                                    <select name="estado" class="form-select @error('estado') is-invalid @enderror"
-                                        required>
-                                        <option value="disponible" selected>🟢 Disponible</option>
-                                        <option value="mantenimiento">🔵 Mantenimiento</option>
-                                    </select>
-                                    @error('estado')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
-                                </div>
-
-                                <div class="col-md-12">
-                                    <label class="form-label fw-bold">Características (Procesador, RAM, Detalles)</label>
-                                    <textarea name="caracteristicas" rows="3"
-                                        class="form-control @error('caracteristicas') is-invalid @enderror"
-                                        placeholder="Ej: Core i7, 16GB RAM, SSD 512GB">{{ old('caracteristicas') }}</textarea>
-                                    @error('caracteristicas')
-                                        <div class="invalid-feedback">{{ $message }}</div>
-                                    @enderror
+                            {{-- ESTADO SIMPLE (solo para equipos por cantidad) --}}
+                            <div id="estadoSimpleContainer" style="display: none;">
+                                <h6 class="text-primary border-bottom pb-2 mb-3">Estado</h6>
+                                <div class="row g-3 mb-4">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Estado Inicial</label>
+                                        <select name="estado_simple" id="estado_simple" class="form-select">
+                                            <option value="disponible" selected>🟢 Disponible</option>
+                                            <option value="mantenimiento">🔵 Mantenimiento</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
 
@@ -191,25 +208,51 @@
             const cantidadContainer = document.getElementById('cantidadContainer');
             const nombreInput = document.getElementById('nombre_equipo');
             const cantidadInput = document.getElementById('cantidad_total');
+            
+            // Contenedores de detalles técnicos
+            const detallesTecnicosContainer = document.getElementById('detallesTecnicosContainer');
+            const estadoSimpleContainer = document.getElementById('estadoSimpleContainer');
+            const marcaInput = document.getElementById('marca');
+            const modeloInput = document.getElementById('modelo');
+            const caracteristicasInput = document.getElementById('caracteristicas');
 
             if (tipo === 'Laptop') {
-                // LAPTOP: Mostrar nombre, ocultar cantidad
+                // LAPTOP: Mostrar nombre, ocultar cantidad, mostrar todos los detalles técnicos
                 nombreContainer.style.display = 'block';
                 cantidadContainer.style.display = 'none';
+                detallesTecnicosContainer.style.display = 'block';
+                estadoSimpleContainer.style.display = 'none';
+                
                 nombreInput.required = true;
                 cantidadInput.required = false;
                 cantidadInput.value = 1;
+                
+                // Campos técnicos obligatorios para laptops
+                marcaInput.required = true;
+                modeloInput.required = true;
             } else if (tipo !== '') {
-                // OTROS: Ocultar nombre, mostrar cantidad
+                // OTROS EQUIPOS: Ocultar nombre, mostrar cantidad, ocultar detalles técnicos
                 nombreContainer.style.display = 'none';
                 cantidadContainer.style.display = 'block';
+                detallesTecnicosContainer.style.display = 'none';
+                estadoSimpleContainer.style.display = 'block';
+                
                 nombreInput.required = false;
                 nombreInput.value = '';
                 cantidadInput.required = true;
+                
+                // Campos técnicos NO obligatorios para equipos por cantidad
+                marcaInput.required = false;
+                modeloInput.required = false;
+                marcaInput.value = '';
+                modeloInput.value = '';
+                caracteristicasInput.value = '';
             } else {
                 // Sin selección
                 nombreContainer.style.display = 'block';
                 cantidadContainer.style.display = 'none';
+                detallesTecnicosContainer.style.display = 'block';
+                estadoSimpleContainer.style.display = 'none';
             }
         }
 

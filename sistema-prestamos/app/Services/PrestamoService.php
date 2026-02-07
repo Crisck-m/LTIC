@@ -72,9 +72,10 @@ class PrestamoService
                 'estado' => 'activo',
             ]);
 
-            // Registrar equipos en la tabla intermedia
-            foreach ($datos['equipo_id'] as $equipoId) {
+            // Registrar equipos en la tabla intermedia con sus cantidades
+            foreach ($datos['equipo_id'] as $index => $equipoId) {
                 $equipo = Equipo::findOrFail($equipoId);
+                $cantidad = $datos['cantidades'][$index] ?? 1;  // NUEVO: Obtener cantidad
 
                 // ===================================================================
                 // DECREMENTAR CANTIDAD DISPONIBLE
@@ -83,12 +84,13 @@ class PrestamoService
                     // LAPTOP: Cambiar estado a 'prestado'
                     $equipo->estado = 'prestado';
                     $equipo->cantidad_disponible = 0;
+                    $cantidad = 1;  // Laptops siempre son 1 unidad
                 } else {
-                    // OTROS: Decrementar cantidad
-                    if ($equipo->cantidad_disponible <= 0) {
-                        throw new \Exception("No hay stock disponible de {$equipo->nombre_equipo}");
+                    // EQUIPOS POR CANTIDAD: Decrementar por N unidades
+                    if ($equipo->cantidad_disponible < $cantidad) {
+                        throw new \Exception("No hay stock suficiente de {$equipo->nombre_equipo}");
                     }
-                    $equipo->cantidad_disponible -= 1;
+                    $equipo->cantidad_disponible -= $cantidad;  // MODIFICADO: Restar N unidades
 
                     // Si se agotó el stock, cambiar estado
                     if ($equipo->cantidad_disponible == 0) {
@@ -97,10 +99,11 @@ class PrestamoService
                 }
                 $equipo->save();
 
-                // Crear registro en prestamo_equipos
+                // Crear registro en prestamo_equipos CON CANTIDAD
                 PrestamoEquipo::create([
                     'prestamo_id' => $prestamo->id,
                     'equipo_id' => $equipoId,
+                    'cantidad' => $cantidad,  // NUEVO: Almacenar cantidad prestada
                     'estado' => 'activo',
                 ]);
             }
@@ -112,15 +115,18 @@ class PrestamoService
     /**
      * Registrar devolución de equipo(s)
      */
-    public function registrarDevolucion(Prestamo $prestamo, array $equiposDevueltos, array $datos)
+    public function registrarDevolucion(Prestamo $prestamo, array $prestamoEquipoIds, array $datos)
     {
-        return DB::transaction(function () use ($prestamo, $equiposDevueltos, $datos) {
-            foreach ($equiposDevueltos as $equipoId) {
-                // Buscar el registro específico en prestamo_equipos
-                $prestamoEquipo = PrestamoEquipo::where('prestamo_id', $prestamo->id)
-                    ->where('equipo_id', $equipoId)
+        return DB::transaction(function () use ($prestamo, $prestamoEquipoIds, $datos) {
+            foreach ($prestamoEquipoIds as $prestamoEquipoId) {
+                // Buscar el registro específico en prestamo_equipos por su ID
+                $prestamoEquipo = PrestamoEquipo::where('id', $prestamoEquipoId)
+                    ->where('prestamo_id', $prestamo->id)
                     ->where('estado', 'activo')
                     ->firstOrFail();
+
+                // Obtener la cantidad que se está devolviendo
+                $cantidadDevuelta = $prestamoEquipo->cantidad ?? 1;
 
                 // Actualizar el registro de devolución
                 $prestamoEquipo->update([
@@ -131,17 +137,17 @@ class PrestamoService
                 ]);
 
                 // ===================================================================
-                // INCREMENTAR CANTIDAD DISPONIBLE
+                // INCREMENTAR CANTIDAD DISPONIBLE CORRECTAMENTE
                 // ===================================================================
-                $equipo = Equipo::findOrFail($equipoId);
+                $equipo = Equipo::findOrFail($prestamoEquipo->equipo_id);
 
                 if ($equipo->es_individual) {
                     // LAPTOP: Cambiar estado a 'disponible'
                     $equipo->estado = 'disponible';
                     $equipo->cantidad_disponible = 1;
                 } else {
-                    // OTROS: Incrementar cantidad
-                    $equipo->cantidad_disponible += 1;
+                    // OTROS: Incrementar por la cantidad que fue prestada
+                    $equipo->cantidad_disponible += $cantidadDevuelta;
 
                     // Si vuelve a haber stock, cambiar estado a disponible
                     if ($equipo->cantidad_disponible > 0) {
@@ -170,99 +176,98 @@ class PrestamoService
     public function actualizarPrestamo(Prestamo $prestamo, array $datos)
     {
         return DB::transaction(function () use ($prestamo, $datos) {
-            // Obtener equipos actuales del préstamo (activos)
+            // ===================================================================
+            // OBTENER EQUIPOS ACTUALES DEL PRÉSTAMO
+            // ===================================================================
             $equiposActuales = $prestamo->prestamoEquipos()
                 ->where('estado', 'activo')
                 ->pluck('equipo_id')
                 ->toArray();
 
-            $equiposNuevos = $datos['equipo_id'];
-
             // ===================================================================
-            // CONTAR CANTIDADES DE CADA EQUIPO (maneja duplicados correctamente)
+            // IDENTIFICAR SOLO LOS EQUIPOS NUEVOS
             // ===================================================================
-            $countActuales = array_count_values($equiposActuales);
-            $countNuevos = array_count_values($equiposNuevos);
+            $equiposEnviados = $datos['equipo_id'];  // Todos los equipos recibidos
+            $equiposNuevos = array_diff($equiposEnviados, $equiposActuales);  // Solo los nuevos
 
-            // Obtener todos los IDs únicos (actuales + nuevos)
-            $todosIds = array_unique(array_merge(
-                array_keys($countActuales),
-                array_keys($countNuevos)
-            ));
-
-            // ===================================================================
-            // PROCESAR CADA EQUIPO SEGÚN LA DIFERENCIA DE CANTIDADES
-            // ===================================================================
-            foreach ($todosIds as $equipoId) {
-                $cantidadActual = $countActuales[$equipoId] ?? 0;
-                $cantidadNueva = $countNuevos[$equipoId] ?? 0;
-                $diferencia = $cantidadNueva - $cantidadActual;
-
-                if ($diferencia > 0) {
-                    // ============================================================
-                    // AGREGAR UNIDADES (diferencia positiva)
-                    // ============================================================
-                    $equipo = Equipo::findOrFail($equipoId);
-
-                    for ($i = 0; $i < $diferencia; $i++) {
-                        // Decrementar stock
-                        if ($equipo->es_individual) {
-                            $equipo->estado = 'prestado';
-                            $equipo->cantidad_disponible = 0;
-                        } else {
-                            if ($equipo->cantidad_disponible <= 0) {
-                                throw new \Exception("No hay stock disponible de {$equipo->nombre_equipo}");
-                            }
-                            $equipo->cantidad_disponible -= 1;
-                            if ($equipo->cantidad_disponible == 0) {
-                                $equipo->estado = 'prestado';
-                            }
-                        }
-                        $equipo->save();
-
-                        // Crear registro en prestamo_equipos
-                        PrestamoEquipo::create([
-                            'prestamo_id' => $prestamo->id,
-                            'equipo_id' => $equipoId,
-                            'estado' => 'activo',
-                        ]);
-                    }
-
-                } elseif ($diferencia < 0) {
-                    // ============================================================
-                    // QUITAR UNIDADES (diferencia negativa)
-                    // ============================================================
-                    $cantidadAQuitar = abs($diferencia);
-                    $equipo = Equipo::findOrFail($equipoId);
-
-                    // Obtener registros activos de este equipo en el préstamo
-                    $registrosActivos = PrestamoEquipo::where('prestamo_id', $prestamo->id)
-                        ->where('equipo_id', $equipoId)
-                        ->where('estado', 'activo')
-                        ->limit($cantidadAQuitar)
-                        ->get();
-
-                    foreach ($registrosActivos as $registro) {
-                        // Marcar como cancelado
-                        $registro->update(['estado' => 'cancelado']);
-
-                        // Incrementar stock
-                        if ($equipo->es_individual) {
-                            $equipo->estado = 'disponible';
-                            $equipo->cantidad_disponible = 1;
-                        } else {
-                            $equipo->cantidad_disponible += 1;
-                            if ($equipo->cantidad_disponible > 0) {
-                                $equipo->estado = 'disponible';
-                            }
-                        }
-                        $equipo->save();
-                    }
+            // Crear un mapa que asocie cada nuevo equipo con su índice en el array original
+            // para obtener la cantidad correcta
+            $indicesNuevos = [];
+            foreach ($equiposNuevos as $nuevoId) {
+                // Encontrar la posición de este equipo en el array original
+                $indice = array_search($nuevoId, $equiposEnviados);
+                if ($indice !== false) {
+                    $indicesNuevos[$nuevoId] = $indice;
                 }
-                // Si diferencia == 0, no hacer nada (cantidad no cambió)
             }
 
-            // Actualizar datos del préstamo
+            // ===================================================================
+            // AGREGAR SOLO LOS EQUIPOS NUEVOS
+            // ===================================================================
+            foreach ($indicesNuevos as $equipoId => $indiceOriginal) {
+                $equipo = Equipo::findOrFail($equipoId);
+                $cantidad = $datos['cantidades'][$indiceOriginal] ?? 1;
+
+                // Validar disponibilidad
+                if (!$equipo->es_individual && $cantidad > $equipo->cantidad_disponible) {
+                    throw new \Exception("No hay stock suficiente de {$equipo->nombre_equipo}");
+                }
+
+                // Decrementar stock
+                if ($equipo->es_individual) {
+                    $equipo->estado = 'prestado';
+                    $equipo->cantidad_disponible = 0;
+                    $cantidad = 1;
+                } else {
+                    $equipo->cantidad_disponible -= $cantidad;
+                    if ($equipo->cantidad_disponible == 0) {
+                        $equipo->estado = 'prestado';
+                    }
+                }
+                $equipo->save();
+
+                // Crear registro con cantidad
+                PrestamoEquipo::create([
+                    'prestamo_id' => $prestamo->id,
+                    'equipo_id' => $equipoId,
+                    'cantidad' => $cantidad,  // Usar campo cantidad
+                    'estado' => 'activo',
+                ]);
+            }
+
+            // ===================================================================
+            // MANEJAR EQUIPOS QUE SE REMOVIERON (si aplica)
+            // ===================================================================
+            $equiposRemovidos = array_diff($equiposActuales, $equiposEnviados);
+            foreach ($equiposRemovidos as $equipoRemovido) {
+                // Obtener el registro activo de este equipo
+                $prestamoEquipo = PrestamoEquipo::where('prestamo_id', $prestamo->id)
+                    ->where('equipo_id', $equipoRemovido)
+                    ->where('estado', 'activo')
+                    ->first();
+
+                if ($prestamoEquipo) {
+                    // Marcar como cancelado
+                    $prestamoEquipo->update(['estado' => 'cancelado']);
+
+                    // Incrementar stock del equipo
+                    $equipo = Equipo::findOrFail($equipoRemovido);
+                    $cantidadDevuelta = $prestamoEquipo->cantidad ?? 1;
+
+                    if ($equipo->es_individual) {
+                        $equipo->estado = 'disponible';
+                        $equipo->cantidad_disponible = 1;
+                    } else {
+                        $equipo->cantidad_disponible += $cantidadDevuelta;
+                        if ($equipo->cantidad_disponible > 0) {
+                            $equipo->estado = 'disponible';
+                        }
+                    }
+                    $equipo->save();
+                }
+            }
+
+            // Actualizar datos del préstamo si es necesario
             $prestamo->update([
                 'fecha_devolucion_esperada' => $datos['fecha_devolucion_esperada'],
                 'observaciones_prestamo' => $datos['observaciones'] ?? $prestamo->observaciones_prestamo,

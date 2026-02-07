@@ -12,41 +12,53 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// ===============================
 // 👉 Rutas protegidas por auth (Solo usuarios logueados)
+// ===============================
 Route::middleware(['auth'])->group(function () {
 
-    // Dashboard
+    // Dashboard (todos)
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Gestión de Estudiantes
+    // ===============================
+    // GESTIÓN DE ESTUDIANTES (todos pueden acceder)
+    // ===============================
     Route::resource('estudiantes', EstudianteController::class);
-
-    // Rutas AJAX para búsqueda en tiempo real (después de las rutas de estudiantes)
     Route::get('/api/estudiantes/buscar', [EstudianteController::class, 'buscarAjax'])->name('estudiantes.buscar');
-    Route::get('/api/equipos/buscar', [EquipoController::class, 'buscarAjax'])->name('equipos.buscar');
 
-    // Ruta API para polling de estados de equipos
+    // ===============================
+    // GESTIÓN DE EQUIPOS (SOLO ADMIN para crear/editar/eliminar)
+    // ===============================
+
+    // Ver inventario y buscar (todos pueden acceder)
+    Route::get('/equipos', [EquipoController::class, 'index'])->name('equipos.index');
+    Route::get('/api/equipos/buscar', [EquipoController::class, 'buscarAjax'])->name('equipos.buscar');
     Route::get('/api/equipos/estados', [EquipoController::class, 'obtenerEstados'])->name('equipos.estados');
 
-    // Gestión de Inventario (Equipos)
-    Route::resource('equipos', EquipoController::class);
+    // Crear, editar y eliminar equipos (SOLO ADMIN)
+    Route::middleware(['admin'])->group(function () {
+        Route::get('/equipos/create', [EquipoController::class, 'create'])->name('equipos.create');
+        Route::post('/equipos', [EquipoController::class, 'store'])->name('equipos.store');
+        Route::get('/equipos/{equipo}/edit', [EquipoController::class, 'edit'])->name('equipos.edit');
+        Route::put('/equipos/{equipo}', [EquipoController::class, 'update'])->name('equipos.update');
+        Route::delete('/equipos/{equipo}', [EquipoController::class, 'destroy'])->name('equipos.destroy');
+    });
 
-    // Gestión de Préstamos (CRUD completo)
+    // ===============================
+    // GESTIÓN DE PRÉSTAMOS (todos pueden acceder)
+    // ===============================
     Route::resource('prestamos', PrestamoController::class);
 
-    // Rutas de exportación de reportes
-    Route::get('/prestamos/export/pdf', [PrestamoController::class, 'exportPDF'])->name('prestamos.export.pdf');
-    Route::get('/prestamos/export/excel', [PrestamoController::class, 'exportExcel'])->name('prestamos.export.excel');
-
-    // Rutas personalizadas para Devoluciones
-    // 1. Bandeja de devoluciones pendientes
+    // Rutas personalizadas de devolución
     Route::get('/devoluciones', [DevolucionController::class, 'index'])->name('devoluciones.index');
-
-    // 2. Pantalla de confirmación de devolución
     Route::get('/prestamos/{prestamo}/finalizar', [PrestamoController::class, 'finalizar'])->name('prestamos.finalizar');
-
-    // 3. Procesar la devolución (Guardar en BD)
     Route::put('/prestamos/{prestamo}/devolver', [PrestamoController::class, 'devolver'])->name('prestamos.devolver');
+
+    // Exportación de reportes (SOLO ADMIN)
+    Route::middleware(['admin'])->group(function () {
+        Route::get('/prestamos/export/pdf', [PrestamoController::class, 'exportPDF'])->name('prestamos.export.pdf');
+        Route::get('/prestamos/export/excel', [PrestamoController::class, 'exportExcel'])->name('prestamos.export.excel');
+    });
 });
 
 // ===============================

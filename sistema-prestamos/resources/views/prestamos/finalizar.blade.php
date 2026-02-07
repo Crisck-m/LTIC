@@ -97,16 +97,16 @@
                                         <div class="row g-3">
                                             @foreach($equiposActivos as $pe)
                                                 <div class="col-md-6">
-                                                    <div class="card border-2 equipo-card" data-equipo-id="{{ $pe->equipo_id }}">
+                                                    <div class="card border-2 equipo-card" data-prestamo-equipo-id="{{ $pe->id }}">
                                                         <div class="card-body">
                                                             <div class="form-check">
                                                                 <input class="form-check-input equipo-checkbox" 
                                                                     type="checkbox" 
                                                                     name="equipos_devolver[]" 
-                                                                    value="{{ $pe->equipo_id }}" 
-                                                                    id="equipo_{{ $pe->equipo_id }}"
+                                                                    value="{{ $pe->id }}" 
+                                                                    id="prestamo_equipo_{{ $pe->id }}"
                                                                     {{ $equiposActivos->count() == 1 ? 'checked' : '' }}>
-                                                                <label class="form-check-label w-100" for="equipo_{{ $pe->equipo_id }}">
+                                                                <label class="form-check-label w-100" for="prestamo_equipo_{{ $pe->id }}">
                                                                     <div class="d-flex align-items-center">
                                                                         <div class="bg-light p-2 rounded me-3">
                                                                             <i class="fas fa-laptop fa-2x text-primary"></i>
@@ -117,6 +117,9 @@
                                                                                 {{ $pe->equipo->marca }} - {{ $pe->equipo->modelo }}
                                                                             </div>
                                                                             <span class="badge bg-secondary">{{ $pe->equipo->nombre_equipo }}</span>
+                                                                            @if($pe->cantidad && $pe->cantidad > 1)
+                                                                                <span class="badge bg-info ms-1">Cantidad: {{ $pe->cantidad }}</span>
+                                                                            @endif
                                                                         </div>
                                                                     </div>
                                                                 </label>
@@ -278,12 +281,21 @@
             // Click en la tarjeta también marca el checkbox
             document.querySelectorAll('.equipo-card').forEach(card => {
                 card.addEventListener('click', function(e) {
-                    if (e.target.type !== 'checkbox') {
-                        const checkbox = this.querySelector('.equipo-checkbox');
-                        if (checkbox) {
-                            checkbox.checked = !checkbox.checked;
-                            checkbox.dispatchEvent(new Event('change'));
-                        }
+                    // Evitar doble toggle si se hace clic directamente en el checkbox
+                    if (e.target.type === 'checkbox') {
+                        return;
+                    }
+                    
+                    // Evitar doble toggle si se hace clic en el label (que ya activa el checkbox)
+                    if (e.target.tagName === 'LABEL' || e.target.closest('label')) {
+                        return;
+                    }
+                    
+                    // Para cualquier otra parte de la tarjeta, activar el checkbox
+                    const checkbox = this.querySelector('.equipo-checkbox');
+                    if (checkbox) {
+                        checkbox.checked = !checkbox.checked;
+                        checkbox.dispatchEvent(new Event('change'));
                     }
                 });
             });

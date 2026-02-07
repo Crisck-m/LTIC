@@ -50,13 +50,40 @@ class EquipoService
         return $equipo->update(['estado' => 'baja']);
     }
 
+    /**
+     * Eliminar equipo o darlo de baja según si tiene préstamos
+     * Retorna: 'eliminado', 'dado_de_baja', o false si hay error
+     */
     public function eliminarEquipo(Equipo $equipo)
     {
-        // Verificar si el equipo tiene préstamos asociados usando la relación
-        if ($equipo->prestamos()->exists()) {
-            return false;
-        }
+        // Verificar si tiene préstamos asociados
+        $tienePrestamos = $equipo->prestamos()->exists();
 
-        return $equipo->delete();
+        if ($tienePrestamos) {
+            // ===================================================================
+            // CASO: TIENE PRÉSTAMOS → DAR DE BAJA (no eliminar)
+            // ===================================================================
+            $equipo->estado = 'dado_de_baja';
+
+            // Si es equipo por cantidad, poner cantidad disponible en 0
+            if (!$equipo->es_individual) {
+                $equipo->cantidad_disponible = 0;
+            }
+
+            $equipo->save();
+
+            return 'dado_de_baja';
+        } else {
+            // ===================================================================
+            // CASO: NO TIENE PRÉSTAMOS → ELIMINAR FÍSICAMENTE
+            // ===================================================================
+            try {
+                $equipo->delete();
+                return 'eliminado';
+            } catch (\Exception $e) {
+                \Log::error('Error al eliminar equipo: ' . $e->getMessage());
+                return false;
+            }
+        }
     }
 }
