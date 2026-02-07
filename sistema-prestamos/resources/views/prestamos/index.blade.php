@@ -8,9 +8,33 @@
             <h5 class="mb-0 text-secondary">
                 <i class="fas fa-history me-2"></i>Historial de Préstamos
             </h5>
-            <a href="{{ route('prestamos.create') }}" class="btn btn-primary">
-                <i class="fas fa-plus me-2"></i> Nuevo Préstamo
-            </a>
+            <div class="d-flex gap-2">
+                <!-- Botón Dropdown de Exportar -->
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                        <i class="fas fa-download me-2"></i>Exportar Reporte
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="#"
+                                onclick="event.preventDefault(); confirmarExportacion('pdf');">
+                                <i class="far fa-file-pdf text-danger me-2"></i>📄 Descargar PDF
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#"
+                                onclick="event.preventDefault(); confirmarExportacion('excel');">
+                                <i class="far fa-file-excel text-success me-2"></i>📊 Descargar Excel
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <!-- Botón Nuevo Préstamo -->
+                <a href="{{ route('prestamos.create') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i> Nuevo Préstamo
+                </a>
+            </div>
         </div>
 
         <div class="card-body">
@@ -349,6 +373,43 @@
 
     @push('scripts')
         <script>
+            /**
+             * Confirmar exportación de reporte
+             */
+            function confirmarExportacion(formato) {
+                // Detectar si hay filtros activos
+                const search = document.querySelector('[name="search"]').value;
+                const estado = document.querySelector('[name="estado"]').value;
+                const fechaDesde = document.querySelector('[name="fecha_desde"]').value;
+                const fechaHasta = document.querySelector('[name="fecha_hasta"]').value;
+
+                const hayFiltros = search || estado || fechaDesde || fechaHasta;
+
+                // Si NO hay filtros, mostrar confirmación
+                if (!hayFiltros) {
+                    const confirmar = confirm(
+                        "⚠️ Te recomendamos filtrar el reporte por fechas específicas, de lo contrario será muy largo.\n\n¿Deseas continuar con el reporte completo?"
+                    );
+                    if (!confirmar) {
+                        return; // Usuario canceló
+                    }
+                }
+
+                // Construir URL con parámetros
+                const route = formato === 'pdf' ? '{{ route("prestamos.export.pdf") }}' : '{{ route("prestamos.export.excel") }}';
+                const params = new URLSearchParams();
+
+                if (search) params.append('search', search);
+                if (estado) params.append('estado', estado);
+                if (fechaDesde) params.append('fecha_desde', fechaDesde);
+                if (fechaHasta) params.append('fecha_hasta', fechaHasta);
+
+                const url = params.toString() ? `${route}?${params.toString()}` : route;
+
+                // Redirigir a descarga
+                window.location.href = url;
+            }
+
             function validarFechas() {
                 const fechaDesde = document.getElementById('fecha_desde');
                 const fechaHasta = document.getElementById('fecha_hasta');

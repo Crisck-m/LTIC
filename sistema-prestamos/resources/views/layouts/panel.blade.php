@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema de Préstamos LTIC</title>
+    <link rel="icon" type="image/png" href="{{ asset('images/LogoRecorLTIC.png') }}">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
@@ -116,11 +117,12 @@
             <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
                 <div class="position-sticky pt-3">
                     <div class="text-center mb-4">
-                        <h4 class="text-white">
-                            <i class="fas fa-laptop-house"></i>
+                        <img src="{{ asset('images/LogoLTIC.png') }}" alt="Logo LTIC"
+                            style="max-width: 200px; height: auto; margin-bottom: 15px;">
+                        <h4 class="text-white mb-1">
                             Sistema Préstamos
                         </h4>
-                        <small class="text-light">LTIC</small>
+
                     </div>
 
                     <ul class="nav flex-column">

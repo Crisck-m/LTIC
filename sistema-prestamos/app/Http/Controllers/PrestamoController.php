@@ -453,7 +453,161 @@ class PrestamoController extends Controller
 
     public function exportExcel(Request $request)
     {
-        // Similar al PDF pero para Excel...
-        // (código similar al anterior, adaptado para CSV)
+        // Validar filtros
+        $request->validate([
+            'fecha_desde' => 'nullable|date',
+            'fecha_hasta' => 'nullable|date|after_or_equal:fecha_desde',
+        ]);
+
+        // Obtener préstamos filtrados (sin paginación)
+        $query = Prestamo::with(['estudiante', 'practicante', 'prestamoEquipos.equipo', 'prestamoEquipos.practicanteRecibe']);
+
+        // Aplicar filtros
+        if ($request->search) {
+            $query->where(function ($q) use ($request) {
+                $q->whereHas('estudiante', function ($subQ) use ($request) {
+                    $subQ->where('nombre', 'LIKE', "%{$request->search}%")
+                        ->orWhere('apellido', 'LIKE', "%{$request->search}%");
+                })->orWhereHas('prestamoEquipos.equipo', function ($subQ) use ($request) {
+                    $subQ->where('nombre_equipo', 'LIKE', "%{$request->search}%")
+                        ->orWhere('tipo', 'LIKE', "%{$request->search}%");
+                });
+            });
+        }
+
+        if ($request->estado) {
+            $query->where('estado', $request->estado);
+        }
+
+        if ($request->fecha_desde) {
+            $query->whereDate('fecha_prestamo', '>=', $request->fecha_desde);
+        }
+
+        if ($request->fecha_hasta) {
+            $query->whereDate('fecha_prestamo', '<=', $request->fecha_hasta);
+        }
+
+        $prestamos = $query->latest()->get();
+
+        // Generar CSV
+        $nombreArchivo = 'reporte_prestamos_' . Carbon::now()->format('Y-m-d_His') . '.csv';
+
+        $callback = function () use ($prestamos) {
+            $file = fopen('php://output', 'w');
+
+            // UTF-8 BOM para Excel
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            // Encabezados
+            fputcsv($file, [
+                'ID Préstamo',
+                'Tipo de Equipo',
+                'Marca',
+                'Modelo',
+                'Código Equipo',
+                'Estudiante Solicitante',
+                'Carrera',
+                'Practicante que Registra',
+                'Fecha Préstamo',
+                'Hora Préstamo',
+                'Fecha Esperada Devolución',
+                'Fecha Real Devolución',
+                'Hora Real Devolución',
+                'Practicante que Recibe',
+                'Estado',
+                'Cumplimiento',
+                'Tiempo de Préstamo',
+                'Observaciones Préstamo',
+                'Observaciones Devolución',
+            ], ';');
+
+            // Datos - Una fila por cada equipo en el préstamo
+            foreach ($prestamos as $prestamo) {
+                foreach ($prestamo->prestamoEquipos as $prestamoEquipo) {
+                    $equipo = $prestamoEquipo->equipo;
+
+                    // Calcular cumplimiento basado en este equipo específico
+                    $cumplimiento = 'Pendiente';
+                    $fechaEsperada = Carbon::parse($prestamo->fecha_devolucion_esperada)->startOfDay();
+                    $hoy = Carbon::now()->startOfDay();
+
+                    if ($prestamoEquipo->estado == 'devuelto' && $prestamoEquipo->fecha_devolucion_real) {
+                        // Equipo ya devuelto
+                        $fechaDevolucionReal = Carbon::parse($prestamoEquipo->fecha_devolucion_real)->startOfDay();
+
+                        if ($fechaDevolucionReal->lte($fechaEsperada)) {
+                            $cumplimiento = 'Listo';
+                        } else {
+                            $diasRetraso = $fechaEsperada->diffInDays($fechaDevolucionReal);
+                            $cumplimiento = "Listo (Atraso +{$diasRetraso} días)";
+                        }
+                    } else {
+                        // Equipo aún no devuelto (activo)
+                        if ($hoy->gt($fechaEsperada)) {
+                            $diasRetraso = $fechaEsperada->diffInDays($hoy);
+                            $cumplimiento = "Atrasado (+{$diasRetraso} días)";
+                        } else {
+                            $cumplimiento = 'En Curso';
+                        }
+                    }
+
+                    // Calcular tiempo de préstamo
+                    $tiempoPrestamo = '-';
+                    if ($prestamoEquipo->estado == 'devuelto' && $prestamoEquipo->fecha_devolucion_real) {
+                        $inicio = Carbon::parse($prestamo->fecha_prestamo);
+                        $fin = Carbon::parse($prestamoEquipo->fecha_devolucion_real);
+
+                        $minutosTotales = floor($inicio->diffInMinutes($fin));
+                        $horasTotales = floor($inicio->diffInHours($fin));
+                        $diasTotales = floor($inicio->diffInDays($fin));
+
+                        if ($minutosTotales < 1) {
+                            $tiempoPrestamo = 'Menos de 1 minuto';
+                        } elseif ($minutosTotales == 1) {
+                            $tiempoPrestamo = '1 minuto';
+                        } elseif ($minutosTotales < 60) {
+                            $tiempoPrestamo = $minutosTotales . ' minutos';
+                        } elseif ($horasTotales == 1) {
+                            $tiempoPrestamo = '1 hora';
+                        } elseif ($horasTotales < 24) {
+                            $tiempoPrestamo = $horasTotales . ' horas';
+                        } elseif ($diasTotales == 1) {
+                            $tiempoPrestamo = '1 día';
+                        } else {
+                            $tiempoPrestamo = $diasTotales . ' días';
+                        }
+                    }
+
+                    fputcsv($file, [
+                        $prestamo->id,
+                        $equipo->tipo ?? '-',
+                        $equipo->marca ?? '-',
+                        $equipo->modelo ?? '-',
+                        $equipo->nombre_equipo ?? '-',
+                        ($prestamo->estudiante->nombre ?? '') . ' ' . ($prestamo->estudiante->apellido ?? ''),
+                        $prestamo->estudiante->carrera ?? '-',
+                        ($prestamo->practicante->nombre ?? '') . ' ' . ($prestamo->practicante->apellido ?? ''),
+                        Carbon::parse($prestamo->fecha_prestamo)->format('d/m/Y'),
+                        Carbon::parse($prestamo->fecha_prestamo)->format('H:i A'),
+                        $fechaEsperada->format('d/m/Y'),
+                        $prestamoEquipo->fecha_devolucion_real ? Carbon::parse($prestamoEquipo->fecha_devolucion_real)->format('d/m/Y') : 'Pendiente',
+                        $prestamoEquipo->fecha_devolucion_real ? Carbon::parse($prestamoEquipo->fecha_devolucion_real)->format('H:i A') : '-',
+                        $prestamoEquipo->practicanteRecibe ? ($prestamoEquipo->practicanteRecibe->nombre . ' ' . $prestamoEquipo->practicanteRecibe->apellido) : '-',
+                        $prestamoEquipo->estado == 'activo' ? 'En Curso' : 'Devuelto',
+                        $cumplimiento,
+                        $tiempoPrestamo,
+                        $prestamo->observaciones_prestamo ?? '-',
+                        $prestamoEquipo->observaciones_devolucion ?? '-',
+                    ], ';');
+                }
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"{$nombreArchivo}\"",
+        ]);
     }
 }

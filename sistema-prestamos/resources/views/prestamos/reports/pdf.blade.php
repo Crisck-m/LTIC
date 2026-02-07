@@ -208,108 +208,124 @@
             </thead>
             <tbody>
                 @foreach($prestamos as $prestamo)
-                    @php
-                        $cumplimiento = 'Pendiente';
-                        $badgeClass = 'badge-info';
-                        $tiempoPrestamo = '-';
+                    @foreach($prestamo->prestamoEquipos as $prestamoEquipo)
+                        @php
+                            $equipo = $prestamoEquipo->equipo;
+                            $cumplimiento = 'Pendiente';
+                            $badgeClass = 'badge-info';
+                            $tiempoPrestamo = '-';
 
-                        if ($prestamo->estado == 'finalizado' && $prestamo->fecha_devolucion_real) {
-                            $fechaReal = \Carbon\Carbon::parse($prestamo->fecha_devolucion_real)->startOfDay();
                             $fechaEsperada = \Carbon\Carbon::parse($prestamo->fecha_devolucion_esperada)->startOfDay();
+                            $hoy = \Carbon\Carbon::now()->startOfDay();
 
-                            // Calcular tiempo de préstamo
-                            $inicio = \Carbon\Carbon::parse($prestamo->fecha_prestamo);
-                            $fin = \Carbon\Carbon::parse($prestamo->fecha_devolucion_real);
+                            if ($prestamoEquipo->estado == 'devuelto' && $prestamoEquipo->fecha_devolucion_real) {
+                                // Equipo ya devuelto
+                                $fechaDevolucionReal = \Carbon\Carbon::parse($prestamoEquipo->fecha_devolucion_real)->startOfDay();
 
-                            $minutosTotales = floor($inicio->diffInMinutes($fin));
-                            $horasTotales = floor($inicio->diffInHours($fin));
-                            $diasTotales = floor($inicio->diffInDays($fin));
+                                // Calcular tiempo de préstamo
+                                $inicio = \Carbon\Carbon::parse($prestamo->fecha_prestamo);
+                                $fin = \Carbon\Carbon::parse($prestamoEquipo->fecha_devolucion_real);
 
-                            if ($minutosTotales < 1) {
-                                $tiempoPrestamo = 'Menos de 1 min';
-                            } elseif ($minutosTotales == 1) {
-                                $tiempoPrestamo = '1 min';
-                            } elseif ($minutosTotales < 60) {
-                                $tiempoPrestamo = $minutosTotales . ' min';
-                            } elseif ($horasTotales == 1) {
-                                $tiempoPrestamo = '1 hora';
-                            } elseif ($horasTotales < 24) {
-                                $tiempoPrestamo = $horasTotales . ' hrs';
-                            } elseif ($diasTotales == 1) {
-                                $tiempoPrestamo = '1 día';
+                                $minutosTotales = floor($inicio->diffInMinutes($fin));
+                                $horasTotales = floor($inicio->diffInHours($fin));
+                                $diasTotales = floor($inicio->diffInDays($fin));
+
+                                if ($minutosTotales < 1) {
+                                    $tiempoPrestamo = 'Menos de 1 min';
+                                } elseif ($minutosTotales == 1) {
+                                    $tiempoPrestamo = '1 min';
+                                } elseif ($minutosTotales < 60) {
+                                    $tiempoPrestamo = $minutosTotales . ' min';
+                                } elseif ($horasTotales == 1) {
+                                    $tiempoPrestamo = '1 hora';
+                                } elseif ($horasTotales < 24) {
+                                    $tiempoPrestamo = $horasTotales . ' hrs';
+                                } elseif ($diasTotales == 1) {
+                                    $tiempoPrestamo = '1 día';
+                                } else {
+                                    $tiempoPrestamo = $diasTotales . ' días';
+                                }
+
+                                // Calcular cumplimiento
+                                if ($fechaDevolucionReal->lte($fechaEsperada)) {
+                                    $cumplimiento = 'Listo';
+                                    $badgeClass = 'badge-success';
+                                } else {
+                                    $diasRetraso = $fechaEsperada->diffInDays($fechaDevolucionReal);
+                                    $cumplimiento = "Listo (Atraso +{$diasRetraso}d)";
+                                    $badgeClass = 'badge-warning';
+                                }
                             } else {
-                                $tiempoPrestamo = $diasTotales . ' días';
+                                // Equipo aún no devuelto (activo)
+                                if ($hoy->gt($fechaEsperada)) {
+                                    $diasRetraso = $fechaEsperada->diffInDays($hoy);
+                                    $cumplimiento = "Atrasado (+{$diasRetraso}d)";
+                                    $badgeClass = 'badge-danger';
+                                } else {
+                                    $cumplimiento = 'En Curso';
+                                    $badgeClass = 'badge-info';
+                                }
                             }
-
-                            // Calcular cumplimiento
-                            if ($fechaReal->lte($fechaEsperada)) {
-                                $cumplimiento = 'A tiempo';
-                                $badgeClass = 'badge-success';
-                            } else {
-                                $diasRetraso = $fechaEsperada->diffInDays($fechaReal);
-                                $cumplimiento = "Retraso +{$diasRetraso}d";
-                                $badgeClass = 'badge-danger';
-                            }
-                        }
-                    @endphp
-                    <tr>
-                        <td>
-                            <strong>{{ $prestamo->equipo->tipo ?? '-' }}</strong><br>
-                            <span class="small-text">{{ $prestamo->equipo->marca ?? '-' }}
-                                {{ $prestamo->equipo->modelo ?? '-' }}</span><br>
-                            <span class="small-text">{{ $prestamo->equipo->nombre_equipo ?? '-' }}</span>
-                        </td>
-                        <td>
-                            <strong>{{ $prestamo->estudiante->nombre ?? '' }}
-                                {{ $prestamo->estudiante->apellido ?? '' }}</strong><br>
-                            <span class="small-text">{{ $prestamo->estudiante->carrera ?? '-' }}</span>
-                        </td>
-                        <td>
-                            <span class="small-text">Registra:</span><br>
-                            {{ $prestamo->practicante->nombre ?? '' }} {{ $prestamo->practicante->apellido ?? '' }}
-                            @if($prestamo->practicanteDevolucion)
-                                <br><span class="small-text">Recibe:</span><br>
-                                {{ $prestamo->practicanteDevolucion->nombre }} {{ $prestamo->practicanteDevolucion->apellido }}
-                            @endif
-                        </td>
-                        <td class="small-text">
-                            {{ \Carbon\Carbon::parse($prestamo->fecha_prestamo)->format('d/m/Y') }}<br>
-                            {{ \Carbon\Carbon::parse($prestamo->fecha_prestamo)->format('H:i A') }}
-                        </td>
-                        <td class="small-text">
-                            {{ \Carbon\Carbon::parse($prestamo->fecha_devolucion_esperada)->format('d/m/Y') }}
-                        </td>
-                        <td class="small-text">
-                            @if($prestamo->fecha_devolucion_real)
-                                {{ \Carbon\Carbon::parse($prestamo->fecha_devolucion_real)->format('d/m/Y') }}<br>
-                                {{ \Carbon\Carbon::parse($prestamo->fecha_devolucion_real)->format('H:i A') }}
-                            @else
-                                <em>Pendiente</em>
-                            @endif
-                        </td>
-                        <td class="text-center">
-                            <span class="badge {{ $prestamo->estado == 'activo' ? 'badge-warning' : 'badge-success' }}">
-                                {{ $prestamo->estado == 'activo' ? 'En Curso' : 'Devuelto' }}
-                            </span>
-                        </td>
-                        <td class="text-center">
-                            <span class="badge {{ $badgeClass }}">{{ $cumplimiento }}</span>
-                        </td>
-                        <td class="small-text text-center">
-                            {{ $tiempoPrestamo }}
-                        </td>
-                        <td class="small-text">
-                            @if($prestamo->observaciones_prestamo)
-                                <strong>Préstamo:</strong> {{ Str::limit($prestamo->observaciones_prestamo, 50) }}<br>
-                            @endif
-                            @if($prestamo->observaciones_devolucion)
-                                <strong>Devolución:</strong> {{ Str::limit($prestamo->observaciones_devolucion, 50) }}
-                            @endif
-                            @if(!$prestamo->observaciones_prestamo && !$prestamo->observaciones_devolucion)
-                                <em>Sin observaciones</em>
-                            @endif
-                        </td>
-                    </tr>
+                        @endphp
+                        <tr>
+                            <td>
+                                <strong>{{ $equipo->tipo ?? '-' }}</strong><br>
+                                <span class="small-text">{{ $equipo->marca ?? '-' }}
+                                    {{ $equipo->modelo ?? '-' }}</span><br>
+                                <span class="small-text">{{ $equipo->nombre_equipo ?? '-' }}</span>
+                            </td>
+                            <td>
+                                <strong>{{ $prestamo->estudiante->nombre ?? '' }}
+                                    {{ $prestamo->estudiante->apellido ?? '' }}</strong><br>
+                                <span class="small-text">{{ $prestamo->estudiante->carrera ?? '-' }}</span>
+                            </td>
+                            <td>
+                                <span class="small-text">Registra:</span><br>
+                                {{ $prestamo->practicante->nombre ?? '' }} {{ $prestamo->practicante->apellido ?? '' }}
+                                @if($prestamoEquipo->practicanteRecibe)
+                                    <br><span class="small-text">Recibe:</span><br>
+                                    {{ $prestamoEquipo->practicanteRecibe->nombre }} {{ $prestamoEquipo->practicanteRecibe->apellido }}
+                                @endif
+                            </td>
+                            <td class="small-text">
+                                {{ \Carbon\Carbon::parse($prestamo->fecha_prestamo)->format('d/m/Y') }}<br>
+                                {{ \Carbon\Carbon::parse($prestamo->fecha_prestamo)->format('H:i A') }}
+                            </td>
+                            <td class="small-text">
+                                {{ $fechaEsperada->format('d/m/Y') }}
+                            </td>
+                            <td class="small-text">
+                                @if($prestamoEquipo->fecha_devolucion_real)
+                                    {{ \Carbon\Carbon::parse($prestamoEquipo->fecha_devolucion_real)->format('d/m/Y') }}<br>
+                                    {{ \Carbon\Carbon::parse($prestamoEquipo->fecha_devolucion_real)->format('H:i A') }}
+                                @else
+                                    <em>Pendiente</em>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                <span class="badge {{ $prestamoEquipo->estado == 'activo' ? 'badge-warning' : 'badge-success' }}">
+                                    {{ $prestamoEquipo->estado == 'activo' ? 'En Curso' : 'Devuelto' }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge {{ $badgeClass }}">{{ $cumplimiento }}</span>
+                            </td>
+                            <td class="small-text text-center">
+                                {{ $tiempoPrestamo }}
+                            </td>
+                            <td class="small-text">
+                                @if($prestamo->observaciones_prestamo)
+                                    <strong>Préstamo:</strong> {{ Str::limit($prestamo->observaciones_prestamo, 50) }}<br>
+                                @endif
+                                @if($prestamoEquipo->observaciones_devolucion)
+                                    <strong>Devolución:</strong> {{ Str::limit($prestamoEquipo->observaciones_devolucion, 50) }}
+                                @endif
+                                @if(!$prestamo->observaciones_prestamo && !$prestamoEquipo->observaciones_devolucion)
+                                    <em>Sin observaciones</em>
+                                @endif
+                            </td>
+                        </tr>
+                    @endforeach
                 @endforeach
             </tbody>
         </table>

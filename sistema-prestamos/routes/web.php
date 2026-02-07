@@ -54,11 +54,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/prestamos/{prestamo}/finalizar', [PrestamoController::class, 'finalizar'])->name('prestamos.finalizar');
     Route::put('/prestamos/{prestamo}/devolver', [PrestamoController::class, 'devolver'])->name('prestamos.devolver');
 
-    // Exportación de reportes (SOLO ADMIN)
-    Route::middleware(['admin'])->group(function () {
-        Route::get('/prestamos/export/pdf', [PrestamoController::class, 'exportPDF'])->name('prestamos.export.pdf');
-        Route::get('/prestamos/export/excel', [PrestamoController::class, 'exportExcel'])->name('prestamos.export.excel');
-    });
+    // Exportación de reportes (accesible para admin y practicante)
+    Route::get('/prestamos/export/pdf', [PrestamoController::class, 'exportPDF'])->name('prestamos.export.pdf');
+    Route::get('/prestamos/export/excel', [PrestamoController::class, 'exportExcel'])->name('prestamos.export.excel');
 });
 
 // ===============================
