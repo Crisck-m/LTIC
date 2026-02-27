@@ -111,7 +111,7 @@ class Estudiante extends Model
      */
     public function scopeBuscar($query, $search)
     {
-        return $query->where('cedula', 'LIKE', "%{$search}%")      // ✅ CAMBIADO
+        return $query->where('cedula', 'LIKE', "%{$search}%")
             ->orWhere('nombre', 'LIKE', "%{$search}%")
             ->orWhere('apellido', 'LIKE', "%{$search}%")
             ->orWhere('email', 'LIKE', "%{$search}%");

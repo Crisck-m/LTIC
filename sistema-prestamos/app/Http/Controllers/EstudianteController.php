@@ -245,13 +245,13 @@ class EstudianteController extends Controller
 
         $estudiantes = Estudiante::where('activo', true)
             ->where(function ($query) use ($search) {
-                $query->where('cedula', 'LIKE', "%{$search}%")  // ✅ CAMBIADO
+                $query->where('cedula', 'LIKE', "%{$search}%")
                     ->orWhere('nombre', 'LIKE', "%{$search}%")
                     ->orWhere('apellido', 'LIKE', "%{$search}%")
                     ->orWhereRaw("CONCAT(nombre, ' ', apellido) LIKE ?", ["%{$search}%"]);
             })
             ->limit(10)
-            ->get(['id', 'cedula', 'nombre', 'apellido', 'carrera']);  // ✅ CAMBIADO
+            ->get(['id', 'cedula', 'nombre', 'apellido', 'carrera']);
 
         return response()->json($estudiantes);
     }
