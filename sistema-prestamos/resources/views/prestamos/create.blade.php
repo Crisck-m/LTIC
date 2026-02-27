@@ -64,6 +64,11 @@
                                         <input type="hidden" name="estudiante_id" id="estudiante_id" required>
                                         <div id="resultadosEstudiante" class="search-results"></div>
 
+                                        <div id="errorEstudiante" class="d-none mt-1">
+                                            <small class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>Debes
+                                                seleccionar un estudiante de la lista.</small>
+                                        </div>
+
                                         <div id="estudianteSeleccionado" class="mt-3" style="display: none;">
                                             <div class="card border-success border-2">
                                                 <div class="card-body p-3 bg-success bg-opacity-10">
@@ -101,6 +106,11 @@
                                     </div>
 
                                     <div id="contenedorEquipos"></div>
+
+                                    <div id="errorEquipos" class="d-none mt-1">
+                                        <small class="text-danger"><i class="fas fa-exclamation-circle me-1"></i>Debes
+                                            añadir y seleccionar al menos un equipo.</small>
+                                    </div>
 
                                     <div class="form-text text-success mt-2">
                                         <i class="fas fa-info-circle me-1"></i>Solo se muestran equipos disponibles.
@@ -229,7 +239,10 @@
 
             timeoutEstudiante = setTimeout(() => {
                 fetch(`{{ route('estudiantes.buscar') }}?q=${encodeURIComponent(query)}`)
-                    .then(r => r.json())
+                    .then(r => {
+                        if (!r.ok) throw new Error('Error del servidor: ' + r.status);
+                        return r.json();
+                    })
                     .then(data => {
                         if (data.length === 0) {
                             resultadosEstudiante.innerHTML = '<div class="p-3 text-center text-muted">No se encontraron estudiantes</div>';
@@ -238,11 +251,15 @@
                         let html = '';
                         data.forEach(est => {
                             html += `<div class="search-result-item" onclick='seleccionarEstudiante(${JSON.stringify(est)})'>
-                                        <strong>${est.nombre} ${est.apellido}</strong><br>
-                                        <small>Cédula: ${est.cedula || 'N/A'} | ${est.carrera || 'Sin carrera'}</small>
-                                    </div>`;
+                                                <strong>${est.nombre} ${est.apellido}</strong><br>
+                                                <small>Cédula: ${est.cedula || 'N/A'} | ${est.carrera || 'Sin carrera'}</small>
+                                            </div>`;
                         });
                         resultadosEstudiante.innerHTML = html;
+                    })
+                    .catch(err => {
+                        console.error('Error buscando estudiante:', err);
+                        resultadosEstudiante.innerHTML = '<div class="p-3 text-center text-danger"><i class="fas fa-exclamation-circle me-1"></i>Error al buscar. Intenta de nuevo.</div>';
                     });
             }, 300);
         });
@@ -267,31 +284,31 @@
         function agregarFilaEquipo() {
             equipoCounter++;
             const html = `
-                        <div class="equipo-row mb-3" id="equipo-row-${equipoCounter}">
-                            <div class="position-relative">
-                                <div class="input-group" id="inputGroupEquipo_${equipoCounter}">
-                                    <span class="input-group-text bg-light"><i class="fas fa-laptop"></i></span>
-                                    <input type="text" id="buscarEquipo_${equipoCounter}" class="form-control" 
-                                        placeholder="Buscar equipo ${equipoCounter}..." autocomplete="off">
-                                </div>
-                                <input type="hidden" name="equipo_id[]" id="equipo_id_${equipoCounter}" required>
-                                <div id="resultadosEquipo_${equipoCounter}" class="search-results"></div>
+                                <div class="equipo-row mb-3" id="equipo-row-${equipoCounter}">
+                                    <div class="position-relative">
+                                        <div class="input-group" id="inputGroupEquipo_${equipoCounter}">
+                                            <span class="input-group-text bg-light"><i class="fas fa-laptop"></i></span>
+                                            <input type="text" id="buscarEquipo_${equipoCounter}" class="form-control" 
+                                                placeholder="Buscar equipo ${equipoCounter}..." autocomplete="off">
+                                        </div>
+                                        <input type="hidden" name="equipo_id[]" id="equipo_id_${equipoCounter}" required>
+                                        <div id="resultadosEquipo_${equipoCounter}" class="search-results"></div>
 
-                                <div id="equipoSeleccionado_${equipoCounter}" class="mt-2" style="display:none;">
-                                    <div class="card border-info border-2">
-                                        <div class="card-body p-3 bg-info bg-opacity-10">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <div id="equipoNombre_${equipoCounter}"></div>
-                                                <button type="button" class="btn btn-danger btn-sm rounded-circle" 
-                                                    onclick="limpiarEquipo(${equipoCounter})" style="width:32px;height:32px;">
-                                                    <i class="fas fa-times"></i>
-                                                </button>
+                                        <div id="equipoSeleccionado_${equipoCounter}" class="mt-2" style="display:none;">
+                                            <div class="card border-info border-2">
+                                                <div class="card-body p-3 bg-info bg-opacity-10">
+                                                    <div class="d-flex justify-content-between align-items-center">
+                                                        <div id="equipoNombre_${equipoCounter}"></div>
+                                                        <button type="button" class="btn btn-danger btn-sm rounded-circle" 
+                                                            onclick="limpiarEquipo(${equipoCounter})" style="width:32px;height:32px;">
+                                                            <i class="fas fa-times"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                        </div>`;
+                                </div>`;
             document.getElementById('contenedorEquipos').insertAdjacentHTML('beforeend', html);
             inicializarBusquedaEquipo(equipoCounter);
         }
@@ -314,7 +331,10 @@
 
                 timeoutsEquipos[id] = setTimeout(() => {
                     fetch(`{{ route('equipos.buscar') }}?q=${encodeURIComponent(query)}`)
-                        .then(r => r.json())
+                        .then(r => {
+                            if (!r.ok) throw new Error('Error del servidor: ' + r.status);
+                            return r.json();
+                        })
                         .then(data => {
                             if (data.length === 0) {
                                 resultados.innerHTML = '<div class="p-3 text-center text-muted">No hay equipos disponibles</div>';
@@ -335,10 +355,14 @@
                             disponibles.forEach(eq => {
                                 const equipoJSON = JSON.stringify(eq).replace(/'/g, '&#39;');
                                 html += `<div class="search-result-item" onclick='seleccionarEquipo(${equipoJSON}, ${id})'>
-                                            ${eq.display || eq.nombre_equipo}
-                                        </div>`;
+                                                    ${eq.display || eq.nombre_equipo}
+                                                </div>`;
                             });
                             resultados.innerHTML = html;
+                        })
+                        .catch(err => {
+                            console.error('Error buscando equipo:', err);
+                            resultados.innerHTML = '<div class="p-3 text-center text-danger"><i class="fas fa-exclamation-circle me-1"></i>Error al buscar. Intenta de nuevo.</div>';
                         });
                 }, 300);
             });
@@ -357,7 +381,7 @@
                 // LAPTOP (EQUIPO INDIVIDUAL): Sin selector de cantidad
                 // ===================================================================
                 displayText = `<strong>${equipo.nombre_equipo}</strong><br>
-                            <small class="text-muted">${equipo.marca} - Modelo ${equipo.modelo}</small>`;
+                                    <small class="text-muted">${equipo.marca} - Modelo ${equipo.modelo}</small>`;
 
                 // Campo oculto con cantidad=1 para laptops
                 cantidadHTML = `<input type="hidden" name="equipo_cantidad[]" value="1">`;
@@ -366,25 +390,25 @@
                 // EQUIPO POR CANTIDAD: Mostrar selector de cantidad
                 // ===================================================================
                 displayText = `<strong>${equipo.nombre_equipo}</strong><br>
-                            <small class="text-muted">${equipo.marca} - Modelo ${equipo.modelo}</small><br>
-                            <span class="badge bg-info mt-1">Disponibles: ${equipo.cantidad_disponible}/${equipo.cantidad_total}</span>`;
+                                    <small class="text-muted">${equipo.marca} - Modelo ${equipo.modelo}</small><br>
+                                    <span class="badge bg-info mt-1">Disponibles: ${equipo.cantidad_disponible}/${equipo.cantidad_total}</span>`;
 
                 // Campo numérico para seleccionar cantidad
                 cantidadHTML = `
-                        <div class="mt-2">
-                            <label class="form-label fw-bold small mb-1">
-                                <i class="fas fa-hashtag me-1"></i>Cantidad a prestar
-                            </label>
-                            <input type="number" 
-                                name="equipo_cantidad[]" 
-                                id="cantidad_${rowIndex}"
-                                class="form-control form-control-sm" 
-                                min="1" 
-                                max="${equipo.cantidad_disponible}" 
-                                value="1" 
-                                required>
-                            <small class="text-muted">Máximo: ${equipo.cantidad_disponible} unidad(es) disponibles</small>
-                        </div>`;
+                                <div class="mt-2">
+                                    <label class="form-label fw-bold small mb-1">
+                                        <i class="fas fa-hashtag me-1"></i>Cantidad a prestar
+                                    </label>
+                                    <input type="number" 
+                                        name="equipo_cantidad[]" 
+                                        id="cantidad_${rowIndex}"
+                                        class="form-control form-control-sm" 
+                                        min="1" 
+                                        max="${equipo.cantidad_disponible}" 
+                                        value="1" 
+                                        required>
+                                    <small class="text-muted">Máximo: ${equipo.cantidad_disponible} unidad(es) disponibles</small>
+                                </div>`;
             }
 
             document.getElementById(`equipoNombre_${rowIndex}`).innerHTML = displayText + cantidadHTML;
@@ -412,6 +436,45 @@
                 const day = String(hoy.getDate()).padStart(2, '0');
                 fechaDevolucion.value = `${year}-${month}-${day}`;
             }
+
+            // ===== VALIDACIÓN PRE-SUBMIT =====
+            document.getElementById('formPrestamo').addEventListener('submit', function (e) {
+                let valid = true;
+
+                // 1. Verificar que se seleccionó un estudiante del dropdown
+                const estudianteId = document.getElementById('estudiante_id').value;
+                const errorEstudiante = document.getElementById('errorEstudiante');
+                if (!estudianteId) {
+                    valid = false;
+                    errorEstudiante.classList.remove('d-none');
+                    document.getElementById('inputGroupEstudiante').classList.add('border', 'border-danger', 'rounded');
+                } else {
+                    errorEstudiante.classList.add('d-none');
+                    document.getElementById('inputGroupEstudiante').classList.remove('border', 'border-danger', 'rounded');
+                }
+
+                // 2. Verificar que cada fila de equipo tenga un equipo seleccionado
+                const equipoInputs = document.querySelectorAll('input[name="equipo_id[]"]');
+                let equipoSinSeleccionar = false;
+                equipoInputs.forEach(input => {
+                    if (!input.value) equipoSinSeleccionar = true;
+                });
+
+                const errorEquipos = document.getElementById('errorEquipos');
+                if (equipoSinSeleccionar || equipoInputs.length === 0) {
+                    valid = false;
+                    errorEquipos.classList.remove('d-none');
+                } else {
+                    errorEquipos.classList.add('d-none');
+                }
+
+                if (!valid) {
+                    e.preventDefault();
+                    showToast('Por favor completa todos los campos requeridos.', 'warning');
+                    // Scroll al primer error
+                    document.querySelector('.text-danger:not(.d-none)')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
         });
 
         document.addEventListener('click', (e) => {

@@ -273,7 +273,9 @@
                 
                 if (!algunoSeleccionado) {
                     e.preventDefault();
-                    alert('Debes seleccionar al menos un equipo para devolver.');
+                    alertaSeleccion.classList.remove('d-none');
+                    alertaSeleccion.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    showToast('Debes seleccionar al menos un equipo para registrar la devolución.', 'warning');
                     return false;
                 }
             });

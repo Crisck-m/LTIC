@@ -15,6 +15,24 @@
 
                     <div class="card-body p-4">
 
+                        {{-- Mostrar errores de validación del servidor --}}
+                        @if ($errors->any())
+                            <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    <div>
+                                        <strong>Por favor corrige los siguientes errores:</strong>
+                                        <ul class="mb-0 mt-2">
+                                            @foreach ($errors->all() as $error)
+                                                <li>{{ $error }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+                            </div>
+                        @endif
+
                         @if($equipo->es_individual)
                             {{-- ============================================ --}}
                             {{-- FORMULARIO PARA LAPTOPS (EQUIPOS INDIVIDUALES) --}}

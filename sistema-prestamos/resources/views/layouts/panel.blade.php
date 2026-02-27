@@ -202,9 +202,63 @@
         </div>
     </div>
 
+    <!-- Contenedor de Toasts global -->
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999;" id="toastContainer"></div>
+
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        /**
+         * Muestra un toast Bootstrap en la esquina superior derecha.
+         * @param {string} message - Mensaje a mostrar
+         * @param {string} type    - 'danger' | 'warning' | 'success' | 'info'  (default: 'danger')
+         */
+        function showToast(message, type = 'danger') {
+            const icons = {
+                danger: 'fa-exclamation-circle',
+                warning: 'fa-exclamation-triangle',
+                success: 'fa-check-circle',
+                info: 'fa-info-circle',
+            };
+            const titles = {
+                danger: 'Error',
+                warning: 'Atención',
+                success: 'Éxito',
+                info: 'Información',
+            };
+
+            const id = 'toast-' + Date.now();
+            const icon = icons[type] ?? icons.danger;
+            const title = titles[type] ?? titles.danger;
+
+            const html = `
+                <div id="${id}" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body d-flex align-items-start gap-2">
+                            <i class="fas ${icon} text-${type} mt-1 flex-shrink-0"></i>
+                            <div>
+                                <strong class="d-block">${title}</strong>
+                                <span>${message}</span>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button>
+                    </div>
+                </div>`;
+
+            const container = document.getElementById('toastContainer');
+            container.insertAdjacentHTML('beforeend', html);
+
+            const toastEl = document.getElementById(id);
+            const toast = new bootstrap.Toast(toastEl, { delay: 5000 });
+            toast.show();
+
+            // Limpiar del DOM tras ocultarse
+            toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+        }
+    </script>
+
     @stack('scripts')
 </body>
 

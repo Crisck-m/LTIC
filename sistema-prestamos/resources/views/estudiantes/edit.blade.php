@@ -40,7 +40,11 @@
                                         <input type="text" name="cedula"
                                             class="form-control @error('cedula') is-invalid @enderror"
                                             value="{{ old('cedula', $estudiante->cedula) }}" placeholder="Ej: 1712345678"
-                                            maxlength="10" required>
+                                            maxlength="10"
+                                            pattern="[0-9]{10}"
+                                            title="La cédula debe tener exactamente 10 dígitos numéricos (sin letras ni espacios)."
+                                            inputmode="numeric"
+                                            required>
                                     </div>
                                     @error('cedula')
                                         <div class="invalid-feedback d-block">{{ $message }}</div>
@@ -113,30 +117,43 @@
                                     <div class="input-group">
                                         <span class="input-group-text bg-light"><i class="fas fa-phone"></i></span>
                                         <input type="text" name="telefono" class="form-control"
-                                            value="{{ old('telefono', $estudiante->telefono) }}">
+                                            value="{{ old('telefono', $estudiante->telefono) }}"
+                                            maxlength="10"
+                                            pattern="[0-9]{10}"
+                                            title="El teléfono debe tener exactamente 10 dígitos numéricos."
+                                            inputmode="numeric">
                                     </div>
                                 </div>
 
                                 <div class="col-md-12">
                                     <label class="form-label fw-bold">Carrera <span class="text-danger">*</span></label>
-                                    <select name="carrera" id="carrera" class="form-select" required
-                                        onchange="toggleOtraCarrera()">
-                                        <option value="Ingeniería en Sistemas" {{ old('carrera', $estudiante->carrera) == 'Ingeniería en Sistemas' ? 'selected' : '' }}>Ingeniería en Sistemas</option>
-                                        <option value="Ingeniería Informática" {{ old('carrera', $estudiante->carrera) == 'Ingeniería Informática' ? 'selected' : '' }}>Ingeniería Informática</option>
-                                        <option value="Tecnologías de la Información" {{ old('carrera', $estudiante->carrera) == 'Tecnologías de la Información' ? 'selected' : '' }}>Tecnologías de la Información</option>
-                                        <option value="Otra" {{ !in_array(old('carrera', $estudiante->carrera), ['Ingeniería en Sistemas', 'Ingeniería Informática', 'Tecnologías de la Información']) ? 'selected' : '' }}>Otra</option>
+                                    <select name="carrera_id" id="carrera_id" class="form-select @error('carrera_id') is-invalid @enderror"
+                                        required onchange="toggleCarreraOtra()">
+                                        <option value="" disabled>Seleccione una carrera...</option>
+                                        @foreach($carreras as $carrera)
+                                            <option value="{{ $carrera->id }}"
+                                                {{ old('carrera_id', $estudiante->carrera_id) == $carrera->id ? 'selected' : '' }}>
+                                                {{ $carrera->nombre }}
+                                            </option>
+                                        @endforeach
+                                        <option value="otra" {{ old('carrera_id') === 'otra' ? 'selected' : '' }}>
+                                            + Otra (especificar)
+                                        </option>
                                     </select>
+                                    @error('carrera_id')
+                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                    @enderror
                                 </div>
 
-                                <div class="col-md-12" id="otraCarreraDiv"
-                                    style="display: {{ !in_array(old('carrera', $estudiante->carrera), ['Ingeniería en Sistemas', 'Ingeniería Informática', 'Tecnologías de la Información']) ? 'block' : 'none' }};">
-                                    <label for="otra_carrera" class="form-label fw-bold">Especificar Carrera <span class="text-danger">*</span></label>
-                                    <input type="text" name="otra_carrera" id="otra_carrera"
-                                        class="form-control @error('otra_carrera') is-invalid @enderror"
-                                        value="{{ !in_array(old('carrera', $estudiante->carrera), ['Ingeniería en Sistemas', 'Ingeniería Informática', 'Tecnologías de la Información']) ? old('otra_carrera', $estudiante->carrera) : old('otra_carrera') }}"
-                                        {{ !in_array(old('carrera', $estudiante->carrera), ['Ingeniería en Sistemas', 'Ingeniería Informática', 'Tecnologías de la Información']) ? 'required' : '' }}>
-                                    @error('otra_carrera')
-                                        <div class="invalid-feedback d-block">{{ $message }}</div>
+                                <div class="col-md-12" id="carreraOtraContainer"
+                                    style="display: {{ old('carrera_id') === 'otra' ? 'block' : 'none' }};">
+                                    <label class="form-label fw-bold">Especificar Carrera <span class="text-danger">*</span></label>
+                                    <input type="text" name="carrera_otra" id="carrera_otra"
+                                        class="form-control @error('carrera_otra') is-invalid @enderror"
+                                        value="{{ old('carrera_otra') }}"
+                                        placeholder="Ej: Ingeniería Civil">
+                                    @error('carrera_otra')
+                                        <div class="invalid-feedback">{{ $message }}</div>
                                     @enderror
                                 </div>
 
@@ -162,19 +179,86 @@
         </div>
     </div>
 
+@endsection
+
+@push('scripts')
     <script>
-        function toggleOtraCarrera() {
-            const select = document.getElementById('carrera');
-            const div = document.getElementById('otraCarreraDiv');
-            const input = document.getElementById('otra_carrera');
-            if (select.value === 'Otra') {
-                div.style.display = 'block';
+        function toggleCarreraOtra() {
+            const select = document.getElementById('carrera_id');
+            const container = document.getElementById('carreraOtraContainer');
+            const input = document.getElementById('carrera_otra');
+
+            if (select.value === 'otra') {
+                container.style.display = 'block';
                 input.required = true;
             } else {
-                div.style.display = 'none';
+                container.style.display = 'none';
                 input.required = false;
                 input.value = '';
             }
         }
+
+        // ===== VALIDACIÓN PRE-SUBMIT =====
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.querySelector('form');
+            form.addEventListener('submit', function (e) {
+                let valid = true;
+
+                // Validar cédula: exactamente 10 dígitos numéricos
+                const cedulaInput = document.querySelector('[name="cedula"]');
+                if (cedulaInput) {
+                    const cedula = cedulaInput.value.trim();
+                    if (!/^\d{10}$/.test(cedula)) {
+                        valid = false;
+                        cedulaInput.classList.add('is-invalid');
+                        let fb = cedulaInput.closest('.col-md-6')?.querySelector('.invalid-feedback-js');
+                        if (!fb) {
+                            fb = document.createElement('div');
+                            fb.className = 'invalid-feedback-js text-danger small mt-1';
+                            fb.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i>La cédula debe tener exactamente 10 dígitos numéricos.';
+                            cedulaInput.closest('.input-group').after(fb);
+                        }
+                    } else {
+                        cedulaInput.classList.remove('is-invalid');
+                        cedulaInput.closest('.col-md-6')?.querySelector('.invalid-feedback-js')?.remove();
+                    }
+                }
+
+                // Validar teléfono: 10 dígitos (si se llenó)
+                const telInput = document.querySelector('[name="telefono"]');
+                if (telInput && telInput.value.trim() !== '') {
+                    const tel = telInput.value.trim();
+                    if (!/^\d{10}$/.test(tel)) {
+                        valid = false;
+                        telInput.classList.add('is-invalid');
+                        let fb = telInput.closest('.col-md-6')?.querySelector('.invalid-feedback-js');
+                        if (!fb) {
+                            fb = document.createElement('div');
+                            fb.className = 'invalid-feedback-js text-danger small mt-1';
+                            fb.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i>El teléfono debe tener exactamente 10 dígitos numéricos.';
+                            telInput.closest('.input-group').after(fb);
+                        }
+                    } else {
+                        telInput.classList.remove('is-invalid');
+                        telInput.closest('.col-md-6')?.querySelector('.invalid-feedback-js')?.remove();
+                    }
+                }
+
+                if (!valid) {
+                    e.preventDefault();
+                    showToast('Por favor corrige los errores del formulario.', 'warning');
+                }
+            });
+
+            // Limpiar error en tiempo real
+            document.querySelector('[name="cedula"]')?.addEventListener('input', function () {
+                this.classList.remove('is-invalid');
+                this.closest('.col-md-6')?.querySelector('.invalid-feedback-js')?.remove();
+            });
+            document.querySelector('[name="telefono"]')?.addEventListener('input', function () {
+                this.classList.remove('is-invalid');
+                this.closest('.col-md-6')?.querySelector('.invalid-feedback-js')?.remove();
+            });
+        });
     </script>
-@endsection
+@endpush

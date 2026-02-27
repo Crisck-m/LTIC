@@ -422,7 +422,7 @@
 
                 if (fechaDesde.value && fechaHasta.value) {
                     if (fechaHasta.value < fechaDesde.value) {
-                        alert('La fecha "Hasta" no puede ser anterior a la fecha "Desde".');
+                        showToast('La fecha "Hasta" no puede ser anterior a la fecha "Desde".', 'warning');
                         fechaHasta.value = '';
                         return false;
                     }

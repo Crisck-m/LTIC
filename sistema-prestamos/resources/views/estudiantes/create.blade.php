@@ -17,15 +17,36 @@
                         <form action="{{ route('estudiantes.store') }}" method="POST">
                             @csrf
 
+                            @if ($errors->any())
+                                <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                                    <div class="d-flex align-items-start">
+                                        <i class="fas fa-exclamation-triangle me-2 mt-1"></i>
+                                        <div>
+                                            <strong>No se pudo registrar el estudiante:</strong>
+                                            <ul class="mb-0 mt-1">
+                                                @foreach ($errors->all() as $error)
+                                                    <li>{{ $error }}</li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                </div>
+                            @endif
+
                             <div class="row g-3">
                                 <!-- Cédula -->
                                 <div class="col-md-6">
                                     <label class="form-label fw-bold">Cédula <span class="text-danger">*</span></label>
-                                    <div class="input-group">
+                                    <div class="input-group" id="inputGroupCedula">
                                         <span class="input-group-text bg-light"><i class="fas fa-id-card"></i></span>
-                                        <input type="text" name="cedula"
+                                        <input type="text" name="cedula" id="cedula"
                                             class="form-control @error('cedula') is-invalid @enderror"
-                                            value="{{ old('cedula') }}" placeholder="Ej: 1712345678" maxlength="10"
+                                            value="{{ old('cedula') }}" placeholder="Ej: 1712345678"
+                                            maxlength="10"
+                                            pattern="[0-9]{10}"
+                                            title="La cédula debe tener exactamente 10 dígitos numéricos (sin letras ni espacios)."
+                                            inputmode="numeric"
                                             required>
                                     </div>
                                     @error('cedula')
@@ -43,10 +64,10 @@
                                             <span class="input-group-text bg-light"><i class="fas fa-user-tag"></i></span>
                                             <select name="tipo" class="form-select" required>
                                                 <option value="" disabled selected>Seleccione...</option>
-                                                <option value="Estudiante Regular" {{ old('tipo') == 'Estudiante Regular' ? 'selected' : '' }}>
+                                                <option value="estudiante" {{ old('tipo') == 'estudiante' ? 'selected' : '' }}>
                                                     Estudiante
                                                 </option>
-                                                <option value="Practicante" {{ old('tipo') == 'Practicante' ? 'selected' : '' }}>
+                                                <option value="practicante" {{ old('tipo') == 'practicante' ? 'selected' : '' }}>
                                                     Practicante
                                                 </option>
                                             </select>
@@ -57,7 +78,7 @@
                                             <span class="input-group-text bg-light"><i class="fas fa-user-tag"></i></span>
                                             <input type="text" class="form-control bg-light" value="Estudiante Regular" readonly>
                                         </div>
-                                        <input type="hidden" name="tipo" value="Estudiante Regular">
+                                        <input type="hidden" name="tipo" value="estudiante">
                                         <div class="alert alert-warning mt-2 py-2 px-3 mb-0">
                                             <i class="fas fa-lock me-1"></i>
                                             <small>Este campo solo puede ser modificado por administradores</small>
@@ -114,7 +135,11 @@
                                         <span class="input-group-text bg-light"><i class="fas fa-phone"></i></span>
                                         <input type="text" name="telefono"
                                             class="form-control @error('telefono') is-invalid @enderror"
-                                            value="{{ old('telefono') }}" placeholder="Ej: 0987654321" maxlength="10">
+                                            value="{{ old('telefono') }}" placeholder="Ej: 0987654321"
+                                            maxlength="10"
+                                            pattern="[0-9]{10}"
+                                            title="El teléfono debe tener exactamente 10 dígitos numéricos."
+                                            inputmode="numeric">
                                     </div>
                                     @error('telefono')
                                         <div class="text-danger small mt-1">{{ $message }}</div>
@@ -175,6 +200,10 @@
         </div>
     </div>
 
+    </div>
+@endsection
+
+@push('scripts')
     <script>
         function toggleCarreraOtra() {
             const select = document.getElementById('carrera_id');
@@ -193,5 +222,70 @@
 
         // Ejecutar al cargar la página por si hay old()
         document.addEventListener('DOMContentLoaded', toggleCarreraOtra);
+
+        // ===== VALIDACIÓN PRE-SUBMIT =====
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.querySelector('form');
+            form.addEventListener('submit', function (e) {
+                let valid = true;
+
+                // Validar cédula: exactamente 10 dígitos numéricos
+                const cedulaInput = document.querySelector('[name="cedula"]');
+                if (cedulaInput) {
+                    const cedula = cedulaInput.value.trim();
+                    if (!/^\d{10}$/.test(cedula)) {
+                        valid = false;
+                        cedulaInput.classList.add('is-invalid');
+                        let fb = cedulaInput.parentElement.querySelector('.invalid-feedback-js');
+                        if (!fb) {
+                            fb = document.createElement('div');
+                            fb.className = 'invalid-feedback-js text-danger small mt-1';
+                            fb.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i>La cédula debe tener exactamente 10 dígitos numéricos.';
+                            cedulaInput.parentElement.after(fb);
+                        }
+                    } else {
+                        cedulaInput.classList.remove('is-invalid');
+                        const fb = cedulaInput.parentElement.querySelector('.invalid-feedback-js');
+                        if (fb) fb.remove();
+                    }
+                }
+
+                // Validar teléfono: 10 dígitos numéricos (si se llenó)
+                const telInput = document.querySelector('[name="telefono"]');
+                if (telInput && telInput.value.trim() !== '') {
+                    const tel = telInput.value.trim();
+                    if (!/^\d{10}$/.test(tel)) {
+                        valid = false;
+                        telInput.classList.add('is-invalid');
+                        let fb = telInput.parentElement.querySelector('.invalid-feedback-js');
+                        if (!fb) {
+                            fb = document.createElement('div');
+                            fb.className = 'invalid-feedback-js text-danger small mt-1';
+                            fb.innerHTML = '<i class="fas fa-exclamation-circle me-1"></i>El teléfono debe tener exactamente 10 dígitos numéricos.';
+                            telInput.parentElement.after(fb);
+                        }
+                    } else {
+                        telInput.classList.remove('is-invalid');
+                        const fb = telInput.parentElement.querySelector('.invalid-feedback-js');
+                        if (fb) fb.remove();
+                    }
+                }
+
+                if (!valid) {
+                    e.preventDefault();
+                    showToast('Por favor corrige los errores del formulario.', 'warning');
+                }
+            });
+
+            // Limpiar error en tiempo real al corregir
+            document.querySelector('[name="cedula"]')?.addEventListener('input', function () {
+                this.classList.remove('is-invalid');
+                this.parentElement.querySelector('.invalid-feedback-js')?.remove();
+            });
+            document.querySelector('[name="telefono"]')?.addEventListener('input', function () {
+                this.classList.remove('is-invalid');
+                this.parentElement.querySelector('.invalid-feedback-js')?.remove();
+            });
+        });
     </script>
-@endsection
+@endpush

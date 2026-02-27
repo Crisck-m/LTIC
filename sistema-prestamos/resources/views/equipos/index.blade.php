@@ -153,8 +153,7 @@
                                                 <i class="fas fa-edit"></i>
                                             </a>
 
-                                            <form action="{{ route('equipos.destroy', $equipo) }}" method="POST" class="d-inline"
-                                                onsubmit="return confirm('¿Estás seguro de eliminar este equipo?');">
+                                            <form action="{{ route('equipos.destroy', $equipo) }}" method="POST" class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="button" class="btn btn-sm btn-danger"
@@ -185,99 +184,107 @@
         </div>
     </div>
     @push('scripts')
+        {{-- Modal de confirmación de eliminación/baja --}}
+        <div class="modal fade" id="modalConfirmarEliminar" tabindex="-1" aria-labelledby="modalEliminarLabel"
+            aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header" id="modalEliminarHeader">
+                        <h5 class="modal-title" id="modalEliminarLabel">Confirmar Acción</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body" id="modalEliminarBody">
+                        <!-- Contenido dinámico -->
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="button" class="btn" id="btnConfirmarEliminar">Confirmar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <script>
+            let _equipoIdPendiente = null;
+
             function confirmarEliminacion(id, nombre, tipo, marca, tienePrestamos, estadoActual, esIndividual, cantidadTotal) {
-            const nombreCompleto = `${nombre} - ${tipo} ${marca}`;
+                const nombreCompleto = `${nombre} - ${tipo} ${marca}`;
+                const header = document.getElementById('modalEliminarHeader');
+                const body = document.getElementById('modalEliminarBody');
+                const btnConf = document.getElementById('btnConfirmarEliminar');
 
-            // ===================================================================
-            // VALIDACIÓN: Si ya está dado de baja, no permitir acción
-            // ===================================================================
-            if (estadoActual === 'baja') { // Changed from 'dado_de_baja' to 'baja' to match the option value
-                alert(
-                    '⚠️ EQUIPO YA DADO DE BAJA\n\n' +
-                    `📦 ${nombreCompleto}\n\n` +
-                    'Este equipo ya está marcado como "Dado de Baja".\n\n' +
-                    '💡 Si deseas cambiar su estado (por ejemplo, volver a ponerlo disponible), ' +
-                    'puedes hacerlo usando el botón de EDITAR (✏️) y modificando el campo "Estado".'
-                );
-                return; // No continuar con la eliminación/baja
+                // Equipo ya dado de baja → solo informar
+                if (estadoActual === 'baja') {
+                    header.className = 'modal-header bg-secondary bg-opacity-10';
+                    document.getElementById('modalEliminarLabel').textContent = 'Equipo Ya Dado de Baja';
+                    body.innerHTML = `
+                                                    <div class="alert alert-secondary mb-0">
+                                                        <i class="fas fa-info-circle me-2"></i>
+                                                        <strong>${nombreCompleto}</strong> ya está marcado como <strong>"Dado de Baja"</strong>.
+                                                    </div>
+                                                    <p class="mt-3 mb-0 text-muted small">Para cambiar su estado, usa el botón
+                                                        <i class="fas fa-edit"></i> <strong>Editar</strong> y modifica el campo "Estado".</p>`;
+                    btnConf.style.display = 'none';
+                    new bootstrap.Modal(document.getElementById('modalConfirmarEliminar')).show();
+                    return;
+                }
+
+                btnConf.style.display = '';
+                _equipoIdPendiente = id;
+
+                if (tienePrestamos) {
+                    // DAR DE BAJA
+                    header.className = 'modal-header bg-warning bg-opacity-10';
+                    document.getElementById('modalEliminarLabel').innerHTML =
+                        '<i class="fas fa-arrow-down me-2 text-warning"></i>Dar de Baja Equipo';
+                    const desc = esIndividual
+                        ? `El equipo <strong>${nombreCompleto}</strong> tiene registros de préstamos y <strong>no puede eliminarse</strong>.`
+                        : `El tipo de equipo <strong>${tipo}</strong> (${cantidadTotal} unidades) tiene registros de préstamos y <strong>no puede eliminarse</strong>.`;
+                    body.innerHTML = `
+                                                    <p>${desc}</p>
+                                                    <p class="mb-0">Se marcará como <strong>"Dado de Baja"</strong> y dejará de estar disponible para préstamos.</p>
+                                                    <p class="text-warning mt-2 mb-0"><i class="fas fa-exclamation-triangle me-1"></i><strong>¿Deseas continuar?</strong></p>`;
+                    btnConf.className = 'btn btn-warning';
+                    btnConf.innerHTML = '<i class="fas fa-arrow-down me-1"></i>Sí, dar de baja';
+                } else {
+                    // ELIMINAR
+                    header.className = 'modal-header bg-danger bg-opacity-10';
+                    document.getElementById('modalEliminarLabel').innerHTML =
+                        '<i class="fas fa-trash me-2 text-danger"></i>Eliminar Equipo';
+                    const desc = esIndividual
+                        ? `El equipo <strong>${nombreCompleto}</strong> no tiene préstamos y puede ser eliminado permanentemente.`
+                        : `El tipo <strong>${tipo}</strong> (${cantidadTotal} unidades) no tiene préstamos y puede ser eliminado.`;
+                    body.innerHTML = `
+                                                    <p>${desc}</p>
+                                                    <div class="alert alert-danger py-2 mb-0">
+                                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                                        <strong>Esta acción no se puede deshacer.</strong>
+                                                    </div>`;
+                    btnConf.className = 'btn btn-danger';
+                    btnConf.innerHTML = '<i class="fas fa-trash me-1"></i>Sí, eliminar';
+                }
+
+                new bootstrap.Modal(document.getElementById('modalConfirmarEliminar')).show();
             }
 
-            let titulo, mensaje, textoBoton, icono;
-
-            if (tienePrestamos) {
-                // ===================================================================
-                // CASO: TIENE PRÉSTAMOS → DAR DE BAJA
-                // ===================================================================
-                titulo = '⚠️ Dar de Baja Equipo';
-                
-                if (esIndividual) {
-                    // Laptop
-                    mensaje = `Este equipo tiene registros de préstamos, por lo que NO se puede eliminar del sistema.\n\n` +
-                        `📦 ${nombreCompleto}\n\n` +
-                        `En su lugar, se marcará como "DADO DE BAJA" y dejará de estar disponible.\n\n` +
-                        `¿Deseas continuar?`;
-                } else {
-                    // Equipo por cantidad
-                    mensaje = `Este tipo de equipo tiene registros de préstamos, por lo que NO se puede eliminar del sistema.\n\n` +
-                        `📦 ${tipo} (${cantidadTotal} unidades)\n\n` +
-                        `En su lugar, se marcará como "DADO DE BAJA" y dejará de estar disponible.\n\n` +
-                        `¿Deseas continuar?`;
-                }
-                
-                textoBoton = 'Sí, dar de baja';
-                icono = 'warning';
-            } else {
-                // ===================================================================
-                // CASO: NO TIENE PRÉSTAMOS → ELIMINAR
-                // ===================================================================
-                titulo = '🗑️ Eliminar Equipo';
-                
-                if (esIndividual) {
-                    // Laptop
-                    mensaje = `Este equipo NO tiene préstamos registrados, por lo que puede ser eliminado del sistema.\n\n` +
-                        `📦 ${nombreCompleto}\n\n` +
-                        `⚠️ ESTA ACCIÓN NO SE PUEDE DESHACER.\n\n` +
-                        `¿Estás seguro de que deseas eliminarlo permanentemente?`;
-                } else {
-                    // Equipo por cantidad
-                    mensaje = `Este es un EQUIPO POR CANTIDAD sin préstamos registrados.\n\n` +
-                        `📦 Tipo: ${tipo}\n` +
-                        `📊 Cantidad: ${cantidadTotal} unidad(es)\n\n` +
-                        `Se eliminará permanentemente el tipo "${tipo}" con todas sus unidades del sistema.\n\n` +
-                        `⚠️ ESTA ACCIÓN NO SE PUEDE DESHACER.\n\n` +
-                        `¿Estás seguro de que deseas eliminarlo?`;
-                }
-                
-                textoBoton = 'Sí, eliminar';
-                icono = 'error';
-            }
-
-            if (confirm(`${titulo}\n\n${mensaje}`)) {
-                // Crear formulario dinámico y enviarlo
+            document.getElementById('btnConfirmarEliminar').addEventListener('click', function () {
+                if (!_equipoIdPendiente) return;
                 const form = document.createElement('form');
                 form.method = 'POST';
-                form.action = `/equipos/${id}`;
+                form.action = `/equipos/${_equipoIdPendiente}`;
 
-                // Token CSRF
-                const csrfInput = document.createElement('input');
-                csrfInput.type = 'hidden';
-                csrfInput.name = '_token';
-                csrfInput.value = '{{ csrf_token() }}';
-                form.appendChild(csrfInput);
+                const csrf = document.createElement('input');
+                csrf.type = 'hidden'; csrf.name = '_token';
+                csrf.value = '{{ csrf_token() }}';
+                form.appendChild(csrf);
 
-                // Method DELETE
-                const methodInput = document.createElement('input');
-                methodInput.type = 'hidden';
-                methodInput.name = '_method';
-                methodInput.value = 'DELETE';
-                form.appendChild(methodInput);
+                const method = document.createElement('input');
+                method.type = 'hidden'; method.name = '_method'; method.value = 'DELETE';
+                form.appendChild(method);
 
-                // Agregar al body y enviar
                 document.body.appendChild(form);
                 form.submit();
-            }
-        }
+            });
         </script>
     @endpush
 @endsection

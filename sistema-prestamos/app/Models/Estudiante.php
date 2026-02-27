@@ -10,12 +10,13 @@ class Estudiante extends Model
     use HasFactory;
 
     protected $fillable = [
-        'cedula',        // ✅ CAMBIADO de 'matricula' a 'cedula'
+        'cedula',
         'nombre',
         'apellido',
         'email',
         'telefono',
-        'carrera_id',
+        'carrera',      // texto (compatibilidad con datos antiguos)
+        'carrera_id',   // FK a tabla carreras (nuevo)
         'tipo',
         'activo',
         'observaciones'
@@ -65,10 +66,10 @@ class Estudiante extends Model
     }
 
     /**
-     * Relación: Un estudiante pertenece a una carrera
+     * Relación: Un estudiante pertenece a una carrera (por carrera_id)
      */
-    public function carrera()
+    public function carreraRelacion()
     {
-        return $this->belongsTo(Carrera::class);
+        return $this->belongsTo(Carrera::class, 'carrera_id');
     }
 }

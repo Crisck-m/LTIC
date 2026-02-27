@@ -208,7 +208,7 @@
             const cantidadContainer = document.getElementById('cantidadContainer');
             const nombreInput = document.getElementById('nombre_equipo');
             const cantidadInput = document.getElementById('cantidad_total');
-            
+
             // Contenedores de detalles técnicos
             const detallesTecnicosContainer = document.getElementById('detallesTecnicosContainer');
             const estadoSimpleContainer = document.getElementById('estadoSimpleContainer');
@@ -222,11 +222,11 @@
                 cantidadContainer.style.display = 'none';
                 detallesTecnicosContainer.style.display = 'block';
                 estadoSimpleContainer.style.display = 'none';
-                
+
                 nombreInput.required = true;
                 cantidadInput.required = false;
                 cantidadInput.value = 1;
-                
+
                 // Campos técnicos obligatorios para laptops
                 marcaInput.required = true;
                 modeloInput.required = true;
@@ -236,11 +236,11 @@
                 cantidadContainer.style.display = 'block';
                 detallesTecnicosContainer.style.display = 'none';
                 estadoSimpleContainer.style.display = 'block';
-                
+
                 nombreInput.required = false;
                 nombreInput.value = '';
                 cantidadInput.required = true;
-                
+
                 // Campos técnicos NO obligatorios para equipos por cantidad
                 marcaInput.required = false;
                 modeloInput.required = false;
@@ -260,6 +260,80 @@
         document.addEventListener('DOMContentLoaded', function () {
             toggleTipoOtro();
             toggleCampoIndividual();
+
+            // ===== VALIDACIÓN PRE-SUBMIT =====
+            document.querySelector('form').addEventListener('submit', function (e) {
+                let valid = true;
+                const tipo = document.getElementById('tipo').value;
+
+                // Función auxiliar: marcar error inline
+                function setError(input, mensaje) {
+                    input.classList.add('is-invalid');
+                    let fb = input.nextElementSibling?.classList.contains('invalid-feedback-js')
+                        ? input.nextElementSibling
+                        : null;
+                    if (!fb) {
+                        fb = document.createElement('div');
+                        fb.className = 'invalid-feedback-js invalid-feedback d-block';
+                        fb.innerHTML = `<i class="fas fa-exclamation-circle me-1"></i>${mensaje}`;
+                        input.after(fb);
+                    }
+                }
+                function clearError(input) {
+                    input.classList.remove('is-invalid');
+                    input.nextElementSibling?.classList.contains('invalid-feedback-js') && input.nextElementSibling.remove();
+                }
+
+                if (!tipo) {
+                    valid = false;
+                    setError(document.getElementById('tipo'), 'Debes seleccionar un tipo de equipo.');
+                } else {
+                    clearError(document.getElementById('tipo'));
+                }
+
+                if (tipo === 'Otro') {
+                    const tipoOtro = document.getElementById('tipo_otro');
+                    if (!tipoOtro.value.trim()) {
+                        valid = false;
+                        setError(tipoOtro, 'Debes especificar el tipo de equipo.');
+                    } else {
+                        clearError(tipoOtro);
+                    }
+                }
+
+                if (tipo === 'Laptop') {
+                    const nombreInput = document.getElementById('nombre_equipo');
+                    const marcaInput = document.getElementById('marca');
+                    const modeloInput = document.getElementById('modelo');
+
+                    if (!nombreInput.value.trim()) { valid = false; setError(nombreInput, 'El nombre/código es obligatorio para laptops.'); }
+                    else clearError(nombreInput);
+
+                    if (!marcaInput.value.trim()) { valid = false; setError(marcaInput, 'La marca es obligatoria para laptops.'); }
+                    else clearError(marcaInput);
+
+                    if (!modeloInput.value.trim()) { valid = false; setError(modeloInput, 'El modelo es obligatorio para laptops.'); }
+                    else clearError(modeloInput);
+
+                } else if (tipo && tipo !== '') {
+                    // Equipos por cantidad
+                    const cantidadInput = document.getElementById('cantidad_total');
+                    const cantidadVal = parseInt(cantidadInput.value, 10);
+                    if (!cantidadInput.value || cantidadVal < 1 || isNaN(cantidadVal)) {
+                        valid = false;
+                        setError(cantidadInput, 'La cantidad debe ser al menos 1.');
+                    } else {
+                        clearError(cantidadInput);
+                    }
+                }
+
+                if (!valid) {
+                    e.preventDefault();
+                    showToast('Por favor corrige los errores antes de guardar.', 'warning');
+                    // Scroll al primer error
+                    document.querySelector('.is-invalid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            });
         });
     </script>
 @endsection

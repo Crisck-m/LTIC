@@ -35,16 +35,22 @@ class EstudianteController extends Controller
     public function store(Request $request)
     {
         $datos = $request->validate([
-            'cedula' => 'required|string|max:20|unique:estudiantes,cedula',
+            'cedula' => 'required|digits:10|unique:estudiantes,cedula',
             'nombre' => 'required|string|max:100',
             'apellido' => 'required|string|max:100',
-            'email' => 'required|email|max:100',
-            'telefono' => 'nullable|string|max:15',
+            'email' => 'required|email|max:100|unique:estudiantes,email',
+            'telefono' => 'nullable|digits:10',
             'carrera_id' => 'required_without:carrera_otra',
             'carrera_otra' => 'required_if:carrera_id,otra|nullable|string|max:100',
             'observaciones' => 'nullable|string|max:500',
-            'tipo' => 'required|in:estudiante,practicante'
+            'tipo' => 'required|in:estudiante,practicante',
         ], [
+            'cedula.required' => 'La cédula es obligatoria.',
+            'cedula.digits' => 'La cédula debe tener exactamente 10 dígitos numéricos.',
+            'cedula.unique' => 'Ya existe un estudiante registrado con esa cédula.',
+            'email.unique' => 'Ya existe un estudiante registrado con ese correo electrónico.',
+            'email.email' => 'El correo electrónico no tiene un formato válido.',
+            'telefono.digits' => 'El teléfono debe tener exactamente 10 dígitos numéricos.',
             'carrera_id.required_without' => 'Debes seleccionar una carrera o especificar una nueva.',
             'carrera_otra.required_if' => 'Debes especificar el nombre de la carrera.',
         ]);
@@ -53,17 +59,14 @@ class EstudianteController extends Controller
         // LÓGICA: Si seleccionó "Otra", crear la carrera automáticamente
         // ===================================================================
         if ($request->carrera_id === 'otra' && !empty($request->carrera_otra)) {
-            // Verificar si la carrera ya existe (por si alguien más la creó)
             $carrera = \App\Models\Carrera::firstOrCreate(
                 ['nombre' => trim($request->carrera_otra)]
             );
-
             $datos['carrera_id'] = $carrera->id;
-            $datos['carrera'] = $carrera->nombre; // Por compatibilidad
+            $datos['carrera'] = $carrera->nombre;
         } else {
-            // Usar la carrera seleccionada
-            $carrera = \App\Models\Carrera::find($request->carrera_id);
-            $datos['carrera'] = $carrera ? $carrera->nombre : null;
+            $carreraObj = \App\Models\Carrera::find($request->carrera_id);
+            $datos['carrera'] = $carreraObj ? $carreraObj->nombre : null;
         }
 
         // Remover campo temporal
@@ -83,28 +86,44 @@ class EstudianteController extends Controller
 
     public function edit(Estudiante $estudiante)
     {
-        return view('estudiantes.edit', compact('estudiante'));
+        $carreras = \App\Models\Carrera::orderBy('nombre')->get();
+        return view('estudiantes.edit', compact('estudiante', 'carreras'));
     }
 
     public function update(Request $request, Estudiante $estudiante)
     {
         $datos = $request->validate([
-            'cedula' => ['required', 'digits:10', Rule::unique('estudiantes')->ignore($estudiante->id)],  // ✅ CAMBIADO
-            'nombre' => 'required|string',
-            'apellido' => 'required|string',
-            'email' => ['required', 'email', Rule::unique('estudiantes')->ignore($estudiante->id)],
-            'carrera_id' => 'required',
+            'cedula' => ['required', 'digits:10', Rule::unique('estudiantes')->ignore($estudiante->id)],
+            'nombre' => 'required|string|max:100',
+            'apellido' => 'required|string|max:100',
+            'email' => ['required', 'email', 'max:100', Rule::unique('estudiantes')->ignore($estudiante->id)],
+            'carrera_id' => 'required_without:carrera_otra',
+            'carrera_otra' => 'required_if:carrera_id,otra|nullable|string|max:100',
             'tipo' => 'required|in:estudiante,practicante',
-            'telefono' => 'nullable|string',
-            'observaciones' => 'nullable|string'
+            'telefono' => 'nullable|digits:10',
+            'observaciones' => 'nullable|string|max:500',
+        ], [
+            'cedula.digits' => 'La cédula debe tener exactamente 10 dígitos numéricos.',
+            'cedula.unique' => 'Ya existe un estudiante registrado con esa cédula.',
+            'email.unique' => 'Ya existe un estudiante registrado con ese correo.',
+            'telefono.digits' => 'El teléfono debe tener exactamente 10 dígitos numéricos.',
+            'carrera_id.required_without' => 'Debes seleccionar una carrera o especificar una nueva.',
+            'carrera_otra.required_if' => 'Debes especificar el nombre de la carrera.',
         ]);
 
-        // Si carrera es 'Otra', usar el valor de otra_carrera
-        if ($request->carrera_id === 'Otra') {
-            $datos['carrera_id'] = $request->validate([
-                'otra_carrera' => 'required|string'
-            ])['otra_carrera'];
+        // Resolver carrera_id igual que store()
+        if ($request->carrera_id === 'otra' && !empty($request->carrera_otra)) {
+            $carrera = \App\Models\Carrera::firstOrCreate(
+                ['nombre' => trim($request->carrera_otra)]
+            );
+            $datos['carrera_id'] = $carrera->id;
+            $datos['carrera'] = $carrera->nombre;
+        } else {
+            $carreraObj = \App\Models\Carrera::find($request->carrera_id);
+            $datos['carrera'] = $carreraObj ? $carreraObj->nombre : null;
         }
+
+        unset($datos['carrera_otra']);
 
         $this->estudianteService->actualizarEstudiante($estudiante, $datos);
 
