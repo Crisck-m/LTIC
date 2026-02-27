@@ -11,15 +11,48 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * PrestamoController
+ *
+ * Controlador principal para la gestión del ciclo de vida de los préstamos:
+ * - Listado y filtrado con paginación.
+ * - Creación de nuevos préstamos (incluyendo la lógica de agregar equipos a préstamos activos).
+ * - Edición (agregar/quitar equipos de un préstamo activo).
+ * - Devolución total o parcial de equipos.
+ * - Exportación de reportes en PDF y CSV/Excel.
+ */
 class PrestamoController extends Controller
 {
+    /**
+     * Instancia del servicio de préstamos.
+     *
+     * @var PrestamoService
+     */
     protected $prestamoService;
 
+    /**
+     * Inyecta el servicio de préstamos al controlador.
+     *
+     * @param PrestamoService $prestamoService Servicio que encapsula la lógica de negocio de préstamos.
+     */
     public function __construct(PrestamoService $prestamoService)
     {
         $this->prestamoService = $prestamoService;
     }
 
+    /**
+     * Muestra el historial de préstamos con soporte de filtros y paginación.
+     *
+     * Acepta los parámetros de query:
+     * - `search`: busca por nombre/apellido del estudiante o tipo/nombre del equipo.
+     * - `estado`: filtra por estado ('activo', 'finalizado', 'atrasado').
+     * - `fecha_desde` / `fecha_hasta`: filtrado por rango de fechas del préstamo.
+     *
+     * Valida que `fecha_hasta` no sea anterior a `fecha_desde`.
+     *
+     * @param  Request $request Petición HTTP con los filtros opcionales.
+     * @return \Illuminate\View\View
+     */
     public function index(Request $request)
     {
         // Validar que fecha_hasta no sea anterior a fecha_desde
@@ -40,6 +73,14 @@ class PrestamoController extends Controller
         return view('prestamos.index', compact('prestamos'));
     }
 
+    /**
+     * Muestra el formulario para registrar un nuevo préstamo.
+     *
+     * Carga todos los equipos disponibles, todos los estudiantes registrados
+     * y filtra los practicantes (tipo = 'practicante') para los selectores del formulario.
+     *
+     * @return \Illuminate\View\View
+     */
     public function create()
     {
         $equipos = Equipo::where('estado', 'disponible')->get();
@@ -49,6 +90,20 @@ class PrestamoController extends Controller
         return view('prestamos.create', compact('equipos', 'estudiantes', 'practicantes'));
     }
 
+    /**
+     * Registra un nuevo préstamo o agrega equipos a un préstamo activo existente.
+     *
+     * **Flujo principal:**
+     * 1. Valida los datos del formulario (estudiante, equipos, cantidades, fecha).
+     * 2. Verifica la disponibilidad de todos los equipos solicitados antes de proceder.
+     * 3. Comprueba si el estudiante ya tiene un préstamo activo:
+     *    - **Con préstamo activo**: agrega los nuevos equipos al préstamo existente,
+     *      actualiza la fecha de devolución si la nueva es posterior, y concatena observaciones.
+     *    - **Sin préstamo activo**: crea un nuevo préstamo con todos los equipos.
+     *
+     * @param  Request $request Petición HTTP con los datos del formulario de préstamo.
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function store(Request $request)
     {
         // Validación directa
@@ -147,7 +202,7 @@ class PrestamoController extends Controller
                 $datos['cantidades'] = $request->equipo_cantidad;  // NUEVO: Pasar cantidades
                 $this->prestamoService->actualizarPrestamo($prestamoActivo, $datos);
 
-                return redirect()->route('dashboard')
+                return redirect()->route('home')
                     ->with('success', "✅ Préstamo actualizado correctamente.\n\n" .
                         "• Se agregaron {$cantidadNuevos} equipo(s) nuevo(s)\n" .
                         "• Total de equipos en préstamo: " . count($request->equipo_id) . "\n" .
@@ -161,7 +216,7 @@ class PrestamoController extends Controller
                 $datos['cantidades'] = $request->equipo_cantidad;  // NUEVO: Pasar cantidades
                 $prestamo = $this->prestamoService->registrarSalida($datos);
 
-                return redirect()->route('dashboard')
+                return redirect()->route('home')
                     ->with('success', "✅ Préstamo registrado correctamente.\n\n" .
                         "• Equipos prestados: " . count($request->equipo_id) . "\n" .
                         "• Préstamo ID: #{$prestamo->id}");
@@ -174,6 +229,15 @@ class PrestamoController extends Controller
         }
     }
 
+    /**
+     * Muestra el formulario para editar un préstamo activo.
+     *
+     * Solo permite editar préstamos con estado 'activo'.
+     * Carga las relaciones del préstamo (estudiante, practicante y equipos asociados).
+     *
+     * @param  Prestamo $prestamo El préstamo a editar (resuelto por Route Model Binding).
+     * @return \Illuminate\View\View|\Illuminate\Http\RedirectResponse
+     */
     public function edit(Prestamo $prestamo)
     {
         if ($prestamo->estado !== 'activo') {
@@ -185,6 +249,19 @@ class PrestamoController extends Controller
         return view('prestamos.edit', compact('prestamo'));
     }
 
+    /**
+     * Actualiza los equipos y datos de un préstamo activo.
+     *
+     * **Flujo:**
+     * 1. Recibe los equipos actuales marcados para mantener y los equipos nuevos a agregar.
+     * 2. Combina ambas listas y valida que el préstamo no quede vacío.
+     * 3. Valida la disponibilidad solo de los equipos verdaderamente nuevos (no los ya prestados).
+     * 4. Delega la actualización al servicio, que maneja el incremento/decremento de stocks.
+     *
+     * @param  Request  $request  Petición HTTP con los datos actualizados del formulario.
+     * @param  Prestamo $prestamo El préstamo a actualizar (resuelto por Route Model Binding).
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function update(Request $request, Prestamo $prestamo)
     {
         // Validar datos del formulario
@@ -316,12 +393,33 @@ class PrestamoController extends Controller
         }
     }
 
+    /**
+     * Muestra el formulario para registrar la devolución de equipos de un préstamo.
+     *
+     * Carga la lista de practicantes para el selector de "quién recibe la devolución".
+     *
+     * @param  Prestamo $prestamo El préstamo a finalizar (resuelto por Route Model Binding).
+     * @return \Illuminate\View\View
+     */
     public function finalizar(Prestamo $prestamo)
     {
         $practicantes = Estudiante::where('tipo', 'practicante')->orderBy('nombre')->get();
         return view('prestamos.finalizar', compact('prestamo', 'practicantes'));
     }
 
+    /**
+     * Registra la devolución de uno o más equipos de un préstamo activo.
+     *
+     * **Flujo:**
+     * 1. Valida que el préstamo siga activo (evita race conditions de múltiples usuarios).
+     * 2. Si no se especifican equipos concretos, devuelve TODOS los activos del préstamo.
+     * 3. Delega la lógica de devolución al servicio (actualiza stocks, marca estados).
+     * 4. Si todos los equipos son devueltos, el préstamo pasa a estado 'finalizado'.
+     *
+     * @param  Request  $request  Petición HTTP con los IDs de prestamo_equipos a devolver.
+     * @param  Prestamo $prestamo El préstamo que se está devolviendo (resuelto por Route Model Binding).
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function devolver(Request $request, Prestamo $prestamo)
     {
         $request->validate([
@@ -374,6 +472,16 @@ class PrestamoController extends Controller
         }
     }
 
+    /**
+     * Genera y descarga un reporte PDF de los préstamos filtrados.
+     *
+     * Aplica los mismos filtros que el listado (search, estado, fecha_desde, fecha_hasta).
+     * Incluye estadísticas de totales, activos y finalizados.
+     * El PDF se genera en formato A4 horizontal usando la librería DomPDF.
+     *
+     * @param  Request $request Petición HTTP con los filtros a aplicar al reporte.
+     * @return \Symfony\Component\HttpFoundation\Response Descarga del archivo PDF.
+     */
     public function exportPDF(Request $request)
     {
         // Validar filtros
@@ -451,6 +559,22 @@ class PrestamoController extends Controller
         return $pdf->download($nombreArchivo);
     }
 
+    /**
+     * Genera y descarga un reporte CSV (compatible con Excel) de los préstamos filtrados.
+     *
+     * Aplica los mismos filtros que el listado.
+     * El archivo incluye una fila por cada equipo dentro de cada préstamo,
+     * con información de cumplimiento y tiempo de préstamo calculados dinámicamente.
+     *
+     * **Formato del CSV:**
+     * - Separador: punto y coma (`;`) para compatibilidad con Excel en español.
+     * - Codificación: UTF-8 con BOM para que Excel muestre correctamente los acentos.
+     * - Columnas de cumplimiento: 'Listo', 'Listo (Atraso +N días)', 'Atrasado (+N días)', 'En Curso', 'Pendiente'.
+     * - Columna de tiempo: expresada en minutos, horas o días según la duración.
+     *
+     * @param  Request $request Petición HTTP con los filtros a aplicar al reporte.
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse Descarga del archivo CSV.
+     */
     public function exportExcel(Request $request)
     {
         // Validar filtros

@@ -8,10 +8,36 @@ use App\Models\PrestamoEquipo;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * PrestamoService
+ *
+ * Servicio central que encapsula toda la lógica de negocio relacionada con préstamos.
+ * Maneja el ciclo de vida completo:
+ * - Listado con filtros.
+ * - Registro de salida de equipos (creación de préstamos).
+ * - Registro de devoluciones (parciales o totales).
+ * - Actualización de préstamos existentes (agregar/quitar equipos).
+ * - Consulta de préstamos pendientes.
+ *
+ * Todas las operaciones que modifican datos de equipos y préstamos se ejecutan
+ * dentro de **transacciones de base de datos** para garantizar la consistencia.
+ */
 class PrestamoService
 {
     /**
-     * Listar préstamos con filtros
+     * Listar préstamos con filtros opcionales y paginación.
+     *
+     * Soporta búsqueda por texto (nombre/apellido del estudiante, nombre/tipo del equipo),
+     * filtrado por estado (incluyendo el estado virtual 'atrasado') y por rango de fechas.
+     *
+     * El estado `atrasado` no existe en la base de datos; es un filtrado virtual que
+     * selecciona préstamos activos cuya fecha de devolución ya pasó.
+     *
+     * @param  string|null $search     Búsqueda por nombre/apellido del estudiante o nombre/tipo del equipo.
+     * @param  string|null $estado     Estado del préstamo: 'activo', 'finalizado' o 'atrasado'.
+     * @param  string|null $fechaDesde Fecha de inicio del rango (formato Y-m-d).
+     * @param  string|null $fechaHasta Fecha de fin del rango (formato Y-m-d).
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator Préstamos paginados de 15 en 15.
      */
     public function listarPrestamos($search = null, $estado = null, $fechaDesde = null, $fechaHasta = null)
     {
@@ -57,7 +83,23 @@ class PrestamoService
     }
 
     /**
-     * Registrar salida de equipo(s)
+     * Registrar salida de equipo(s) - Crear un nuevo préstamo.
+     *
+     * Crea el registro principal del préstamo y, por cada equipo en la lista,
+     * registra la asociación en `prestamo_equipos` y decrementa el stock disponible.
+     *
+     * **Lógica de stock por tipo de equipo:**
+     * - **Laptop (individual)**: Cambia estado a 'prestado', `cantidad_disponible = 0`.
+     * - **Otros (por cantidad)**: Resta la cantidad solicitada de `cantidad_disponible`.
+     *   Si se agota el stock, cambia estado a 'prestado'.
+     *
+     * Toda la operación se ejecuta dentro de una transacción de base de datos.
+     *
+     * @param  array<string, mixed> $datos Array con: estudiante_id, practicante_id,
+     *                                     fecha_devolucion_esperada, equipo_id (array),
+     *                                     cantidades (array), observaciones.
+     * @return Prestamo El préstamo recién creado.
+     * @throws \Exception Si no hay stock suficiente para algún equipo.
      */
     public function registrarSalida(array $datos)
     {
@@ -113,7 +155,23 @@ class PrestamoService
     }
 
     /**
-     * Registrar devolución de equipo(s)
+     * Registrar devolución de uno o más equipos de un préstamo activo.
+     *
+     * Procesa cada ID de `prestamo_equipos` recibido:
+     * 1. Marca el registro como 'devuelto' con fecha, practicante y observaciones.
+     * 2. Incrementa el stock disponible del equipo en el inventario.
+     * 3. Si todos los equipos del préstamo fueron devueltos, cierra el préstamo ('finalizado').
+     *
+     * **Lógica de stock:**
+     * - **Laptop**: Cambia estado a 'disponible', `cantidad_disponible = 1`.
+     * - **Otros**: Suma la cantidad original prestada a `cantidad_disponible`.
+     *
+     * Toda la operación se ejecuta dentro de una transacción de base de datos.
+     *
+     * @param  Prestamo      $prestamo          El préstamo en proceso de devolución.
+     * @param  array<int>    $prestamoEquipoIds IDs de los registros en `prestamo_equipos` a devolver.
+     * @param  array<string, mixed> $datos      Array con: practicante_recibe_id, observaciones_devolucion.
+     * @return Prestamo El préstamo actualizado.
      */
     public function registrarDevolucion(Prestamo $prestamo, array $prestamoEquipoIds, array $datos)
     {
@@ -171,7 +229,23 @@ class PrestamoService
     }
 
     /**
-     * Actualizar préstamo (agregar/quitar equipos)
+     * Actualizar préstamo: agregar equipos nuevos y/o remover equipos existentes.
+     *
+     * Compara la lista de equipos enviada contra los equipos actualmente activos
+     * en el préstamo para identificar:
+     * - **Equipos nuevos** (en enviados pero no en activos): se agregan y se descuenta su stock.
+     * - **Equipos removidos** (en activos pero no en enviados): se marcan como 'cancelado'
+     *   y se devuelve su stock al inventario.
+     * - **Equipos existentes** (en ambas listas): no se tocan.
+     *
+     * Al final, actualiza la fecha de devolución esperada y las observaciones del préstamo.
+     * Toda la operación se ejecuta dentro de una transacción de base de datos.
+     *
+     * @param  Prestamo             $prestamo El préstamo a actualizar.
+     * @param  array<string, mixed> $datos    Array con: equipo_id (array combinado de IDs),
+     *                                        cantidades (array), fecha_devolucion_esperada, observaciones.
+     * @return Prestamo El préstamo actualizado.
+     * @throws \Exception Si no hay stock suficiente para algún equipo nuevo.
      */
     public function actualizarPrestamo(Prestamo $prestamo, array $datos)
     {
@@ -278,7 +352,13 @@ class PrestamoService
     }
 
     /**
-     * Obtener préstamos pendientes de devolución (con paginación)
+     * Obtener préstamos pendientes de devolución con paginación.
+     *
+     * Retorna todos los préstamos en estado 'activo', es decir, aquellos
+     * que tienen equipos que aún no han sido devueltos.
+     * Ordenados del más reciente al más antiguo, de 15 en 15.
+     *
+     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
      */
     public function obtenerPendientes()
     {

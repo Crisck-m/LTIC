@@ -14,7 +14,7 @@ class CheckAdmin
     public function handle(Request $request, Closure $next): Response
     {
         if (!auth()->check() || !auth()->user()->esAdmin()) {
-            return redirect()->route('dashboard')
+            return redirect()->route('home')
                 ->with('error', '❌ Acceso denegado. Solo administradores pueden realizar esta acción.');
         }
 

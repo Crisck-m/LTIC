@@ -7,8 +7,26 @@ use App\Models\Equipo;
 use App\Models\Prestamo;
 use Carbon\Carbon;
 
+/**
+ * DashboardService
+ *
+ * Servicio que proporciona los datos estadísticos para el panel de control principal.
+ * Centraliza los cálculos de métricas del sistema para mantener el controlador limpio.
+ */
 class DashboardService
 {
+    /**
+     * Obtiene todas las estadísticas necesarias para el panel de control.
+     *
+     * Retorna un array asociativo con:
+     * - `equipos_disponibles`: Cantidad de laptops con estado 'disponible'.
+     * - `historial_prestamos`: Total de préstamos registrados hoy.
+     * - `pendientes_devolucion`: Total de préstamos activos (aún no devueltos).
+     * - `prestamos_atrasados`: Total de préstamos activos con fecha de devolución vencida.
+     * - `ultimos_movimientos`: Los 5 préstamos más recientes con sus relaciones cargadas.
+     *
+     * @return array<string, mixed>
+     */
     public function obtenerEstadisticas()
     {
         return [
@@ -24,7 +42,12 @@ class DashboardService
     }
 
     /**
-     * Contar préstamos con fecha de devolución vencida
+     * Contar préstamos con fecha de devolución vencida.
+     *
+     * Un préstamo se considera atrasado si tiene estado 'activo' y su
+     * `fecha_devolucion_esperada` es anterior al día de hoy.
+     *
+     * @return int Número de préstamos atrasados.
      */
     private function contarPrestamosAtrasados()
     {

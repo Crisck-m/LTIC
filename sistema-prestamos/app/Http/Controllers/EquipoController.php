@@ -8,15 +8,46 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * EquipoController
+ *
+ * Controlador CRUD para la gestión del inventario de equipos.
+ * Maneja dos tipos de equipos:
+ * - **Individuales** (ej: Laptops): identificadas por nombre/código único, con marca y modelo.
+ * - **Por cantidad** (ej: auriculares, cables): agrupados por tipo, con stock total y disponible.
+ *
+ * También expone endpoints AJAX para autocompletado y polling de estados.
+ */
 class EquipoController extends Controller
 {
+    /**
+     * Instancia del servicio de equipos.
+     *
+     * @var EquipoService
+     */
     protected $equipoService;
 
+    /**
+     * Inyecta el servicio de equipos al controlador.
+     *
+     * @param EquipoService $equipoService Servicio que encapsula la lógica de negocio de equipos.
+     */
     public function __construct(EquipoService $equipoService)
     {
         $this->equipoService = $equipoService;
     }
 
+    /**
+     * Muestra el listado de equipos con filtros de búsqueda.
+     *
+     * Acepta los parámetros de query:
+     * - `search`: filtra por marca, modelo, nombre o tipo.
+     * - `tipo`: filtra por tipo de equipo.
+     * - `estado`: filtra por estado (disponible, prestado, mantenimiento, etc.).
+     *
+     * @param  Request $request Petición HTTP con los filtros opcionales.
+     * @return \Illuminate\View\View
+     */
     public function index(Request $request)
     {
         $equipos = $this->equipoService->listarEquipos(
@@ -27,11 +58,35 @@ class EquipoController extends Controller
         return view('equipos.index', compact('equipos'));
     }
 
+    /**
+     * Muestra el formulario para registrar un nuevo equipo.
+     *
+     * @return \Illuminate\View\View
+     */
     public function create()
     {
         return view('equipos.create');
     }
 
+    /**
+     * Almacena un nuevo equipo en el inventario.
+     *
+     * La lógica de validación y creación varía según el tipo de equipo:
+     *
+     * **Laptop (equipo individual)**:
+     * - El nombre/código del equipo debe ser único.
+     * - Se validan marca, modelo y estado completo.
+     * - Se establece `es_individual = true` y `cantidad_total = 1`.
+     *
+     * **Equipo por cantidad** (otros tipos):
+     * - Solo se valida tipo y cantidad.
+     * - Si ya existe un equipo del mismo tipo, se INCREMENTA su cantidad en lugar de crear un nuevo registro.
+     * - Si el tipo es "Otro", se permite especificar un nombre personalizado.
+     * - Marca y modelo se almacenan como 'N/A'.
+     *
+     * @param  Request $request Petición HTTP con los datos del formulario.
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function store(Request $request)
     {
         // VALIDACIÓN SEPARADA POR TIPO
@@ -146,11 +201,37 @@ class EquipoController extends Controller
                 ->withInput();
         }
     }
+
+    /**
+     * Muestra el formulario de edición de un equipo existente.
+     *
+     * @param  Equipo $equipo El equipo a editar (resuelto por Route Model Binding).
+     * @return \Illuminate\View\View
+     */
     public function edit(Equipo $equipo)
     {
         return view('equipos.edit', compact('equipo'));
     }
 
+    /**
+     * Actualiza los datos de un equipo existente en el inventario.
+     *
+     * La lógica de actualización varía según el tipo de equipo:
+     *
+     * **Laptop (equipo individual)**:
+     * - Permite editar tipo, marca, modelo, nombre/código, estado y características.
+     * - Delega la actualización al servicio.
+     *
+     * **Equipo por cantidad**:
+     * - Solo permite actualizar la cantidad total y el estado.
+     * - La nueva cantidad total no puede ser menor a las unidades actualmente prestadas.
+     * - Si el estado cambia a 'mantenimiento', la cantidad disponible se pone en 0.
+     * - La cantidad disponible se recalcula como: cantidad_total - unidades_prestadas.
+     *
+     * @param  Request $request Petición HTTP con los datos actualizados.
+     * @param  Equipo  $equipo  El equipo a actualizar (resuelto por Route Model Binding).
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function update(Request $request, Equipo $equipo)
     {
         if ($equipo->es_individual) {
@@ -213,6 +294,18 @@ class EquipoController extends Controller
         }
     }
 
+    /**
+     * Elimina o da de baja un equipo del inventario.
+     *
+     * El resultado depende de si el equipo tiene préstamos registrados:
+     * - **Con préstamos**: se marca como 'dado_de_baja' (no se elimina físicamente).
+     * - **Sin préstamos**: se elimina permanentemente de la base de datos.
+     *
+     * El controlador delega la decisión al `EquipoService::eliminarEquipo()`.
+     *
+     * @param  Equipo $equipo El equipo a procesar (resuelto por Route Model Binding).
+     * @return \Illuminate\Http\RedirectResponse
+     */
     public function destroy(Equipo $equipo)
     {
         $codigo = $equipo->nombre_equipo;
@@ -237,7 +330,18 @@ class EquipoController extends Controller
     }
 
     /**
-     * Búsqueda AJAX para autocompletado de equipos
+     * Búsqueda AJAX para autocompletado de equipos en el formulario de préstamos.
+     *
+     * Retorna hasta 10 equipos **disponibles** que coincidan con el término de búsqueda.
+     * Busca en: nombre_equipo, tipo, marca y modelo.
+     * Solo incluye equipos con `cantidad_disponible > 0`.
+     *
+     * El resultado formatea cada equipo diferente según su tipo:
+     * - **Laptop**: muestra nombre único + marca/modelo.
+     * - **Otros**: muestra nombre + cantidad disponible/total.
+     *
+     * @param  Request $request Petición HTTP con el parámetro `q` (término de búsqueda).
+     * @return \Illuminate\Http\JsonResponse Lista de equipos disponibles con datos de visualización.
      */
     public function buscarAjax(Request $request)
     {
@@ -310,8 +414,13 @@ class EquipoController extends Controller
     }
 
     /**
-     * Obtener estados de todos los equipos para polling
-     * Retorna solo id y estado para optimizar rendimiento
+     * Obtiene los estados actuales de todos los equipos del inventario.
+     *
+     * Endpoint utilizado por el sistema de polling en tiempo real del frontend.
+     * Retorna solo `id` y `estado` de cada equipo para minimizar la carga de datos.
+     * El frontend actualiza los indicadores de estado sin recargar la página completa.
+     *
+     * @return \Illuminate\Http\JsonResponse Lista de equipos con su id y estado actual.
      */
     public function obtenerEstados()
     {

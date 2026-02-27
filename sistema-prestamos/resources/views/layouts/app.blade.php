@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -25,15 +26,15 @@
 
             <ul class="mt-4 space-y-1">
                 <li class="nav-item">
-                    <a class="nav-link block px-4 py-2 hover:bg-gray-200 {{ request()->routeIs('dashboard') ? 'bg-gray-300' : '' }}"
-                       href="{{ route('dashboard') }}">
+                    <a class="nav-link block px-4 py-2 hover:bg-gray-200 {{ request()->routeIs('home') ? 'bg-gray-300' : '' }}"
+                        href="{{ route('home') }}">
                         <i class="fas fa-home"></i> Dashboard
                     </a>
                 </li>
 
                 <li class="nav-item">
                     <a class="nav-link block px-4 py-2 hover:bg-gray-200 {{ request()->routeIs('estudiantes.*') ? 'bg-gray-300' : '' }}"
-                       href="{{ route('estudiantes.index') }}">
+                        href="{{ route('estudiantes.index') }}">
                         <i class="fas fa-users"></i> Estudiantes
                     </a>
                 </li>
@@ -55,11 +56,12 @@
                 @isset($slot)
                     {{ $slot }}
                 @elseif(View::hasSection('content'))
-                    @yield('content')
+                @yield('content')
                 @endif
             </main>
         </div>
 
     </div>
 </body>
+
 </html>

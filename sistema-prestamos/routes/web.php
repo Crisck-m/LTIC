@@ -17,8 +17,8 @@ Route::get('/', function () {
 // ===============================
 Route::middleware(['auth'])->group(function () {
 
-    // Dashboard (todos)
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    // Home / Panel principal (todos)
+    Route::get('/home', [DashboardController::class, 'index'])->name('home');
 
     // ===============================
     // GESTIÓN DE ESTUDIANTES (todos pueden acceder)
