@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Estudiante;
 use App\Services\EstudianteService;
+use App\Rules\ValidarCedulaEcuatoriana;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -87,7 +88,7 @@ class EstudianteController extends Controller
     public function store(Request $request)
     {
         $datos = $request->validate([
-            'cedula' => 'required|digits:10|unique:estudiantes,cedula',
+            'cedula' => ['required', 'digits:10', 'unique:estudiantes,cedula', new ValidarCedulaEcuatoriana()],
             'nombre' => 'required|string|max:100',
             'apellido' => 'required|string|max:100',
             'email' => 'required|email|max:100|unique:estudiantes,email',
@@ -164,7 +165,7 @@ class EstudianteController extends Controller
     public function update(Request $request, Estudiante $estudiante)
     {
         $datos = $request->validate([
-            'cedula' => ['required', 'digits:10', Rule::unique('estudiantes')->ignore($estudiante->id)],
+            'cedula' => ['required', 'digits:10', Rule::unique('estudiantes')->ignore($estudiante->id), new ValidarCedulaEcuatoriana()],
             'nombre' => 'required|string|max:100',
             'apellido' => 'required|string|max:100',
             'email' => ['required', 'email', 'max:100', Rule::unique('estudiantes')->ignore($estudiante->id)],
